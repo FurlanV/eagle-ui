@@ -3,6 +3,13 @@ import {
   Moon,
   SunMedium,
   Twitter,
+  LayoutDashboard,
+  Microscope,
+  Search,
+  Dna,
+  Database,
+  Upload,
+  File,
   type Icon as LucideIcon,
 } from "lucide-react"
 
@@ -12,6 +19,13 @@ export const Icons = {
   sun: SunMedium,
   moon: Moon,
   twitter: Twitter,
+  dashboard: LayoutDashboard,
+  microscope: Microscope,
+  dna: Dna,
+  search: Search,
+  database: Database,
+  upload: Upload,
+  file: File,
   logo: (props: LucideProps) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" {...props}>
       <path
