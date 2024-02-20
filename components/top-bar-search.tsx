@@ -2,11 +2,7 @@
 
 import { useState } from "react"
 import {
-  CalendarIcon,
-  EnvelopeClosedIcon,
-  FaceIcon,
   GearIcon,
-  PersonIcon,
   ReaderIcon,
   RocketIcon,
 } from "@radix-ui/react-icons"
@@ -23,7 +19,7 @@ import {
   CommandShortcut,
 } from "@/components/ui/command"
 
-export function SearchBar({ className }: any) {
+export function TopBarSearch({ className }: any) {
   const [isExpanded, setIsExpanded] = useState<boolean>(false)
   return (
     <div className="relative w-full">
