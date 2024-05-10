@@ -6,7 +6,6 @@ import {
   ChevronDownIcon,
   DotsHorizontalIcon,
 } from "@radix-ui/react-icons"
-import { ScrollArea } from "@radix-ui/react-scroll-area"
 import {
   ColumnDef,
   ColumnFiltersState,

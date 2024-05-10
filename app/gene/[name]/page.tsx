@@ -3,14 +3,10 @@
 import { useEffect, useState } from "react"
 import { usePathname } from "next/navigation"
 
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { FileUploadArea } from "@/components/file-upload-area"
 import { GeneCard } from "@/components/gene-card"
-import { Icons } from "@/components/icons"
-import { PaperSearch } from "@/components/paper-search"
 import { PapersTable } from "@/components/papers-table"
 import { DataTableDemo } from "@/components/reports-table"
 
