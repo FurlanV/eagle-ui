@@ -6,6 +6,7 @@ import {
   ChevronDownIcon,
   DotsHorizontalIcon,
 } from "@radix-ui/react-icons"
+import { ScrollArea } from "@radix-ui/react-scroll-area"
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -41,61 +42,24 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
-const data: Papers[] = [
-  {
-    id: "m5gr84i9",
-    title: "Systematic evaluation of genome sequencing for the diagnostic...",
-    doi: "10.1073/pnas.2013773117",
-    status: "processed",
-    score: 1.5,
-    abstract:
-      "Western South America was one of the worldwide cradles of civilization. The well-known Inca Empire was the tip of the iceberg of an evolutionary process that started 11,000 to 14,000 years ago. Genetic data from 18 Peruvian populations reveal the following: 1) The between-population homogenization of the central southern Andes and its differentiation with respect to Amazonian populations of similar latitudes do not extend northward...",
-  },
-  {
-    id: "3u1reuv4",
-    title: "Transcriptome and Genome Analysis Uncovers a DMD...",
-    doi: "10.1073/pnas.2013773117",
-    status: "processed",
-    score: 1.0,
-    abstract:
-      "Western South America was one of the worldwide cradles of civilization. The well-known Inca Empire was the tip of the iceberg of an evolutionary process that started 11,000 to 14,000 years ago. Genetic data from 18 Peruvian populations reveal the following: 1) The between-population homogenization of the central southern Andes and its differentiation with respect to Amazonian populations of similar latitudes do not extend northward...",
-  },
-  {
-    id: "derv1ws0",
-    title: "Integrating de novo and inherited variants in 42,607 autism...",
-    doi: "10.1073/pnas.2013773117",
-    status: "processed",
-    score: 2,
-    abstract:
-      "Western South America was one of the worldwide cradles of civilization. The well-known Inca Empire was the tip of the iceberg of an evolutionary process that started 11,000 to 14,000 years ago. Genetic data from 18 Peruvian populations reveal the following: 1) The between-population homogenization of the central southern Andes and its differentiation with respect to Amazonian populations of similar latitudes do not extend northward...",
-  },
-  {
-    id: "5kma53ae",
-    title:
-      "Autism Spectrum Disorder and Duchenne Muscular Dystrophy: A Clinical...",
-    doi: "10.1073/pnas.2013773117",
-    status: "processing",
-    score: 1.25,
-    abstract:
-      "Western South America was one of the worldwide cradles of civilization. The well-known Inca Empire was the tip of the iceberg of an evolutionary process that started 11,000 to 14,000 years ago. Genetic data from 18 Peruvian populations reveal the following: 1) The between-population homogenization of the central southern Andes and its differentiation with respect to Amazonian populations of similar latitudes do not extend northward...",
-  },
-  {
-    id: "bhqecj4p",
-    title: "Genetic landscape of autism spectrum disorder...",
-    doi: "10.1073/pnas.2013773117",
-    status: "processing",
-    score: 1.5,
-    abstract:
-      "Western South America was one of the worldwide cradles of civilization. The well-known Inca Empire was the tip of the iceberg of an evolutionary process that started 11,000 to 14,000 years ago. Genetic data from 18 Peruvian populations reveal the following: 1) The between-population homogenization of the central southern Andes and its differentiation with respect to Amazonian populations of similar latitudes do not extend northward...",
-  },
-]
-
 export type Papers = {
   id: string
-  title: string
   doi: string
-  abstract: string
-  status: "processed" | "processing"
+  patient: string
+  sex: string
+  age: number
+  phenotype: string
+  phenotypingNotes: string
+  ASD: string
+  genotypingMethod: string
+  variant: string
+  impact: string
+  inheritance: string
+  typeOfMutation: string
+  phenotypeQuality: string
+  cautionaryComment: string
+  evidenceType: string
+  points: number
   score: number
 }
 
@@ -123,36 +87,14 @@ export const columns: ColumnDef<Papers>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("status")}</div>
-    ),
-  },
-  {
-    accessorKey: "title",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Title
-          <CaretSortIcon className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
-    cell: ({ row }) => <div className="lowercase">{row.getValue("title")}</div>,
-  },
-  {
-    accessorKey: "abstract",
-    header: "Abstract",
-    cell: ({ row }) => <div>{row.getValue("abstract").substring(0, 60)}</div>,
-  },
-  {
     accessorKey: "doi",
     header: "DOI",
     cell: ({ row }) => <div>{row.getValue("doi")}</div>,
+  },
+  {
+    accessorKey: "variant",
+    header: "Variant",
+    cell: ({ row }) => <div>{row.getValue("variant")}</div>,
   },
   {
     accessorKey: "score",
@@ -167,14 +109,15 @@ export const columns: ColumnDef<Papers>[] = [
         </Button>
       )
     },
-    cell: ({ row }) => <div className="text-center font-bold">{row.getValue("score")}</div>,
+    cell: ({ row }) => (
+      <div className="text-center font-bold">{row.getValue("score")}</div>
+    ),
   },
   {
     id: "actions",
     enableHiding: false,
     cell: ({ row }) => {
       const payment = row.original
-
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -200,7 +143,12 @@ export const columns: ColumnDef<Papers>[] = [
   },
 ]
 
-export function DataTableDemo({ className, setShowFileUpload }: any) {
+export function DataTableDemo({
+  data,
+  className,
+  setShowFileUpload,
+  searchPapers,
+}: any) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -230,9 +178,9 @@ export function DataTableDemo({ className, setShowFileUpload }: any) {
 
   return (
     <div className={cn("w-full h-full", className)}>
-      <div className="flex items-center py-4">
+      <div className="flex items-center py-3">
         <Input
-          placeholder="Filter Papers..."
+          placeholder="Filter Cases..."
           value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("title")?.setFilterValue(event.target.value)
@@ -265,13 +213,10 @@ export function DataTableDemo({ className, setShowFileUpload }: any) {
               })}
           </DropdownMenuContent>
         </DropdownMenu>
-        <Button variant="outline" className="ml-2" onClick={() => setShowFileUpload(true)}>
-            Upload
-        </Button>
       </div>
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-scroll h-[32rem]">
         <Table>
-          <TableHeader>
+          <TableHeader className="w-full">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
@@ -289,7 +234,8 @@ export function DataTableDemo({ className, setShowFileUpload }: any) {
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
+
+          <TableBody className="overflow-scroll">
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow

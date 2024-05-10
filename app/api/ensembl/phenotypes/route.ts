@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 
 export async function GET(req: NextRequest) {
-  const gene_name = req.nextUrl.searchParams.get("name")
+  const id = req.nextUrl.searchParams.get("id")
 
   const res = await fetch(
-    `http://10.118.0.2:8000/api/v1/gene/name/${gene_name}`
+    `https://rest.ensembl.org/phenotype/gene/human/${id}`,
+    {
+      headers: { "Content-Type": "application/json" },
+    }
   )
 
   const data = await res.json()

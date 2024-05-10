@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 
 export async function GET(req: NextRequest) {
-  const gene_name = req.nextUrl.searchParams.get("name")
+  const geneName = req.nextUrl.searchParams.get("name")
 
-  const res = await fetch(
-    `http://10.118.0.2:8000/api/v1/gene/name/${gene_name}`
-  )
+  const res = await fetch(`http://api.vln-hub.com:8005/api/v1/paper/search/${geneName}`)
 
   const data = await res.json()
 

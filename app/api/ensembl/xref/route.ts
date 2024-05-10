@@ -4,7 +4,10 @@ export async function GET(req: NextRequest) {
   const gene_name = req.nextUrl.searchParams.get("name")
 
   const res = await fetch(
-    `http://10.118.0.2:8000/api/v1/gene/name/${gene_name}`
+    `https://rest.ensembl.org/xrefs/symbol/human/${gene_name}`,
+    {
+      headers: { "Content-Type": "application/json" },
+    }
   )
 
   const data = await res.json()

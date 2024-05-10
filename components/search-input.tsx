@@ -216,11 +216,6 @@ export function SearchInput() {
             <CommandSeparator />
             <CommandGroup heading="Actions">
               <CommandItem>
-                <RocketIcon className="mr-2 h-4 w-4" />
-                <span>Upload Paper</span>
-                <CommandShortcut>⌘P</CommandShortcut>
-              </CommandItem>
-              <CommandItem>
                 <GearIcon className="mr-2 h-4 w-4" />
                 <span>Settings</span>
                 <CommandShortcut>⌘S</CommandShortcut>
