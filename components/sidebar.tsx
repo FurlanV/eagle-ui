@@ -1,122 +1,119 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
+import {
+  CandlestickChart,
+  Dna,
+  Home,
+  PersonStanding,
+  Settings,
+  TestTubeDiagonal,
+} from "lucide-react"
 
-import { siteConfig } from "@/config/site"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { ThemeToggle } from "@/components/theme-toggle"
 
-import { Icons } from "./icons"
-
-export function Sidebar({ className }: any) {
-  const [active, setActive] = useState<any>()
-  const [isExpanded, setIsExpanded] = useState<boolean>(false)
-
-  const handleButtonClick = (buttonName: string) => {
-    setActive(buttonName)
-  }
+export function Sidebar() {
+  const pathname = usePathname()
+  const split_pathname = pathname.split("/")
+  const current = split_pathname[split_pathname.length - 1]
 
   return (
-    <div
-      className={cn(
-        `pb-12 border-r transition-all duration-500 ease-in-out ${
-          isExpanded ? "w-[230px]" : "w-[80px]"
-        }`,
-        className
-      )}
-      onMouseOver={() => setIsExpanded(true)}
-      onMouseOut={() => setIsExpanded(false)}
-    >
-      <div className="sticky top-0 bg-background flex items-center justify-center h-16 border-b">
-        <Link href="/" className="flex items-center">
-          <Icons.database className="h-10 w-10" />
-          {isExpanded && (
-            <span className="inline-block font-bold">{siteConfig.name}</span>
-          )}
-        </Link>
-      </div>
-      {isExpanded ? (
-        <div className="grid grid-rows-4 h-[calc(100vh-95px)]">
-          <div className="grid row-start-1 row-span-2 px-3 py-2">
-            <div className="space-y-1 divide-y-reverse">
-              <Button
-                variant={active === "Inbox" ? "outline" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => handleButtonClick("Inbox")}
+    <aside className="inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex">
+      <TooltipProvider>
+        <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
+          <Link
+            href="#"
+            className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
+          >
+            <Dna className="h-4 w-4 transition-all group-hover:scale-110" />
+            <span className="sr-only">LDGH</span>
+          </Link>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                href="/"
+                className={cn(
+                  "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8",
+                  current === "" && "text-accent-foreground bg-accent"
+                )}
               >
-                <Icons.search className="mr-2 h-4 w-4" />
-                <Link href="/">Search</Link>
-              </Button>
-              <Button
-                variant={active === "Inbox" ? "outline" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => handleButtonClick("Inbox")}
+                <Home className="h-5 w-5" />
+                <span className="sr-only">Dashboard</span>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="right">Dashboard</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                href="/samples"
+                className={cn(
+                  "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8",
+                  current === "samples" && "text-accent-foreground bg-accent"
+                )}
               >
-                <Icons.upload className="mr-2 h-4 w-4" />
-                <Link href="/">Upload paper</Link>
-              </Button>
-            </div>
-            <div className="space-y-1">
-              <Button
-                variant={active === "Inbox" ? "secondary" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => handleButtonClick("Inbox")}
+                <TestTubeDiagonal className="h-5 w-5" />
+                <span className="sr-only">Samples</span>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="right">Samples</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                href="/individuals"
+                className={cn(
+                  "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8",
+                  current === "individuals" &&
+                    "text-accent-foreground bg-accent"
+                )}
               >
-                <Icons.dna className="mr-2 h-4 w-4" />
-                <Link href="/">Chromosomes</Link>
-              </Button>
-              <Button
-                variant={active === "Projects" ? "secondary" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => handleButtonClick("Projects")}
+                <PersonStanding className="h-5 w-5" />
+                <span className="sr-only">Individuals</span>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="right">Individuals</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                href="/analyses"
+                className={cn(
+                  "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8",
+                  current === "analyses" && "text-accent-foreground bg-accent"
+                )}
               >
-                <Icons.dna className="mr-2 h-4 w-4" />
-                <Link href="/projects">Genes</Link>
-              </Button>
-              <Button
-                variant={active === "Knowledge Base" ? "secondary" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => handleButtonClick("Knowledge Base")}
+                <CandlestickChart className="h-5 w-5" />
+                <span className="sr-only">Analyses</span>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="right">Analyses</TooltipContent>
+          </Tooltip>
+        </nav>
+        <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
+          <ThemeToggle />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                href="#"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
               >
-                <Icons.dna className="mr-2 h-4 w-4" />
-                <Link className="text-start" href="/knowledge-base">
-                  Traits
-                </Link>
-              </Button>
-              <Button
-                variant={active === "Knowledge Base" ? "secondary" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => handleButtonClick("Knowledge Base")}
-              >
-                <Icons.database className="mr-2 h-4 w-4" />
-                <Link className="text-start" href="/knowledge-base">
-                  Scoring
-                </Link>
-              </Button>
-            </div>
-          </div>
-
-          <div className="grid grid-row-3 row-span-2 p-2 self-end">
-            <div className="border" />
-          </div>
-        </div>
-      ) : (
-        <div className="flex flex-col p-2 gap-2">
-          <Button variant="outline" className="w-full">
-            <Icons.dna className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" className="w-full">
-            <Icons.dna className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" className="w-full">
-            <Icons.dna className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" className="w-full">
-            <Icons.database className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
-    </div>
+                <Settings className="h-5 w-5" />
+                <span className="sr-only">Settings</span>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="right">Settings</TooltipContent>
+          </Tooltip>
+        </nav>
+      </TooltipProvider>
+    </aside>
   )
 }

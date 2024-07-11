@@ -11,6 +11,8 @@ import {
   Upload,
   File,
   SlidersHorizontal,
+  Bell,
+  TestTubeDiagonal,
   type Icon as LucideIcon,
 } from "lucide-react"
 
@@ -28,6 +30,8 @@ export const Icons = {
   upload: Upload,
   file: File,
   filters: SlidersHorizontal,
+  bell: Bell,
+  testTube: TestTubeDiagonal,
   logo: (props: LucideProps) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" {...props}>
       <path
