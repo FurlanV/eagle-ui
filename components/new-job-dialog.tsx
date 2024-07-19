@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label"
 import { FileUploadArea } from "@/components/file-upload-area"
 
 import { Icons } from "./icons"
+import { useToast } from "./ui/use-toast"
 
 const MAXFILESIZE = 150 // in MB
 
@@ -28,6 +29,8 @@ export function NewJobDialog() {
   const genesOfInterestRef = useRef<HTMLInputElement>(null)
 
   const [files, setFiles] = useState<File[]>([])
+
+  const { toast } = useToast()
 
   const uploadFiles = async (selectedFiles: File[]) => {
     const formData = new FormData()
@@ -50,7 +53,10 @@ export function NewJobDialog() {
       body: formData,
     })
 
-    console.log(await uploadResponse.json())
+    toast({
+      title: "Job submitted",
+      description: "Your job has been submitted for processing",
+    })
   }
   return (
     <Dialog>
@@ -98,17 +104,11 @@ export function NewJobDialog() {
           </div>
         </div>
         <DialogFooter>
-          <Button
-            type="button"
-            onClick={(ev) =>
-              useCallback(() => {
-                ev.preventDefault()
-                uploadFiles(files)
-              }, [files.length])
-            }
-          >
-            Run
-          </Button>
+          <DialogClose asChild>
+            <Button type="button" onClick={() => uploadFiles(files)}>
+              Run
+            </Button>
+          </DialogClose>
           <DialogClose asChild>
             <Button variant="outline">Cancel</Button>
           </DialogClose>

@@ -222,7 +222,7 @@ export function PapersTable({
           Upload
         </Button>
       </div>
-      <div className="rounded-md border overflow-scroll h-[32rem]">
+      <div className="rounded-md border overflow-scroll h-[39rem]">
         <Table>
           <TableHeader className="w-full">
             {table.getHeaderGroups().map((headerGroup) => (

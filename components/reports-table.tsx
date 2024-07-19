@@ -41,28 +41,38 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
-export type Papers = {
+export type Reports = {
   id: string
-  doi: string
-  patient: string
+  associated_gene: {
+    symbol: string
+  }
+  paper: {
+    title: string
+    doi: string
+  }
+  eagle_run_id: number | null
+  reported_case_id: string
   sex: string
-  age: number
   phenotype: string
-  phenotypingNotes: string
-  ASD: string
-  genotypingMethod: string
+  cognition: string
+  evidence_type: string
+  genotyping_method: string
   variant: string
   impact: string
+  gnomad: string
   inheritance: string
-  typeOfMutation: string
-  phenotypeQuality: string
-  cautionaryComment: string
-  evidenceType: string
-  points: number
-  score: number
+  variant_notes: string
+  asd: string
+  asd_phenotype_confidence: string
+  cognitive_ability_comment: string
+  initial_score: number
+  phenotype_adjustment_score: number
+  final_score: number
+  score_rationale: string
+  notes: string
+  created_at: string // or Date, depending on how you handle dates in your frontend
 }
-
-export const columns: ColumnDef<Papers>[] = [
+export const columns: ColumnDef<Reports>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -86,9 +96,14 @@ export const columns: ColumnDef<Papers>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "doi",
-    header: "DOI",
-    cell: ({ row }) => <div>{row.getValue("doi")}</div>,
+    accessorKey: "reported_case_id",
+    header: "Case ID",
+    cell: ({ row }) => <div>{row.getValue("reported_case_id")}</div>,
+  },
+  {
+    accessorKey: "associated_gene.symbol",
+    header: "Gene",
+    cell: ({ row }) => <div>{row.original.associated_gene.symbol}</div>,
   },
   {
     accessorKey: "variant",
@@ -96,20 +111,25 @@ export const columns: ColumnDef<Papers>[] = [
     cell: ({ row }) => <div>{row.getValue("variant")}</div>,
   },
   {
-    accessorKey: "score",
+    accessorKey: "paper.doi",
+    header: "DOI",
+    cell: ({ row }) => <div>{row.original.paper.doi}</div>,
+  },
+  {
+    accessorKey: "final_score",
     header: ({ column }) => {
       return (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Score
+          Final Score
           <CaretSortIcon className="ml-2 h-4 w-4" />
         </Button>
       )
     },
     cell: ({ row }) => (
-      <div className="text-center font-bold">{row.getValue("score")}</div>
+      <div className="text-center font-bold">{row.getValue("final_score")}</div>
     ),
   },
   {
@@ -142,12 +162,7 @@ export const columns: ColumnDef<Papers>[] = [
   },
 ]
 
-export function DataTableDemo({
-  data,
-  className,
-  setShowFileUpload,
-  searchPapers,
-}: any) {
+export function ReportsTable({ data, className }: any) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -155,6 +170,8 @@ export function DataTableDemo({
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
+
+  console.log(data)
 
   const table = useReactTable({
     data,
@@ -180,9 +197,14 @@ export function DataTableDemo({
       <div className="flex items-center py-3">
         <Input
           placeholder="Filter Cases..."
-          value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
+          value={
+            (table.getColumn("reported_case_id")?.getFilterValue() as string) ??
+            ""
+          }
           onChange={(event) =>
-            table.getColumn("title")?.setFilterValue(event.target.value)
+            table
+              .getColumn("reported_case_id")
+              ?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
@@ -213,7 +235,7 @@ export function DataTableDemo({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="rounded-md border overflow-scroll h-[32rem]">
+      <div className="rounded-md border overflow-scroll h-[39rem]">
         <Table>
           <TableHeader className="w-full">
             {table.getHeaderGroups().map((headerGroup) => (

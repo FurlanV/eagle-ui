@@ -1,14 +1,20 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { usePathname } from "next/navigation"
+import {
+  useGetGeneInformationQuery,
+  useGetGenePhenotypesQuery,
+  useGetGeneReferencesQuery,
+} from "@/services/annotation/gene"
+import { useGetReportsByGeneQuery } from "@/services/eagle/reports"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { GeneCard } from "@/components/gene-card"
 import { PapersTable } from "@/components/papers-table"
-import { DataTableDemo } from "@/components/reports-table"
+import { ReportsTable } from "@/components/reports-table"
 
 export default function GenePage() {
   const [papers, setPapers] = useState<any[]>([])
@@ -17,87 +23,22 @@ export default function GenePage() {
   const [geneInfo, setGeneInfo] = useState<any>({})
 
   const pathname = usePathname()
+  const split_pathname = pathname.split("/")
+  const gene_name = split_pathname[split_pathname.length - 1]
+  if (!gene_name) return
 
-  const getGeneData = async (): Promise<any> => {
-    const split_pathname = pathname.split("/")
-    const gene_name = split_pathname[split_pathname.length - 1]
-    if (!gene_name) return
+  const { data: annotationData } = useGetGeneReferencesQuery(gene_name)
+  const { data: geneInfoData = {} } = useGetGeneInformationQuery(
+    annotationData && annotationData[0].id
+  )
 
-    const res = await fetch(`/api/ensembl/xref?name=${gene_name}`)
-    const json = await res.json()
-    const ensemblId = json.data[0].id
+  const { data: reportsData = [] } = useGetReportsByGeneQuery(gene_name)
 
-    const gene = await fetch(`/api/ensembl/lookup?id=${ensemblId}`)
-    const jsonData = await gene.json()
-    const geneInfo = jsonData.data
-
-    const phenotype = await fetch(`/api/ensembl/phenotypes?id=${ensemblId}`)
-    const phenotypeData = await phenotype.json()
-    geneInfo.phenotypes = phenotypeData.data
-
-    return geneInfo
-  }
-
-  const getGeneReportData = async (): Promise<any> => {
-    const split_pathname = pathname.split("/")
-    const gene_name = split_pathname[split_pathname.length - 1]
-    if (!gene_name) return
-
-    const res = await fetch(`/api/report/gene?name=${gene_name}`)
-    const json = await res.json()
-    return json.data
-  }
-
-  const getGenePapers = async (): Promise<any> => {
-    const split_pathname = pathname.split("/")
-    const gene_name = split_pathname[split_pathname.length - 1]
-    if (!gene_name) return
-
-    const res = await fetch(`/api/papers/gene?name=${gene_name}`)
-    const json = await res.json()
-    return json.data
-  }
-
-  const getGeneAnnotation = async (): Promise<any> => {
-    const split_pathname = pathname.split("/")
-    const gene_name = split_pathname[split_pathname.length - 1]
-    if (!gene_name) return
-
-    const res = await fetch(`/api/genes/annotation?name=${gene_name}`)
-    const json = await res.json()
-    return json.data
-  }
-
-  useEffect(() => {
-    searchPapers()
-
-    getGeneData().then((data) => {
-      setGeneInfo(data)
-    })
-
-    getGeneAnnotation().then((data) => {
-      setAnnotation(data)
-    })
-  }, [])
-
-  const searchPapers = async () => {
-    const split_pathname = pathname.split("/")
-    const gene_name = split_pathname[split_pathname.length - 1]
-
-    const res = await fetch(`/api/papers/search?name=${gene_name}`)
-    const json = await res.json()
-    const pubmed = json.data.pubmed
-    const scholar = json.data.scholar
-    const data = [...pubmed, ...scholar]
-    setSearchedPapers(data)
-    //setShowPaperSearch(true)
-  }
-
-  console.log(searchedPapers)
+  console.log(reportsData)
 
   return (
-    <div className="flex h-[calc(100vh-55px)] max-h-full flex-row p-4 gap-2">
-      <GeneCard geneInfo={geneInfo} annotation={annotation} />
+    <div className="flex h-full flex-row p-4 gap-2">
+      <GeneCard geneInfo={geneInfoData ?? {}} annotation={{}} />
       <div className="flex flex-col flex-1 gap-2">
         <div className="grid grid-cols-3 gap-2 h-50">
           <Card className="w-full h-full">
@@ -106,7 +47,12 @@ export default function GenePage() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-row items-center justify-center">
-                <Label className="text-4xl font-bold">0.0</Label>
+                <Label className="text-4xl font-bold">
+                  {reportsData.reduce(
+                    (acc, report) => acc + report.final_score,
+                    0
+                  )}
+                </Label>
               </div>
             </CardContent>
           </Card>
@@ -116,7 +62,9 @@ export default function GenePage() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-row items-center justify-center">
-                <Label className="text-4xl font-bold">0.0</Label>
+                <Label className="text-4xl font-bold">
+                  {reportsData.length}
+                </Label>
               </div>
             </CardContent>
           </Card>
@@ -139,7 +87,7 @@ export default function GenePage() {
         </Card>
         <div className="flex flex-row gap-2">
           <PapersTable data={searchedPapers} />
-          <DataTableDemo data={papers} />
+          <ReportsTable data={reportsData} />
         </div>
       </div>
     </div>

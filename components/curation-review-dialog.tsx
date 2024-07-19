@@ -1,11 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@radix-ui/react-collapsible"
+import { useGetJobPapersQuery } from "@/services/eagle/jobs"
 import { Separator } from "@radix-ui/react-separator"
 import Markdown from "react-markdown"
 import remarkGfm from "remark-gfm"
@@ -23,23 +18,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 
-import { Icons } from "./icons"
-
-const MAXFILESIZE = 150 // in MB
-
 export function CurationReviewDialog({ job_id, job_name, job_status }: any) {
-  const [output, setOutput] = useState<any>(null)
-  const [selectedOutput, setSelectedOutput] = useState<any>(null)
-
-  useEffect(() => {
-    async function fetchJobOutput() {
-      const res = await fetch(`/api/eagle/job?id=${job_id}`)
-      const data = await res.json()
-      setOutput(data.data)
-    }
-
-    fetchJobOutput()
-  }, [])
+  const { data, error, isLoading } = useGetJobPapersQuery(job_id)
 
   return (
     <Dialog>
@@ -51,29 +31,36 @@ export function CurationReviewDialog({ job_id, job_name, job_status }: any) {
           </CardHeader>
         </Card>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-full sm: max-h-[780px]">
+      <DialogContent className="sm:max-w-[calc(100vw-100px)] sm:max-h-[780px] m-4">
         <DialogHeader>
           <DialogTitle>{job_name}</DialogTitle>
           <DialogDescription>{job_status}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="flex flex-row  w-full">
-            <div className="flex flex-col w-[400px] gap-2">
-              {output?.map((job_step: any) => (
-                <div className="flex items-center justify-between space-x-4 px-4">
+            <div className="flex flex-col w-[480px] gap-2 overflow-scroll h-72">
+              {data &&
+                data.map((paper: any) => (
                   <div
-                    className="rounded-md border px-4 py-2 font-mono text-sm shadow-sm cursor-pointer"
-                    onClick={() => setSelectedOutput(job_step)}
+                    key={paper.id}
+                    className="flex items-center justify-between space-x-4 px-4"
                   >
-                    {job_step.name}
+                    <div
+                      className="rounded-md border px-4 py-2 font-mono text-sm shadow-sm cursor-pointer w-full text-center"
+                      onClick={() => {}}
+                    >
+                      {paper.title}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
             <Separator orientation="vertical" asChild />
             <div className="rounded-md border overflow-scroll w-full h-[620px]">
-              <Markdown className="flex flex-col overflow-scroll p-4 markdown" remarkPlugins={[remarkGfm]}>
-                {selectedOutput?.output}
+              <Markdown
+                className="flex flex-col overflow-scroll p-4 markdown"
+                remarkPlugins={[remarkGfm]}
+              >
+                {/* {selectedOutput?.output} */}
               </Markdown>
             </div>
           </div>

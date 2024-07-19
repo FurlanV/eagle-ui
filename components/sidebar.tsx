@@ -34,7 +34,7 @@ export function Sidebar() {
             className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
           >
             <Dna className="h-4 w-4 transition-all group-hover:scale-110" />
-            <span className="sr-only">LDGH</span>
+            <span className="sr-only">EAGLE</span>
           </Link>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -54,33 +54,17 @@ export function Sidebar() {
           <Tooltip>
             <TooltipTrigger asChild>
               <Link
-                href="/samples"
+                href="/curations"
                 className={cn(
                   "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8",
-                  current === "samples" && "text-accent-foreground bg-accent"
+                  current === "curations" && "text-accent-foreground bg-accent"
                 )}
               >
                 <TestTubeDiagonal className="h-5 w-5" />
-                <span className="sr-only">Samples</span>
+                <span className="sr-only">Curations</span>
               </Link>
             </TooltipTrigger>
-            <TooltipContent side="right">Samples</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link
-                href="/individuals"
-                className={cn(
-                  "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8",
-                  current === "individuals" &&
-                    "text-accent-foreground bg-accent"
-                )}
-              >
-                <PersonStanding className="h-5 w-5" />
-                <span className="sr-only">Individuals</span>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side="right">Individuals</TooltipContent>
+            <TooltipContent side="right">Curations</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
