@@ -1,18 +1,23 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+import {
+    createApi
+} from '@reduxjs/toolkit/query/react'
 import type { EagleJob } from '@/types/eagle-job'
+import { createBaseQueryWithReauth } from "@/services/base-query"
+
+const baseQueryWithReauth = createBaseQueryWithReauth('/api/')
 
 export const eagleAPI = createApi({
     reducerPath: 'eagleAPI',
-    baseQuery: fetchBaseQuery({ baseUrl: 'api/eagle/' }),
+    baseQuery: baseQueryWithReauth,
     endpoints: (builder) => ({
         getUserJobs: builder.query<EagleJob[], string>({
-            query: () => `jobs`,
+            query: () => `eagle/jobs`,
         }),
         getJobPapers: builder.query<EagleJob[], string>({
-            query: (id) => `job/papers?id=${id}`,
+            query: (id) => `eagle/job/papers?id=${id}`,
         }),
         getJobInformation: builder.query<EagleJob, any>({
-            query: ({ job_id, paper_id }: any) => `job?id=${job_id}&paper_id=${paper_id}`,
+            query: ({ job_id, paper_id }: any) => `eagle/job?id=${job_id}&paper_id=${paper_id}`,
         }),
     }),
 })
