@@ -120,25 +120,12 @@ export default function CurationsPage({ defaultLayout = [10, 50, 15] }) {
             minSize={30}
             className="p-4"
           >
-            <Carousel
-              opts={{
-                align: "start",
-              }}
-              className="w-full"
-            >
-              <CarouselContent>
-                {selectedPhase &&
-                  selectedPhase.pipeline_run.reports.map(
-                    (report: any, index: number) => (
-                      <CarouselItem key={index} className="md:basis-1/2 w-full">
-                        <ReportCard report={report} />
-                      </CarouselItem>
-                    )
-                  )}
-              </CarouselContent>
-              <CarouselPrevious />
-              <CarouselNext />
-            </Carousel>
+            <div className="grid grid-cols-2 grid-rows-auto gap-2">
+              {selectedPhase &&
+                selectedPhase.pipeline_run.reports.map(
+                  (report: any, index: number) => <ReportCard report={report} />
+                )}
+            </div>
             <div className="grid grid-cols-2 grid-rows-auto gap-2 w-full"></div>
 
             {selectedPaper && (

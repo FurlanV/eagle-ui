@@ -14,7 +14,7 @@ export interface LoginRequest {
 
 export const authAPI = createApi({
     baseQuery: fetchBaseQuery({
-        baseUrl: '/api/',
+        baseUrl: '/eagle/api/',
     }),
     endpoints: (builder) => ({
         login: builder.mutation<UserResponse, LoginRequest>({

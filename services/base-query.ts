@@ -13,7 +13,7 @@ export function createBaseQueryWithReauth(
     baseUrl: string,
 ): BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> {
     const baseQuery = fetchBaseQuery({ baseUrl })
-    const refreshQuery = fetchBaseQuery({ baseUrl: "/api/", method: "POST" })
+    const refreshQuery = fetchBaseQuery({ baseUrl: "/eagle/api/", method: "POST" })
     return async (args, api, extraOptions) => {
         await mutex.waitForUnlock()
         let result = await baseQuery(args, api, extraOptions)

@@ -3,7 +3,7 @@ import type { Report } from '@/types/report'
 
 export const ensemblGeneAnnotationAPI = createApi({
     reducerPath: 'ensemblGeneAPI',
-    baseQuery: fetchBaseQuery({ baseUrl: '/api/ensembl/' }),
+    baseQuery: fetchBaseQuery({ baseUrl: '/eagle/api/ensembl/' }),
     endpoints: (builder) => ({
         getGeneReferences: builder.query<any[], string>({
             query: (gene_symbol: string) => `xref?name=${gene_symbol}`,

@@ -2,7 +2,7 @@ import { createApi } from '@reduxjs/toolkit/query/react'
 import type { Report } from '@/types/report'
 import { createBaseQueryWithReauth } from '@/services/base-query'
 
-const baseQueryWithReauth = createBaseQueryWithReauth('/api/report/')
+const baseQueryWithReauth = createBaseQueryWithReauth('/eagle/api/report/')
 
 export const eagleReportAPI = createApi({
     reducerPath: 'eagleReportAPI',

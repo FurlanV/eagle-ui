@@ -4,7 +4,7 @@ import {
 import type { EagleJob } from '@/types/eagle-job'
 import { createBaseQueryWithReauth } from "@/services/base-query"
 
-const baseQueryWithReauth = createBaseQueryWithReauth('/api/eagle/')
+const baseQueryWithReauth = createBaseQueryWithReauth('/eagle/api/eagle/')
 
 export const eagleAPI = createApi({
     reducerPath: 'eagleAPI',
