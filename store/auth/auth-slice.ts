@@ -29,19 +29,15 @@ const authSlice = createSlice({
                 return { user }
             },
         ),
-            builder.addMatcher(
-                authAPI.endpoints.verifyAuthentication.matchFulfilled,
-                (state, { payload }) => {
-                    if (!payload) {
-                        authSlice.actions.loggedOut()
-                    }
-                    state.user = payload
-
-                    if (isTokenExpiring()) {
-                        //authAPI.endpoints.refresh.useMutation()
-                    }
-                },
-            )
+        builder.addMatcher(
+            authAPI.endpoints.verifyAuthentication.matchFulfilled,
+            (state, { payload }) => {
+                if (!payload) {
+                    authSlice.actions.loggedOut()
+                }
+                state.user = payload
+            },
+        )
         builder.addMatcher(
             authAPI.endpoints.refresh.matchFulfilled,
             (state, { payload }) => {

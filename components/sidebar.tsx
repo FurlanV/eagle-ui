@@ -25,6 +25,10 @@ export function Sidebar() {
   const split_pathname = pathname.split("/")
   const current = split_pathname[split_pathname.length - 1]
 
+  if(current === 'login') {
+    return null
+  }
+
   return (
     <aside className="inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex">
       <TooltipProvider>

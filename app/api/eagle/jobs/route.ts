@@ -10,9 +10,8 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
     }
     const token = Buffer.from(authToken.value, 'base64').toString('ascii');
-    console.log(token)
 
-    const res = await fetch(`http://localhost:8000/api/v1/eagle/jobs`, {
+    const res = await fetch(`https://low.enthropy.app/eagle-api/api/v1/eagle/jobs`, {
         method: "GET",
         headers: {
             Authorization: `Bearer ${token}`,

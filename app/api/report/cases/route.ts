@@ -4,7 +4,7 @@ export async function GET(req: NextRequest) {
     const caseId = req.nextUrl.searchParams.get("case_id")
 
     const res = await fetch(
-        `http://localhost:8000/api/v1/report/${caseId}`
+        `https://low.enthropy.app/eagle-api/api/v1/report/${caseId}`
     )
 
     const data = await res.json()

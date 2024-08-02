@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 
 export async function GET(req: NextRequest) {
   const res = await fetch(
-    `http://localhost:8000/api/v1/report/`
+    `https://low.enthropy.app/eagle-api/api/v1/report/`
   )
 
   const data = await res.json()

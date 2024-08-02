@@ -16,8 +16,6 @@ export function JobCollapsible({
   job,
   selectedPaper,
   setSelectedPaper,
-  jobData,
-  selectedPhase,
   setSelectedPhase,
 }: any) {
   const { data = [], error, isLoading } = useGetJobPapersQuery(job.id)
@@ -51,6 +49,7 @@ export function JobCollapsible({
                 )}
                 onClick={() => {
                   setSelectedPaper({ ...paper, job_id: job.id })
+                  setSelectedPhase(null)
                 }}
               >
                 <div className="flex flex-row items-center gap-2">

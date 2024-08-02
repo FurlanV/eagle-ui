@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import "@/styles/globals.css"
 import StoreProvider from "@/store/store-provider"
@@ -9,7 +9,6 @@ import { Toaster } from "@/components/ui/toaster"
 import { Sidebar } from "@/components/sidebar"
 import { TailwindIndicator } from "@/components/tailwind-indicator"
 import { ThemeProvider } from "@/components/theme-provider"
-
 interface RootLayoutProps {
   children: React.ReactNode
 }

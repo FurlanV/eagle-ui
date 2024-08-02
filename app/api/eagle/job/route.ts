@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     }
     const token = Buffer.from(authToken.value, 'base64').toString('ascii');
 
-    const res = await fetch(`http://localhost:8000/api/v1/eagle/job/${job_id}/paper/${paper_id}/output`, {
+    const res = await fetch(`https://low.enthropy.app/eagle-api/api/v1/eagle/job/${job_id}/paper/${paper_id}/output`, {
         method: "GET",
         headers: {
             Authorization: `Bearer ${token}`,

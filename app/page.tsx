@@ -1,5 +1,7 @@
 "use client"
 
+import { useGetAllReportsQuery } from "@/services/eagle/reports"
+
 import { useAppSelector } from "@/lib/hooks"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -58,15 +60,11 @@ export default function IndexPage() {
                 <GeneScoresChart chartData={[]} />
               </div>
               <div className="flex flex-col col-span-4 row-span-4 p-4 gap-2">
-                <Card>
-                  <CardContent>
-
-                  </CardContent>
+                <Card className="h-[48%]">
+                  <CardContent></CardContent>
                 </Card>
-                <Card>
-                  <CardContent>
-
-                  </CardContent>
+                <Card className="h-[48%]">
+                  <CardContent></CardContent>
                 </Card>
               </div>
             </section>

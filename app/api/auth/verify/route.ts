@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server"
 export async function POST(req: NextRequest) {
     const token = await req.json()
 
-    const res = await fetch(`http://localhost:8000/api/v1/auth/verify`, {
+    const res = await fetch(`https://low.enthropy.app/eagle-api/api/v1/auth/verify`, {
         headers: {
             "Content-Type": "application/json",
         },

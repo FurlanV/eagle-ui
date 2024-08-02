@@ -13,21 +13,20 @@ export function createBaseQueryWithReauth(
     baseUrl: string,
 ): BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> {
     const baseQuery = fetchBaseQuery({ baseUrl })
-
+    const refreshQuery = fetchBaseQuery({ baseUrl: "/api/", method: "POST" })
     return async (args, api, extraOptions) => {
         await mutex.waitForUnlock()
         let result = await baseQuery(args, api, extraOptions)
-
-        if (result.error && result.error.status === 401) {
+        if (result.data?.error_code === "UNAUTHORIZED" || result.error?.status === 401) {
             if (!mutex.isLocked()) {
                 const release = await mutex.acquire()
                 try {
-                    const refreshResult = await baseQuery(
-                        '/api/auth/refresh',
+                    const refreshResult = await refreshQuery(
+                        'auth/refresh',
                         api,
                         extraOptions
                     )
-                    if (refreshResult.data) {
+                    if (refreshResult.data && !refreshResult.error) {
                         setAuthCookie(refreshResult.data.token, 'AUTH_TOKEN')
                         setAuthCookie(refreshResult.data.refresh_token, 'REFRESH_TOKEN')
                         result = await baseQuery(args, api, extraOptions)

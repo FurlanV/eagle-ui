@@ -6,7 +6,7 @@ export function GeneCard({ geneInfo, annotation }: any) {
     <Card className="flex flex-col w-96 p-4 gap-3">
       <Card className="bg-secondary items-center justify-center h-[20%]">
         <CardHeader className="col-span-4 flex flex-col items-centerspace-y-0 pb-2">
-          <CardTitle className="text-xl font-medium">DMD</CardTitle>
+          <CardTitle className="text-xl font-medium">{geneInfo.display_name}</CardTitle>
           <CardTitle className="text-sm font-medium">
             {geneInfo.description}
           </CardTitle>

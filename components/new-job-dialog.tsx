@@ -1,8 +1,7 @@
 "use client"
 
-import { useCallback, useRef, useState } from "react"
+import { useRef, useState } from "react"
 import { Separator } from "@radix-ui/react-separator"
-import { compact } from "lodash"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -22,7 +21,7 @@ import { FileUploadArea } from "@/components/file-upload-area"
 import { Icons } from "./icons"
 import { useToast } from "./ui/use-toast"
 
-const MAXFILESIZE = 150 // in MB
+const MAXFILESIZE = 500 // in MB
 
 export function NewJobDialog() {
   const jobIdRef = useRef<HTMLInputElement>(null)
@@ -97,7 +96,7 @@ export function NewJobDialog() {
             <Label htmlFor="upload-files">Upload papers</Label>
             <FileUploadArea
               maxNumFiles={50}
-              maxFileSizeMB={150}
+              maxFileSizeMB={500}
               files={files}
               setFiles={setFiles}
             />
