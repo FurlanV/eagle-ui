@@ -47,7 +47,7 @@ export function NewJobDialog() {
       genesOfInterestRef.current?.value ?? "DMD, TP53"
     )
 
-    const uploadResponse = await fetch(`/api/eagle`, {
+    const uploadResponse = await fetch(`/eagle/api/eagle`, {
       method: "POST",
       body: formData,
     })
