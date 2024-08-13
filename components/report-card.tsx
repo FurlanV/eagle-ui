@@ -71,7 +71,7 @@ export function ReportCard({ report }: ReportCardProps) {
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="items-center pt-4">
+      <CardContent className="flex flex-col flex-1 items-center pt-4 min-h-[200px]">
         <div className="grid grid-cols-2 gap-6">
           <InfoItem
             icon={<Dna className="h-5 w-5 text-green-500" />}

@@ -4,6 +4,8 @@ import { NextURL } from "next/dist/server/web/next-url"
 
 export async function POST(req: NextRequest) {
 
+    const API_URL = process.env.NEXT_PUBLIC_API_URL
+
     const cookie = cookies()
     const authToken = cookie.get('AUTH_TOKEN')
     const refreshToken = cookie.get('REFRESH_TOKEN')
@@ -15,7 +17,7 @@ export async function POST(req: NextRequest) {
     const token = Buffer.from(authToken.value, 'base64').toString('ascii');
     const refresh_token = Buffer.from(refreshToken.value, 'base64').toString('ascii');
 
-    const res = await fetch(`https://low.enthropy.app/eagle-api/api/v1/auth/refresh`, {
+    const res = await fetch(`${API_URL}/api/v1/auth/refresh`, {
         headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`,

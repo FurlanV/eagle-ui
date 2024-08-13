@@ -10,6 +10,7 @@ import Markdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 
 import { EagleJob } from "@/types/eagle-job"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -28,7 +29,6 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { Slider } from "@/components/ui/slider"
 import { Textarea } from "@/components/ui/textarea"
-import { TooltipProvider } from "@/components/ui/tooltip"
 import { AuthWrapper } from "@/components/auth-wrapper"
 import { JobCollapsible } from "@/components/job-collapsible"
 import { ReportCard } from "@/components/report-card"
@@ -68,63 +68,72 @@ export default function CurationsPage({ defaultLayout = [10, 50, 15] }) {
 
   useEffect(() => {
     if (selectedPaper && jobData && !selectedPhase) {
-      setSelectedPhase(jobData[jobData.length - 1])
+      setSelectedPhase(jobData[0])
     }
   }, [selectedPaper, jobData, selectedPhase])
 
   return (
     <AuthWrapper>
-      <TooltipProvider delayDuration={0}>
-        <ResizablePanelGroup
-          direction="horizontal"
-          onLayout={(sizes: number[]) => {
-            document.cookie = `react-resizable-panels:layout:mail=${JSON.stringify(
-              sizes
-            )}`
-          }}
-          className="h-full items-stretch"
+      <ResizablePanelGroup
+        direction="horizontal"
+        className="flex flex-col h-screen overflow-scroll items-stretch"
+      >
+        <ResizablePanel
+          defaultSize={defaultLayout[0]}
+          collapsible={true}
+          minSize={20}
+          maxSize={20}
         >
-          <ResizablePanel
-            defaultSize={defaultLayout[0]}
-            collapsible={true}
-            minSize={20}
-            maxSize={28}
-            onResize={() => {
-              document.cookie = `react-resizable-panels:collapsed=${JSON.stringify(
-                false
-              )}`
-            }}
-          >
-            <div className="flex items-center px-4 py-2 h-[45px]">
-              <h1 className="text-xl font-bold">Jobs</h1>
-            </div>
-            <Separator className="my-2" />
-            {!jobIsLoading &&
-              data.map((job: EagleJob) => {
-                return (
-                  <JobCollapsible
-                    key={job.id}
-                    job={job}
-                    selectedPaper={selectedPaper}
-                    setSelectedPaper={setSelectedPaper}
-                    setSelectedPhase={setSelectedPhase}
-                    selectedPhase={selectedPhase}
-                    jobData={jobData}
-                  />
-                )
-              })}
-          </ResizablePanel>
-          <ResizableHandle />
-          <ResizablePanel
-            defaultSize={defaultLayout[1]}
-            minSize={30}
-            className="p-4"
-          >
-            <div className="grid grid-cols-2 grid-rows-auto gap-2">
-              {selectedPhase &&
-                selectedPhase.pipeline_run.reports.map(
-                  (report: any, index: number) => <ReportCard report={report} />
-                )}
+          <div className="flex items-center px-4 py-2 h-[45px]">
+            <h1 className="text-xl font-bold">Jobs</h1>
+          </div>
+          <Separator className="my-2" />
+
+          {!jobIsLoading &&
+            data.map((job: EagleJob) => {
+              return (
+                <JobCollapsible
+                  key={job.id}
+                  job={job}
+                  selectedPaper={selectedPaper}
+                  setSelectedPaper={setSelectedPaper}
+                  setSelectedPhase={setSelectedPhase}
+                  selectedPhase={selectedPhase}
+                  jobData={jobData}
+                />
+              )
+            })}
+        </ResizablePanel>
+        <ResizableHandle withHandle />
+        <ResizablePanel
+          defaultSize={defaultLayout[1]}
+          minSize={30}
+          className="flex flex-col p-4"
+        >
+          <div className="flex flex-col p-4 overflow-scroll overflow-x-hidden">
+            <div
+              className={cn(
+                "relative",
+                selectedPhase &&
+                  selectedPhase.pipeline_run.reports &&
+                  selectedPhase.pipeline_run.reports.length > 2 &&
+                  "ml-12 pr-12"
+              )}
+            >
+              <Carousel>
+                <CarouselContent className="auto-rows-min">
+                  {selectedPhase &&
+                    selectedPhase.pipeline_run.reports.map(
+                      (report: any, index: number) => (
+                        <CarouselItem key={index} className="md:basis-1/2">
+                          <ReportCard report={report} />
+                        </CarouselItem>
+                      )
+                    )}
+                </CarouselContent>
+                <CarouselPrevious />
+                <CarouselNext />
+              </Carousel>
             </div>
             <div className="grid grid-cols-2 grid-rows-auto gap-2 w-full"></div>
 
@@ -133,11 +142,13 @@ export default function CurationsPage({ defaultLayout = [10, 50, 15] }) {
                 <Card className="hover:shadow-lg">
                   <CardHeader>
                     <CardTitle>
-                      <Stepper
-                        data={jobData}
-                        selectedPhase={selectedPhase}
-                        setSelectedPhase={setSelectedPhase}
-                      />
+                      <div className="w-full">
+                        <Stepper
+                          data={jobData}
+                          selectedPhase={selectedPhase}
+                          setSelectedPhase={setSelectedPhase}
+                        />
+                      </div>
                       <Separator />
                     </CardTitle>
                   </CardHeader>
@@ -154,15 +165,14 @@ export default function CurationsPage({ defaultLayout = [10, 50, 15] }) {
                         Open Review
                       </Button>
                     </div>
-                    <div className="p-2">
-                      <div className="overflow-scroll h-[calc(100vh-80px)]">
-                        <Markdown
-                          className="prose markdown"
-                          remarkPlugins={[remarkGfm]}
-                        >
-                          {selectedPhase?.output}
-                        </Markdown>
-                      </div>
+
+                    <div className="overflow-scroll h-full">
+                      <Markdown
+                        className="prose markdown"
+                        remarkPlugins={[remarkGfm]}
+                      >
+                        {selectedPhase?.output}
+                      </Markdown>
                     </div>
                   </CardContent>
                 </Card>
@@ -217,9 +227,9 @@ export default function CurationsPage({ defaultLayout = [10, 50, 15] }) {
                 )}
               </div>
             )}
-          </ResizablePanel>
-        </ResizablePanelGroup>
-      </TooltipProvider>
+          </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </AuthWrapper>
   )
 }
