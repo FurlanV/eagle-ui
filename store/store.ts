@@ -4,24 +4,28 @@ import { eagleAPI } from "@/services/eagle/jobs"
 import { eagleReportAPI } from "@/services/eagle/reports"
 import { ensemblGeneAnnotationAPI } from "@/services/annotation/gene"
 import { authAPI } from "@/services/auth"
-
+import { tasksAPI } from "@/services/tasks"
+import jobSlice from "./eagle/job-slice"
 import authSlice from "./auth/auth-slice"
 
 export const makeStore = () => {
     return configureStore({
         reducer: {
             auth: authSlice,
+            jobs: jobSlice,
             [eagleAPI.reducerPath]: eagleAPI.reducer,
             [eagleReportAPI.reducerPath]: eagleReportAPI.reducer,
             [ensemblGeneAnnotationAPI.reducerPath]: ensemblGeneAnnotationAPI.reducer,
-            [authAPI.reducerPath]: authAPI.reducer
+            [authAPI.reducerPath]: authAPI.reducer,
+            [tasksAPI.reducerPath]: tasksAPI.reducer
         },
         middleware: (getDefaultMiddleware) =>
             getDefaultMiddleware().concat([
                 eagleAPI.middleware,
                 eagleReportAPI.middleware,
                 ensemblGeneAnnotationAPI.middleware,
-                authAPI.middleware
+                authAPI.middleware,
+                tasksAPI.middleware
             ]),
     })
 }

@@ -156,10 +156,7 @@ export function SearchInput() {
         />
         <Popover>
           <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className="mr-2 bg-primary-foreground gap-2"
-            >
+            <Button variant="outline">
               <Icons.filters className="h-4 w-4" />
               Filters
             </Button>

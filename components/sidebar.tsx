@@ -70,7 +70,7 @@ export function Sidebar() {
             </TooltipTrigger>
             <TooltipContent side="right">Curations</TooltipContent>
           </Tooltip>
-          <Tooltip>
+          {/* <Tooltip>
             <TooltipTrigger asChild>
               <Link
                 href="/eval"
@@ -84,7 +84,7 @@ export function Sidebar() {
               </Link>
             </TooltipTrigger>
             <TooltipContent side="right">Evaluations</TooltipContent>
-          </Tooltip>
+          </Tooltip> */}
         </nav>
         <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
           <ThemeToggle />

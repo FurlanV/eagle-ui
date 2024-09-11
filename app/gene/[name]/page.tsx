@@ -18,11 +18,6 @@ import { PapersTable } from "@/components/papers-table"
 import { ReportsTable } from "@/components/reports-table"
 
 export default function GenePage() {
-  // const [papers, setPapers] = useState<any[]>([])
-  // const [searchedPapers, setSearchedPapers] = useState<any[]>([])
-  // const [annotation, setAnnotation] = useState<any>({})
-  // const [geneInfo, setGeneInfo] = useState<any>({})
-
   const pathname = usePathname()
   const split_pathname = pathname.split("/")
   const gene_name = split_pathname[split_pathname.length - 1]

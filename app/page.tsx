@@ -11,10 +11,12 @@ import { AuthWrapper } from "@/components/auth-wrapper"
 import { DashboardCards } from "@/components/dashboard-cards"
 import { GeneScoresChart } from "@/components/gene-scores-chart"
 import { Icons } from "@/components/icons"
-import { NewJobDialog } from "@/components/new-job-dialog"
 import { SearchInput } from "@/components/search-input"
 
+import { useEffect, useState } from 'react';
+
 export default function IndexPage() {
+
   const user = useAppSelector((state) => state.auth.user)
 
   return (
@@ -50,7 +52,6 @@ export default function IndexPage() {
                     Hello, {user?.name}! Welcome back
                   </h4>
                 </div>
-                <NewJobDialog />
               </div>
               <DashboardCards />
             </section>

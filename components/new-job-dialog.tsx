@@ -1,7 +1,8 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useRef, useState, useCallback } from "react"
 import { Separator } from "@radix-ui/react-separator"
+import axios from "axios"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -16,6 +17,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Progress } from "@/components/ui/progress"
 import { FileUploadArea } from "@/components/file-upload-area"
 
 import { Icons } from "./icons"
@@ -28,10 +30,15 @@ export function NewJobDialog() {
   const genesOfInterestRef = useRef<HTMLInputElement>(null)
 
   const [files, setFiles] = useState<File[]>([])
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [isUploading, setIsUploading] = useState(false)
 
   const { toast } = useToast()
 
-  const uploadFiles = async (selectedFiles: File[]) => {
+  const uploadFiles = useCallback(async (selectedFiles: File[]) => {
+    setIsUploading(true)
+    setUploadProgress(0)
+
     const formData = new FormData()
     selectedFiles.forEach((file) => {
       if (file.size > MAXFILESIZE * 1024 * 1024) {
@@ -47,16 +54,45 @@ export function NewJobDialog() {
       genesOfInterestRef.current?.value ?? "DMD, TP53"
     )
 
-    const uploadResponse = await fetch(`/eagle/api/eagle`, {
-      method: "POST",
-      body: formData,
-    })
+    try {
+      const response = await fetch("/eagle/api/eagle", {
+        method: "POST",
+        body: formData,
+      })
 
-    toast({
-      title: "Job submitted",
-      description: "Your job has been submitted for processing",
-    })
-  }
+      if (!response.ok) {
+        throw new Error("Upload failed")
+      }
+
+      const reader = response.body?.getReader()
+
+      while (true) {
+        const { done, value } = await reader!.read()
+        if (done) break
+
+        // Parse the progress update from the server
+        const progressUpdate = new TextDecoder().decode(value)
+        console.log(progressUpdate)
+        const { progress } = JSON.parse(progressUpdate)
+        setUploadProgress(progress)
+      }
+
+      toast({
+        title: "Job submitted",
+        description: "Your job has been submitted for processing",
+      })
+    } catch (error) {
+      console.error("Upload failed:", error)
+      toast({
+        title: "Upload failed",
+        description: "There was an error uploading your files",
+        variant: "destructive",
+      })
+    } finally {
+      setIsUploading(false)
+    }
+  }, [toast])
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -101,15 +137,28 @@ export function NewJobDialog() {
               setFiles={setFiles}
             />
           </div>
+          {isUploading && (
+            <div className="flex flex-col gap-2">
+              <Label>Upload Progress</Label>
+              <Progress value={uploadProgress} className="w-full" />
+              <span className="text-sm text-gray-500 text-right">
+                {uploadProgress}%
+              </span>
+            </div>
+          )}
         </div>
         <DialogFooter>
+          <Button
+            type="button"
+            onClick={() => uploadFiles(files)}
+            disabled={isUploading}
+          >
+            {isUploading ? "Uploading..." : "Run"}
+          </Button>
           <DialogClose asChild>
-            <Button type="button" onClick={() => uploadFiles(files)}>
-              Run
+            <Button variant="outline" disabled={isUploading}>
+              Cancel
             </Button>
-          </DialogClose>
-          <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
           </DialogClose>
         </DialogFooter>
       </DialogContent>
