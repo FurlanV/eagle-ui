@@ -27,7 +27,6 @@ export default function CurationDetailsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedFile, setSelectedFile] = useState<Task | null>(null)
   const [showFileDetails, setShowFileDetails] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
 
   const { selectedJob } = useAppSelector((state) => state.jobs)
 
@@ -54,32 +53,16 @@ export default function CurationDetailsPage() {
 
   const totalFiles = childrenData?.length || 0
   const processedFiles =
-    childrenData?.filter((step: any) => step.status === "completed").length || 0
+    childrenData?.filter((task: Task) =>
+      task.steps?.some((step) => step.status === "completed")
+    ).length || 0
 
   const progress = (processedFiles / totalFiles) * 100
 
-  const filesWithErrors = childrenData?.filter(
-    (step: any) => step.status === "failed"
-  ).length
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "bg-green-800"
-      case "failed":
-        return "bg-destructive"
-      case "running":
-        return "bg-yellow-600"
-      default:
-        return "bg-muted"
-    }
-  }
-
-  useEffect(() => {
-    if (childrenData) {
-      setIsLoading(false)
-    }
-  }, [childrenData])
+  const filesWithErrors =
+    childrenData?.filter((task: Task) =>
+      task.steps?.some((step) => step.status === "failed")
+    ).length || 0
 
   const router = useRouter()
 
@@ -102,24 +85,8 @@ export default function CurationDetailsPage() {
             </h1>
           </div>
           <div className="flex items-center space-x-4">
-            <Badge
-              className={`${getStatusColor(
-                selectedJob?.status
-              )} flex items-center space-x-2`}
-            >
-              {selectedJob?.status === "error" && <span>Curation Error</span>}
-              {selectedJob?.status === "completed" && (
-                <span>Curation Completed</span>
-              )}
-              {selectedJob?.status === "running" && (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Curation Running</span>
-                </>
-              )}
-              {selectedJob?.status === "pending" && (
-                <span>Curation Pending</span>
-              )}
+            <Badge variant="outline" className="flex items-center space-x-2">
+              {selectedJob?.current_service}
             </Badge>
             <Badge variant="outline" className="flex items-center space-x-2">
               {lastUpdateTime ? (
@@ -168,7 +135,7 @@ export default function CurationDetailsPage() {
               selectedFile={taskInfo}
               handleRating={() => {}} // Implement rating functionality if needed
               onBack={() => setShowFileDetails(false)}
-              isLoading={isLoading}
+              isLoading={isChildrenLoading}
             />
           </div>
         ) : (
