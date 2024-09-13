@@ -10,11 +10,13 @@ import {
   Clock,
   FileText,
   RefreshCw,
+  Terminal,
   XCircle,
 } from "lucide-react"
 
 import { Task } from "@/types/eagle-job"
 import { useAppSelector } from "@/lib/hooks"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -37,20 +39,6 @@ export default function CurationDetailsPage() {
       pollingInterval: 5000,
     })
 
-  const { data: taskInfo, isLoading: isTaskInfoLoading } = useGetTaskInfoQuery(
-    selectedFile?.id,
-    {
-      skip: !selectedFile,
-      refetchOnMountOrArgChange: true,
-      pollingInterval: 3000,
-    }
-  )
-
-  const handleFileClick = (task: Task) => {
-    setSelectedFile(task)
-    setShowFileDetails(true)
-  }
-
   const totalFiles = childrenData?.length || 0
   const processedFiles =
     childrenData?.filter((task: Task) =>
@@ -63,6 +51,27 @@ export default function CurationDetailsPage() {
     childrenData?.filter((task: Task) =>
       task.steps?.some((step) => step.status === "failed")
     ).length || 0
+
+  const allTasksCompleted =
+    childrenData?.every((task: Task) =>
+      task.steps?.every(
+        (step) => step.status === "completed" || step.status === "failed"
+      )
+    ) || false
+
+  const { data: taskInfo, isLoading: isTaskInfoLoading } = useGetTaskInfoQuery(
+    selectedFile?.id,
+    {
+      skip: !selectedFile,
+      refetchOnMountOrArgChange: true,
+      pollingInterval: allTasksCompleted ? null : 3000,
+    }
+  )
+
+  const handleFileClick = (task: Task) => {
+    setSelectedFile(task)
+    setShowFileDetails(true)
+  }
 
   const router = useRouter()
 
@@ -104,7 +113,8 @@ export default function CurationDetailsPage() {
             </Badge>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-1">
           <Card className="flex flex-col items-center rounded-lg p-4">
             <FileText className="w-8 h-8 mb-2" />
             <span className="text-2xl font-bold">{totalFiles}</span>
@@ -128,6 +138,13 @@ export default function CurationDetailsPage() {
             <span className="text-sm">Files with Errors</span>
           </Card>
         </div>
+        {selectedJob?.error_message && (
+          <Alert variant="destructive">
+            <Terminal className="h-4 w-4" />
+            <AlertTitle>Error Occurred</AlertTitle>
+            <AlertDescription>{selectedJob?.error_message}</AlertDescription>
+          </Alert>
+        )}
 
         {showFileDetails ? (
           <div className="grid grid-cols-1 gap-4">

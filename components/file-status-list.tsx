@@ -54,9 +54,11 @@ const FileCard = ({ task, onClick }: { task: Task; onClick: () => void }) => {
         </p>
         <p className="text-xs text-muted-foreground">
           Last Update:{" "}
-          {formatDistanceToNow(new Date(task.steps[0].start_time), {
-            addSuffix: true,
-          })}
+          {task && task.steps.length > 0
+            ? formatDistanceToNow(new Date(task.steps[0].start_time), {
+                addSuffix: true,
+              })
+            : "N/A"}
         </p>
         <TooltipProvider>
           <Tooltip>
