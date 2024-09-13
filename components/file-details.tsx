@@ -75,7 +75,7 @@ export function FileDetails({
             <Skeleton className="h-4 w-[150px]" />
           </div>
         ) : selectedFile && selectedFile.steps ? (
-          <ScrollArea className="h-[calc(100vh-28rem)]">
+          <ScrollArea className="h-[calc(100vh-24rem)]">
             <Accordion
               type="single"
               collapsible

@@ -1,7 +1,7 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
-import { usePathname, useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { useGetTaskChildrenQuery, useGetTaskInfoQuery } from "@/services/tasks"
 import {
   AlertCircle,
@@ -9,7 +9,6 @@ import {
   CheckCircle2,
   Clock,
   FileText,
-  RefreshCw,
   Terminal,
   XCircle,
 } from "lucide-react"
@@ -25,6 +24,7 @@ import { FileDetails } from "@/components/file-details"
 import { FileStatusList } from "@/components/file-status-list"
 
 export default function CurationDetailsPage() {
+  const [stopPolling, setStopPolling] = useState(false)
   const [lastUpdateTime, setLastUpdateTime] = useState(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedFile, setSelectedFile] = useState<Task | null>(null)
@@ -36,7 +36,7 @@ export default function CurationDetailsPage() {
     useGetTaskChildrenQuery(selectedJob?.id, {
       skip: !selectedJob,
       refetchOnMountOrArgChange: true,
-      pollingInterval: 5000,
+      pollingInterval: stopPolling ? null : 5000,
     })
 
   const totalFiles = childrenData?.length || 0
@@ -75,6 +75,12 @@ export default function CurationDetailsPage() {
 
   const router = useRouter()
 
+  useEffect(() => {
+    if (allTasksCompleted) {
+      setStopPolling(true)
+    }
+  }, [allTasksCompleted])
+
   return (
     <AuthWrapper>
       <div className="mx-auto p-6 gap-2 flex flex-col overflow-y-scroll h-screen">
@@ -95,15 +101,16 @@ export default function CurationDetailsPage() {
           </div>
           <div className="flex items-center space-x-4">
             <Badge variant="outline" className="flex items-center space-x-2">
-              {selectedJob?.current_service}
+              {allTasksCompleted ? "Completed" : "In Progress"}
             </Badge>
+
             <Badge variant="outline" className="flex items-center space-x-2">
-              {lastUpdateTime ? (
+              <span>Real-time updates</span>
+              {!allTasksCompleted ? (
                 <div className="w-2 h-2 rounded-full bg-green-500" />
               ) : (
                 <div className="w-2 h-2 rounded-full bg-red-500" />
               )}
-              <span>Real-time updates</span>
             </Badge>
             <Badge variant="outline" className="flex items-center space-x-2">
               <Clock className="w-4 h-4" />

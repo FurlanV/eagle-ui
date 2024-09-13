@@ -2,7 +2,14 @@
 
 import { useState } from "react"
 import { formatDistanceToNow } from "date-fns"
-import { CheckCircle, Clock, FileText, Search, XCircle } from "lucide-react"
+import {
+  CheckCircle,
+  Clock,
+  FileText,
+  FileX,
+  Search,
+  XCircle,
+} from "lucide-react"
 
 import { Task } from "@/types/eagle-job"
 import { cn } from "@/lib/utils"
@@ -33,6 +40,8 @@ const FileCard = ({ task, onClick }: { task: Task; onClick: () => void }) => {
   const progress = totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0
 
   const getStatusInfo = () => {
+    if (totalSteps === 0)
+      return { variant: "default", icon: FileText, text: "Queued" }
     if (failedSteps > 0)
       return { variant: "destructive", icon: XCircle, text: "Failed" }
     if (completedSteps === totalSteps)
@@ -116,9 +125,11 @@ export function FileStatusList({
             />
           ))
         ) : (
-          <p className="text-center text-muted-foreground py-4">
-            No matching files found
-          </p>
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+            <FileX className="w-12 h-12 mb-4" />
+            <p className="text-lg font-semibold">No files found</p>
+            <p className="text-sm">Try adjusting your search or filters</p>
+          </div>
         )}
       </ScrollArea>
     </div>
