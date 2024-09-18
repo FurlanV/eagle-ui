@@ -1,8 +1,9 @@
 "use client"
 
-import { useRef, useState, useCallback } from "react"
+import { useCallback, useRef, useState } from "react"
 import { Separator } from "@radix-ui/react-separator"
 import axios from "axios"
+import Cookies from "js-cookie"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -35,63 +36,64 @@ export function NewJobDialog() {
 
   const { toast } = useToast()
 
-  const uploadFiles = useCallback(async (selectedFiles: File[]) => {
-    setIsUploading(true)
-    setUploadProgress(0)
+  const uploadFiles = useCallback(
+    async (selectedFiles: File[]) => {
+      setIsUploading(true)
+      setUploadProgress(0)
 
-    const formData = new FormData()
-    selectedFiles.forEach((file) => {
-      if (file.size > MAXFILESIZE * 1024 * 1024) {
-        console.error(`File ${file.name} is too large`)
-        return
-      }
-
-      formData.append("papers", file)
-    })
-    formData.append("job_id", jobIdRef.current?.value ?? "TEST")
-    formData.append(
-      "interest_gene",
-      genesOfInterestRef.current?.value ?? "DMD, TP53"
-    )
-
-    try {
-      const response = await fetch("/eagle/api/eagle", {
-        method: "POST",
-        body: formData,
+      const formData = new FormData()
+      selectedFiles.forEach((file) => {
+        if (file.size > MAXFILESIZE * 1024 * 1024) {
+          console.error(`File ${file.name} is too large`)
+          return
+        }
+        formData.append("papers", file)
       })
+      formData.append("job_id", jobIdRef.current?.value ?? "TEST")
+      formData.append(
+        "interest_gene",
+        genesOfInterestRef.current?.value ?? "DMD, TP53"
+      )
 
-      if (!response.ok) {
-        throw new Error("Upload failed")
+      const authToken = Cookies.get("AUTH_TOKEN")
+      console.log(authToken)
+      const token = Buffer.from(authToken, "base64").toString("ascii")
+
+      try {
+        const response = await axios.post(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/eagle/new-job`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${token}`,
+            },
+            onUploadProgress: (progressEvent) => {
+              const percentCompleted = Math.round(
+                (progressEvent.loaded * 100) / (progressEvent.total ?? 1)
+              )
+              setUploadProgress(percentCompleted)
+            },
+          }
+        )
+
+        toast({
+          title: "Job submitted",
+          description: "Your job has been submitted for processing",
+        })
+      } catch (error) {
+        console.error("Upload failed:", error)
+        toast({
+          title: "Upload failed",
+          description: "There was an error uploading your files",
+          variant: "destructive",
+        })
+      } finally {
+        setIsUploading(false)
       }
-
-      const reader = response.body?.getReader()
-
-      while (true) {
-        const { done, value } = await reader!.read()
-        if (done) break
-
-        // Parse the progress update from the server
-        const progressUpdate = new TextDecoder().decode(value)
-        console.log(progressUpdate)
-        const { progress } = JSON.parse(progressUpdate)
-        setUploadProgress(progress)
-      }
-
-      toast({
-        title: "Job submitted",
-        description: "Your job has been submitted for processing",
-      })
-    } catch (error) {
-      console.error("Upload failed:", error)
-      toast({
-        title: "Upload failed",
-        description: "There was an error uploading your files",
-        variant: "destructive",
-      })
-    } finally {
-      setIsUploading(false)
-    }
-  }, [toast])
+    },
+    [toast]
+  )
 
   return (
     <Dialog>
@@ -119,9 +121,9 @@ export function NewJobDialog() {
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="genes of interes">Genes of interest</Label>
+            <Label htmlFor="genes of interest">Genes of interest</Label>
             <Input
-              id="username"
+              id="genes_of_interest"
               placeholder="BRCA1, TP53, ..."
               ref={genesOfInterestRef}
               className="col-span-3"

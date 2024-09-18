@@ -24,7 +24,7 @@ export interface Task {
 export interface TaskStep {
   id: string
   step_id: string
-  step_name: string
+  name: string
   status: string
   output: string
   rating: number

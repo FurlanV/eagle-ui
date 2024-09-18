@@ -22,20 +22,14 @@ export async function POST(req: NextRequest) {
     body: formData,
   })
 
-  // Create a TransformStream to modify the response
-  const transformStream = new TransformStream({
-    async transform(chunk, controller) {
-      // Assuming the API sends progress updates as JSON
-      const update = JSON.parse(new TextDecoder().decode(chunk))
-      if (update.progress) {
-        controller.enqueue(JSON.stringify({ progress: update.progress }))
-      }
-    },
-  })
+  if (!response.body) {
+    return NextResponse.json({ message: 'No response body' }, { status: 500 })
+  }
 
-  return new NextResponse(response.body?.pipeThrough(transformStream), {
+  return new NextResponse(response.body, {
     headers: {
       'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache', // Ensure the response is not cached
     },
   })
 }

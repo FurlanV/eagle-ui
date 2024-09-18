@@ -95,7 +95,7 @@ export function FileDetails({
                   >
                     <AccordionTrigger className="px-4 py-2 hover:bg-white/10">
                       <div className="flex justify-between items-center w-full">
-                        <span className="font-medium">{step.step_name}</span>
+                        <span className="font-medium">{step.name}</span>
                         <div className="flex items-center space-x-2">
                           <Badge variant="outline" className="text-xs">
                             {icon}
@@ -121,9 +121,9 @@ export function FileDetails({
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="px-4 py-2">
-                      {step.step_output ? (
+                      {step.output ? (
                         <ReactMarkdown className="markdown prose prose-sm max-w-none dark:prose-invert">
-                          {step.step_output}
+                          {step.output}
                         </ReactMarkdown>
                       ) : (
                         <p className="text-muted-foreground">

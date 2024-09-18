@@ -28,6 +28,25 @@ const chartConfig = {
 
 export function GeneScoresChart({ chartData }: any) {
 
+  const data = [
+    {
+      gene: "DMD",
+      score: 32.5,
+    },
+    {
+      gene: "PIKA",
+      score: 11.5,
+    },
+    {
+      gene: "SHANK1",
+      score: 14.5,
+    },
+    {
+      gene: "SHANK3",
+      score: 21,
+    },
+  ]
+
   const parsedChartData = [...chartData]
     .sort((a: any, b: any) => {
       const dateA = new Date(a.created_at)
@@ -45,7 +64,7 @@ export function GeneScoresChart({ chartData }: any) {
     <Card>
       <CardHeader>
         <CardTitle>Eagle Scores</CardTitle>
-        <CardDescription>
+        {/* <CardDescription>
           Score Mean:{" "}
           {parsedChartData.length > 0
             ? (
@@ -55,11 +74,11 @@ export function GeneScoresChart({ chartData }: any) {
                 ) / parsedChartData.length
               ).toFixed(2)
             : "N/A"}
-        </CardDescription>
+        </CardDescription> */}
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[485px]">
-          <BarChart accessibilityLayer data={parsedChartData} layout="vertical">
+          <BarChart accessibilityLayer data={data} layout="vertical">
             <XAxis type="number" dataKey="score" hide />
             <YAxis
               dataKey="gene"
@@ -67,7 +86,7 @@ export function GeneScoresChart({ chartData }: any) {
               tickLine={false}
               tickMargin={10}
               axisLine={false}
-              tickFormatter={(value) => value.slice(0, 3)}
+              tickFormatter={(value) => value.slice(0, 10)}
             />
             <ChartTooltip
               cursor={false}
