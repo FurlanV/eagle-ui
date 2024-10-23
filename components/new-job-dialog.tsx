@@ -54,6 +54,7 @@ export function NewJobDialog() {
         "interest_gene",
         genesOfInterestRef.current?.value ?? "DMD, TP53"
       )
+      formData.append("parent_task_id", "None")
 
       const authToken = Cookies.get("AUTH_TOKEN")
       console.log(authToken)
