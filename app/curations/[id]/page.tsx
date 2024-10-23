@@ -10,6 +10,7 @@ import {
   Clock,
   FileText,
   Terminal,
+  Trash2,
   XCircle,
 } from "lucide-react"
 
@@ -19,6 +20,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { AddFilesDialog } from "@/components/add-files-dialog"
 import { AuthWrapper } from "@/components/auth-wrapper"
 import { FileDetails } from "@/components/file-details"
 import { FileStatusList } from "@/components/file-status-list"
@@ -98,8 +100,6 @@ export default function CurationDetailsPage() {
   const variants = reportData.map((report) => report.variant)
   const impacts = reportData.map((report) => report.impact)
 
-  console.log(selectedFile)
-
   return (
     <AuthWrapper>
       <div className="mx-auto p-6 gap-2 flex flex-col overflow-y-scroll h-screen">
@@ -112,11 +112,8 @@ export default function CurationDetailsPage() {
               className="mr-2"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Curations
             </Button>
-            <h1 className="text-3xl font-bold">
-              Curation: {selectedJob?.task_name}
-            </h1>
+            <h1 className="text-3xl font-bold">{selectedJob?.task_name}</h1>
           </div>
           <div className="flex items-center space-x-4">
             <Badge variant="outline" className="flex items-center space-x-2">
@@ -166,18 +163,24 @@ export default function CurationDetailsPage() {
                 <span className="text-sm">Files with Errors</span>
               </Card>
             </div>
+
             {selectedJob?.error_message && (
               <Alert variant="destructive">
                 <Terminal className="h-4 w-4" />
                 <AlertTitle>Error Occurred</AlertTitle>
-                <AlertDescription>{selectedJob?.error_message}</AlertDescription>
+                <AlertDescription>
+                  {selectedJob?.error_message}
+                </AlertDescription>
               </Alert>
             )}
 
             <div className="grid grid-cols-1 gap-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Files Status</CardTitle>
+                  <div className="flex flex-row justify-between items-center">
+                    <CardTitle>Curated Literature</CardTitle>
+                    <AddFilesDialog parent_task_id={selectedJob?.id} />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <FileStatusList
@@ -194,7 +197,7 @@ export default function CurationDetailsPage() {
           <>
             {/* Report Metrics Section */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-            <Card className="flex flex-col items-center rounded-lg p-4 ">
+              <Card className="flex flex-col items-center rounded-lg p-4 ">
                 <span className="text-lg font-semibold">Cases</span>
                 <span className="text-3xl font-bold">{reportData.length}</span>
               </Card>
@@ -226,7 +229,10 @@ export default function CurationDetailsPage() {
                 <CardTitle>Score Rationale</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">{reportData[0]?.score_rationale || "No score rationale available."}</p>
+                <p className="text-muted-foreground">
+                  {reportData[0]?.score_rationale ||
+                    "No score rationale available."}
+                </p>
               </CardContent>
             </Card>
 

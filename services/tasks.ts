@@ -22,7 +22,10 @@ export const tasksAPI = createApi({
         getJobInformation: builder.query<EagleJob, any>({
             query: ({ job_id, paper_id }: any) => `job?id=${job_id}&paper_id=${paper_id}`,
         }),
+        deleteTask: builder.mutation<any, string>({
+            query: (id) => `/delete?id=${id}`,
+        }),
     }),
 })
 
-export const { useGetUserTasksQuery, useGetJobInformationQuery, useGetTaskChildrenQuery, useGetTaskInfoQuery } = tasksAPI
+export const { useGetUserTasksQuery, useGetJobInformationQuery, useGetTaskChildrenQuery, useGetTaskInfoQuery, useDeleteTaskMutation } = tasksAPI

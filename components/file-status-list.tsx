@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useDeleteTaskMutation } from "@/services/tasks"
 import { formatDistanceToNow } from "date-fns"
 import {
   CheckCircle,
@@ -23,6 +24,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { useToast } from "@/components/ui/use-toast"
+import { ConfirmationDialog } from "@/components/confirmation-dialog"
 
 interface FileStatusListProps {
   tasks: Task[]
@@ -50,47 +53,63 @@ const FileCard = ({ task, onClick }: { task: Task; onClick: () => void }) => {
   }
 
   const { variant, icon: StatusIcon, text } = getStatusInfo()
+  const [deleteTask] = useDeleteTaskMutation()
+
+  const { toast } = useToast()
 
   return (
-    <div
-      className="flex flex-row items-center space-x-4 p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors"
-      onClick={onClick}
-    >
-      <FileText className="w-8 h-8 text-muted-foreground" />
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-foreground truncate">
-          {task.task_name}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          Last Update:{" "}
-          {task && task.steps.length > 0
-            ? formatDistanceToNow(new Date(task.steps[0].start_time), {
-                addSuffix: true,
-              })
-            : "N/A"}
-        </p>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger>
-              <Progress
-                value={progress}
-                className="w-full h-2 mt-2 bg-white/20"
-              />
-            </TooltipTrigger>
-            <TooltipContent>{progress.toFixed(0)}% complete</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+    <div className="flex flex-row justify-between items-center">
+      <div
+        className="flex flex-row items-center space-x-4 p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors w-full"
+        onClick={onClick}
+      >
+        <FileText className="w-8 h-8 text-muted-foreground" />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-foreground truncate">
+            {task.task_name}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Last Update:{" "}
+            {task && task.steps.length > 0
+              ? formatDistanceToNow(new Date(task.steps[0].start_time), {
+                  addSuffix: true,
+                })
+              : "N/A"}
+          </p>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <Progress
+                  value={progress}
+                  className="w-full h-2 mt-2 bg-white/20"
+                />
+              </TooltipTrigger>
+              <TooltipContent>{progress.toFixed(0)}% complete</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        <div className="flex flex-row items-end gap-2 z-20">
+          <Badge>{task.current_service}</Badge>
+          <Badge
+            variant={variant}
+            className={cn("items-center justify-center w-[10em] font-bold")}
+          >
+            <StatusIcon className="w-4 h-4 mr-1" />
+            {text}
+          </Badge>
+        </div>
       </div>
-      <div className="flex flex-row items-end gap-2">
-        <Badge>{task.current_service}</Badge>
-        <Badge
-          variant={variant}
-          className={cn("items-center justify-center w-[10em] font-bold")}
-        >
-          <StatusIcon className="w-4 h-4 mr-1" />
-          {text}
-        </Badge>
-      </div>
+      <ConfirmationDialog
+        title="Delete File"
+        description="Are you sure you want to delete this file?"
+        onDelete={() => {
+          deleteTask(task.id)
+          toast({
+            title: "File Deleted",
+            description: "The file has been deleted successfully",
+          })
+        }}
+      />
     </div>
   )
 }

@@ -1,7 +1,5 @@
 "use client"
 
-import { useGetAllReportsQuery } from "@/services/eagle/reports"
-
 import { useAppSelector } from "@/lib/hooks"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -12,8 +10,6 @@ import { DashboardCards } from "@/components/dashboard-cards"
 import { GeneScoresChart } from "@/components/gene-scores-chart"
 import { Icons } from "@/components/icons"
 import { SearchInput } from "@/components/search-input"
-
-import { useEffect, useState } from 'react';
 
 export default function IndexPage() {
 
