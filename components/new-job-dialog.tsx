@@ -57,7 +57,6 @@ export function NewJobDialog() {
       formData.append("parent_task_id", "None")
 
       const authToken = Cookies.get("AUTH_TOKEN")
-      console.log(authToken)
       const token = Buffer.from(authToken, "base64").toString("ascii")
 
       try {
