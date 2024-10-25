@@ -37,7 +37,7 @@ export const WordClouds: React.FC<WordCloudsProps> = ({
                 width={width}
                 height={height}
                 words={words}
-                sizeRange={[15, 30]}
+                sizeRange={[20, 40]}
               />
             )}
           </ParentSize>
