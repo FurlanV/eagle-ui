@@ -28,7 +28,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <div className="relative flex h-screen flex-row">
               <Sidebar />
-              <div className="flex-1 overflow-hidden">{children}</div>
+              <main className="flex-1">{children}</main>
               <Toaster />
             </div>
             <TailwindIndicator />
