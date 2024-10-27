@@ -70,6 +70,7 @@ export function FileDetails({
               job_id={selectedFile.id}
               job_name={selectedFile.task_name}
               job_status={selectedFile.status}
+              curation_reviews={selectedFile.curation_reviews}
             />
           )}
         </CardHeader>

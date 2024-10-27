@@ -1,6 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useEffect, useState } from "react"
+import {
+  useCreateCurationReviewMutation,
+  useGetCurationReviewsByJobIdQuery,
+  useUpdateCurationReviewMutation,
+} from "@/services/eagle/review"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -25,6 +30,37 @@ export function CurationReviewDialog({ job_id, job_name, job_status }: any) {
     evidenceScore: { rating: 0, comment: "" },
   })
 
+  const { data: curationReviews, isLoading: isLoadingCurationReviews } =
+    useGetCurationReviewsByJobIdQuery(job_id, {
+      skip: !job_id,
+    })
+  const [createCurationReview, { isLoading: isCreatingCurationReview }] =
+    useCreateCurationReviewMutation()
+  const [updateCurationReview, { isLoading: isUpdatingCurationReview }] =
+    useUpdateCurationReviewMutation()
+
+  // Add useEffect to populate review state when curation reviews are loaded
+  useEffect(() => {
+    if (curationReviews) {
+      setReview({
+        paperAnalysis: {
+          rating: curationReviews.paper_analysis_rating || 0,
+          comment: curationReviews.paper_analysis_comment || "",
+        },
+        evidenceSummary: {
+          rating: curationReviews.evidence_summary_rating || 0,
+          comment: curationReviews.evidence_summary_comment || "",
+        },
+        evidenceScore: {
+          rating: curationReviews.evidence_score_rating || 0,
+          comment: curationReviews.evidence_score_comment || "",
+        },
+      })
+    }
+  }, [])
+
+  //console.log(curationReviews)
+
   const handleRatingChange = (category: string, value: number) => {
     setReview((prev) => ({
       ...prev,
@@ -39,6 +75,31 @@ export function CurationReviewDialog({ job_id, job_name, job_status }: any) {
     }))
   }
 
+  const handleSave = () => {
+    if (curationReviews) {
+      updateCurationReview({
+        ...curationReviews,
+        paper_analysis_rating: review.paperAnalysis.rating,
+        paper_analysis_comment: review.paperAnalysis.comment,
+        evidence_summary_rating: review.evidenceSummary.rating,
+        evidence_summary_comment: review.evidenceSummary.comment,
+        evidence_score_rating: review.evidenceScore.rating,
+        evidence_score_comment: review.evidenceScore.comment,
+      })
+    } else {
+      createCurationReview({
+        ...curationReviews,
+        job_id: job_id,
+        paper_analysis_rating: review.paperAnalysis.rating,
+        paper_analysis_comment: review.paperAnalysis.comment,
+        evidence_summary_rating: review.evidenceSummary.rating,
+        evidence_summary_comment: review.evidenceSummary.comment,
+        evidence_score_rating: review.evidenceScore.rating,
+        evidence_score_comment: review.evidenceScore.comment,
+      })
+    }
+  }
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -50,16 +111,21 @@ export function CurationReviewDialog({ job_id, job_name, job_status }: any) {
       <DialogContent className="md:max-w-[950px] sm:max-w-[calc(100vw-100px)] max-h-[90vh] p-4">
         <DialogHeader className="pb-4">
           <DialogTitle className="text-xl">{job_name}</DialogTitle>
-          <DialogDescription className="text-muted-foreground">{job_status}</DialogDescription>
+          <DialogDescription className="text-muted-foreground">
+            {job_status}
+          </DialogDescription>
         </DialogHeader>
-        
+
         <div className="flex-1 overflow-y-auto p-2">
           <div className="space-y-6">
             {Object.entries(review).map(([category, values]) => (
               <div key={category} className="space-y-3">
                 <div className="flex flex-col gap-2">
                   <h4 className="font-medium capitalize text-base">
-                    {category.replace(/([A-Z])/g, " $1").trim()}
+                    {category
+                      .replace(/([A-Z])/g, " $1")
+                      .trim()
+                      .toLowerCase()}
                   </h4>
                   <div className="w-full">
                     <LikertSlider
@@ -71,7 +137,9 @@ export function CurationReviewDialog({ job_id, job_name, job_status }: any) {
                 <Textarea
                   placeholder={`Add your ${category} comment here...`}
                   value={values.comment}
-                  onChange={(e) => handleCommentChange(category, e.target.value)}
+                  onChange={(e) =>
+                    handleCommentChange(category, e.target.value)
+                  }
                   className="h-24 resize-none"
                 />
               </div>
@@ -81,7 +149,13 @@ export function CurationReviewDialog({ job_id, job_name, job_status }: any) {
 
         <DialogFooter className="mt-6">
           <DialogClose asChild>
-            <Button variant="outline">Save</Button>
+            <Button
+              variant="outline"
+              disabled={isCreatingCurationReview || isUpdatingCurationReview}
+              onClick={handleSave}
+            >
+              Save
+            </Button>
           </DialogClose>
         </DialogFooter>
       </DialogContent>
