@@ -111,7 +111,6 @@ export default function CurationDetailsPage() {
     [evidenceTypeCounts]
   )
 
-  // Example data extraction for the interactive table
   const caseDetailsData: ReportData[] =
     childrenData?.flatMap(
       (task: Task) =>
@@ -252,6 +251,7 @@ export default function CurationDetailsPage() {
                     handleRating={() => {}}
                     onBack={() => setShowFileDetails(false)}
                     isLoading={isTaskInfoLoading}
+                    //curation_reviews={taskInfo.curation_reviews}
                   />
                 </>
               )}

@@ -8,14 +8,15 @@ import {
   VisibilityState,
   flexRender,
   getCoreRowModel,
+  getExpandedRowModel,
   getFacetedRowModel,
   getFacetedUniqueValues,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-  getExpandedRowModel,
 } from "@tanstack/react-table"
+import { ChevronDown, ChevronUp } from "lucide-react"
 
 import {
   Table,
@@ -28,13 +29,16 @@ import {
 
 import { DataTablePagination } from "./data-table-pagination"
 import { DataTableToolbar } from "./data-table-toolbar"
-import { ChevronDown, ChevronUp } from "lucide-react" // Icons for expand/collapse
+
+// Icons for expand/collapse
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   initialPageSize?: number
   hidePagination?: boolean
+  enableExpanding?: boolean
+  onRowClick?: (row: Row<TData>) => void
 }
 
 export function DataTable<TData, TValue>({
@@ -42,6 +46,8 @@ export function DataTable<TData, TValue>({
   data,
   initialPageSize = 10,
   hidePagination = false,
+  enableExpanding = true,
+  onRowClick,
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] =
@@ -63,7 +69,7 @@ export function DataTable<TData, TValue>({
       expanded,
     },
     enableRowSelection: true,
-    enableExpanded: true, // Enable row expansion
+    enableExpanded: enableExpanding, // Enable row expansion
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -116,22 +122,28 @@ export function DataTable<TData, TValue>({
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
+                    onClick={() => {
+                      onRowClick?.(row)
+                      row.toggleSelected()
+                    }}
                   >
                     {/* Expand/Collapse Button */}
                     <TableCell>
-                      <button
-                        onClick={() => row.toggleExpanded()}
-                        className="flex items-center justify-center w-6 h-6"
-                        aria-label={
-                          row.getIsExpanded() ? "Collapse row" : "Expand row"
-                        }
-                      >
-                        {row.getIsExpanded() ? (
-                          <ChevronUp className="w-4 h-4" />
-                        ) : (
-                          <ChevronDown className="w-4 h-4" />
-                        )}
-                      </button>
+                      {enableExpanding && (
+                        <button
+                          onClick={() => row.toggleExpanded()}
+                          className="flex items-center justify-center w-6 h-6"
+                          aria-label={
+                            row.getIsExpanded() ? "Collapse row" : "Expand row"
+                          }
+                        >
+                          {row.getIsExpanded() ? (
+                            <ChevronUp className="w-4 h-4" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4" />
+                          )}
+                        </button>
+                      )}
                     </TableCell>
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id}>
@@ -142,7 +154,7 @@ export function DataTable<TData, TValue>({
                       </TableCell>
                     ))}
                   </TableRow>
-                  {row.getIsExpanded() && (
+                  {enableExpanding && row.getIsExpanded() && (
                     <TableRow>
                       <TableCell colSpan={row.getVisibleCells().length + 1}>
                         {/* Render Expanded Content */}

@@ -19,6 +19,7 @@ interface FileDetailsProps {
   handleRating: (stepIndex: number, rating: number) => void
   onBack: () => void
   isLoading: boolean
+  curation_reviews: any | null
 }
 
 export function FileDetails({
@@ -26,6 +27,7 @@ export function FileDetails({
   handleRating,
   onBack,
   isLoading,
+  curation_reviews,
 }: FileDetailsProps) {
   const [expandedStep, setExpandedStep] = useState<number | null>(null)
 
