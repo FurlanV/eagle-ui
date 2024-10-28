@@ -7,6 +7,7 @@ import {
   useUpdateCurationReviewMutation,
 } from "@/services/eagle/review"
 
+import { CurationReview } from "@/types/curation-review"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -33,6 +34,7 @@ export function CurationReviewDialog({ job_id, job_name, job_status }: any) {
   const { data: curationReviews, isLoading: isLoadingCurationReviews } =
     useGetCurationReviewsByJobIdQuery(job_id, {
       skip: !job_id,
+      refetchOnMountOrArgChange: true,
     })
   const [createCurationReview, { isLoading: isCreatingCurationReview }] =
     useCreateCurationReviewMutation()
@@ -40,8 +42,9 @@ export function CurationReviewDialog({ job_id, job_name, job_status }: any) {
     useUpdateCurationReviewMutation()
 
   // Add useEffect to populate review state when curation reviews are loaded
-  useEffect(() => {
-    if (curationReviews) {
+
+  const setReviewData = useCallback(
+    (curationReviews: CurationReview) => {
       setReview({
         paperAnalysis: {
           rating: curationReviews.paper_analysis_rating || 0,
@@ -56,8 +59,15 @@ export function CurationReviewDialog({ job_id, job_name, job_status }: any) {
           comment: curationReviews.evidence_score_comment || "",
         },
       })
+    },
+    [curationReviews]
+  )
+
+  useEffect(() => {
+    if (curationReviews) {
+      setReviewData(curationReviews)
     }
-  }, [])
+  }, [curationReviews])
 
   //console.log(curationReviews)
 

@@ -26,8 +26,6 @@ export default function EvaluationsPage() {
     isLoading: caseIsLoading,
   } = useGetReportsByCaseIdQuery(selectedCase ?? "")
 
-  console.log(caseData)
-
   return (
     <section className="flex flex-col h-full w-full">
       <div className="flex flex-col items-center gap-2 w-full h-full p-4">

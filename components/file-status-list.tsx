@@ -8,17 +8,18 @@ import { CheckCircle, Clock, FileText, XCircle } from "lucide-react"
 
 import { Task } from "@/types/eagle-job"
 import { cn } from "@/lib/utils"
+import { Avatar, AvatarImage,AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/ui/data-table"
 import { Progress } from "@/components/ui/progress"
 import {
   Tooltip,
+  TooltipTrigger,
   TooltipContent,
   TooltipProvider,
 } from "@/components/ui/tooltip"
 import { useToast } from "@/components/ui/use-toast"
 import { ConfirmationDialog } from "@/components/confirmation-dialog"
-
 interface FileStatusListProps {
   tasks: Task[]
   searchTerm: string
@@ -92,20 +93,35 @@ export function FileStatusList({
       },
       {
         accessorKey: "curation_reviews",
-        header: "Curation Reviews",
+        header: "Reviewed By",
         cell: ({ row }) => (
-          <div className="flex flex-wrap gap-1 items-center justify-center">
+          <div className="flex -space-x-2">
             {row.original.curation_reviews?.map((review: any) => (
-              <Badge key={review.id} variant="outline">
-                {review.user.name}
-              </Badge>
+              <TooltipProvider key={review.id}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Avatar className="w-8 h-8 border-2 border-white dark:border-gray-800 cursor-pointer">
+                      <AvatarImage src={review.user.profilePicture} alt={review.user.name} />
+                      <AvatarFallback>
+                        {review.user.name[0]}
+                        {review.user.surname[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <p className="text-sm font-medium">
+                      {review.user.name} {review.user.surname}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             ))}
           </div>
         ),
       },
       {
         accessorKey: "current_service",
-        header: "Service",
+        header: "Service Status",
         cell: ({ row }) => (
           <Badge className="flex items-center gap-1 justify-center">
             {/* <Cpu className="w-4 h-4" /> */}
@@ -115,7 +131,7 @@ export function FileStatusList({
       },
       {
         accessorKey: "status",
-        header: "Status",
+        header: "General Status",
         cell: ({ row }) => {
           const task = row.original
           const totalSteps = task.steps.length || 0
@@ -143,7 +159,9 @@ export function FileStatusList({
           return (
             <Badge
               variant={variant}
-              className={cn("flex items-center gap-1 font-bold items-center justify-center")}
+              className={cn(
+                "flex items-center gap-1 font-bold items-center justify-center"
+              )}
             >
               <StatusIcon className="w-4 h-4" />
               {text}

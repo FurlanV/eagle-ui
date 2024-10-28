@@ -56,7 +56,7 @@ export function DataTable<TData, TValue>({
     []
   )
   const [sorting, setSorting] = React.useState<SortingState>([])
-  const [expanded, setExpanded] = React.useState({}) // State for row expansion
+  const [expanded, setExpanded] = React.useState({})
 
   const table = useReactTable({
     data,
@@ -69,12 +69,11 @@ export function DataTable<TData, TValue>({
       expanded,
     },
     enableRowSelection: true,
-    enableExpanded: enableExpanding, // Enable row expansion
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
-    onExpandedChange: setExpanded, // Handle expansion state
+    onExpandedChange: setExpanded,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),

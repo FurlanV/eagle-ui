@@ -18,7 +18,11 @@ export const InheritancePatternsChart: React.FC<
     childrenData?.flatMap(
       (task) =>
         task.reports?.map((report: any) => ({
-          inheritance: report.inheritance,
+          inheritance: report.inheritance.toLowerCase().includes("de novo")
+            ? "De novo"
+            : report.inheritance.toLowerCase().includes("inherited")
+            ? "Inherited"
+            : "Unknown",
           sex: report.sex,
         })) || []
     ) || []

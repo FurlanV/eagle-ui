@@ -10,7 +10,7 @@ import { SeriesPoint } from "@visx/shape/lib/types"
 import { defaultStyles, useTooltip, useTooltipInPortal } from "@visx/tooltip"
 import { max } from "d3-array"
 
-type InheritancePattern = "De novo" | "Inherited"
+type InheritancePattern = "De novo" | "Inherited" | "Unknown"
 
 type TooltipData = {
   bar: SeriesPoint<AggregationData>
@@ -44,7 +44,10 @@ const tooltipStyles = {
   color: "white",
 }
 
-const defaultKeys: InheritancePattern[] = ["De novo", "Inherited"]
+const defaultKeys: InheritancePattern[] = [
+  "De novo",
+  "Inherited",
+]
 const defaultColors: string[] = ["#4caf50", "#ff9800"] // Green for De novo, Orange for Inherited
 
 type AggregationData = {
@@ -79,7 +82,13 @@ export function StackedBarChart({
   const aggregatedData: AggregationData[] = Array.from(
     data.reduce((acc, curr) => {
       if (!acc.has(curr.sex)) {
-        acc.set(curr.sex, { sex: curr.sex })
+        acc.set(curr.sex, {
+          sex: curr.sex.toLowerCase().includes("female")
+            ? "Female"
+            : curr.sex.toLowerCase().includes("male")
+            ? "Male"
+            : "Unknown",
+        })
         keys.forEach((key) => {
           acc.get(curr.sex)![key] = 0
         })
@@ -98,9 +107,12 @@ export function StackedBarChart({
     padding: 0.2,
   })
   const yScale = scaleLinear<number>({
-    domain: [0, max(aggregatedData, (d) => {
-      return keys.reduce((sum, key) => sum + Number(d[key]), 0)
-    }) || 0],
+    domain: [
+      0,
+      max(aggregatedData, (d) => {
+        return keys.reduce((sum, key) => sum + Number(d[key]), 0)
+      }) || 0,
+    ],
     nice: true,
   })
   const colorScale = scaleOrdinal<InheritancePattern, string>({
