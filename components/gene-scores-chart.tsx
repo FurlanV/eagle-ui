@@ -26,19 +26,6 @@ const chartConfig = {
 } satisfies ChartConfig
 
 export function GeneScoresChart({ data }: any) {
-  const parsedChartData = [...data]
-    .sort((a: any, b: any) => {
-      const dateA = new Date(a.created_at)
-      const dateB = new Date(b.created_at)
-      return dateB.getTime() - dateA.getTime()
-    })
-    .map((data: any) => {
-      return {
-        gene: data.reported_case_id,
-        score: data.final_score,
-      }
-    })
-
   return (
     <Card>
       <CardHeader>

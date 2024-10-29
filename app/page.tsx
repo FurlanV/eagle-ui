@@ -26,7 +26,6 @@ export default function IndexPage() {
     isLoading: isSankeyLoading,
     isFetching: isSankeyFetching,
   } = useGetSankeyDataQuery()
-  console.log(sankeyData)
 
   return (
     <AuthWrapper>
