@@ -136,7 +136,8 @@ export const SankeyChart: React.FC<SankeyChartProps> = ({
                   style={{
                     fontSize: "12px",
                     fontFamily: "sans-serif",
-                    fill: "#666"
+                    fill: "currentColor",
+                    opacity: 0.8
                   }}
                 >
                   {node.name}
@@ -149,7 +150,7 @@ export const SankeyChart: React.FC<SankeyChartProps> = ({
                 <path
                   key={`link-${i}`}
                   d={path(link as any) ?? undefined}
-                  stroke={highlightLinkIndexes.includes(i) ? "#ff3333" : "#999"}
+                  stroke={highlightLinkIndexes.includes(i) ? "#ff6b6b" : "#888"}
                   strokeWidth={Math.max(1, link.width!)}
                   strokeOpacity={highlightLinkIndexes.includes(i) ? 0.5 : 0.2}
                   fill="none"
