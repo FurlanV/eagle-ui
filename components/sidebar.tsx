@@ -30,7 +30,7 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="flex flex-col h-full z-10 w-14 flex-col border-r bg-background sm:flex">
+    <aside className="flex flex-col z-10 w-14 flex-col border-r bg-background">
       <TooltipProvider>
         <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
           <Link

@@ -20,13 +20,13 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <head />
       <body
         className={cn(
-          "min-h-screen bg-background font-sans antialiased",
+          "min-h-screen bg-background font-sans antialiased flex flex-col",
           fontSans.variable
         )}
       >
         <StoreProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            <div className="relative flex h-screen flex-row">
+            <div className="flex flex-1 flex-row">
               <Sidebar />
               <main className="flex-1">{children}</main>
               <Toaster />

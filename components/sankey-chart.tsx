@@ -62,7 +62,7 @@ export const SankeyChart: React.FC<SankeyChartProps> = ({
   data,
   width,
   height,
-  margin = { top: 20, left: 20, right: 320, bottom: 20 }
+  margin = { top: 20, left: 20, right: 320, bottom: 80 }
 }) => {
   const [highlightLinkIndexes, setHighlightLinkIndexes] = useState<number[]>([]);
   const [nodePadding] = useState<number>(15);

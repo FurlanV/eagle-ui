@@ -4,7 +4,7 @@ import {
   useGetFinalScorePerGeneQuery,
   useGetSankeyDataQuery,
 } from "@/services/eagle/reports"
-import { ScaleSVG } from "@visx/responsive"
+import { ParentSize, ScaleSVG } from "@visx/responsive"
 
 import { useAppSelector } from "@/lib/hooks"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -66,14 +66,26 @@ export default function IndexPage() {
             <Separator orientation="horizontal" />
             <section className="grid grid-cols-12 h-full">
               <div className="col-span-8 p-4">
-                {/* <GeneScoresChart data={isLoading ? [] : data} /> */}
                 <Card>
-                  <CardContent>
+                  <CardContent className="h-[900px]">
                     <CardHeader>
                       <CardTitle>Gene Variant Flow</CardTitle>
                     </CardHeader>
+                    <ParentSize>
+                      {({ width, height }) => (
+                        <ScaleSVG width={width} height={height}>
+                          <SankeyChart
+                            data={
+                              sankeyData ?? { nodes: [], links: [] }
+                            }
+                            width={width}
+                            height={height}
+                          />
+                        </ScaleSVG>
+                      )}
+                    </ParentSize>
 
-                    {!isSankeyLoading && sankeyData && (
+                    {/* {!isSankeyLoading && sankeyData && (
                       <ScaleSVG width={1080} height={750}>
                         <SankeyChart
                           data={sankeyData}
@@ -81,7 +93,7 @@ export default function IndexPage() {
                           height={750}
                         />
                       </ScaleSVG>
-                    )}
+                    )} */}
                   </CardContent>
                 </Card>
               </div>
