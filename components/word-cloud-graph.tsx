@@ -16,7 +16,15 @@ export interface WordData {
   value: number
 }
 
-const colors = ["#143059", "#2F6B9A", "#82a6c2"]
+function getThemeColors() {
+  return [
+    `hsl(var(--chart-1))`,
+    `hsl(var(--chart-2))`,
+    `hsl(var(--chart-3))`,
+    `hsl(var(--chart-4))`,
+    `hsl(var(--chart-5))`,
+  ]
+}
 
 function getRotationDegree() {
   const rand = Math.random()
@@ -47,6 +55,8 @@ export function WordCloudGraph({
   })
 
   const fontSizeSetter = (datum: WordData) => fontScale(datum.value)
+
+  const colors = getThemeColors()
 
   return (
     <div className="wordcloud">

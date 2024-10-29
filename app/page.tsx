@@ -1,19 +1,32 @@
 "use client"
 
+import {
+  useGetFinalScorePerGeneQuery,
+  useGetSankeyDataQuery,
+} from "@/services/eagle/reports"
+import { ScaleSVG } from "@visx/responsive"
+
 import { useAppSelector } from "@/lib/hooks"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { AuthWrapper } from "@/components/auth-wrapper"
 import { DashboardCards } from "@/components/dashboard-cards"
 import { GeneScoresChart } from "@/components/gene-scores-chart"
 import { Icons } from "@/components/icons"
+import { SankeyChart } from "@/components/sankey-chart"
 import { SearchInput } from "@/components/search-input"
 
 export default function IndexPage() {
-
   const user = useAppSelector((state) => state.auth.user)
+  const { data, isLoading, isFetching } = useGetFinalScorePerGeneQuery()
+  const {
+    data: sankeyData,
+    isLoading: isSankeyLoading,
+    isFetching: isSankeyFetching,
+  } = useGetSankeyDataQuery()
+  console.log(sankeyData)
 
   return (
     <AuthWrapper>
@@ -54,15 +67,27 @@ export default function IndexPage() {
             <Separator orientation="horizontal" />
             <section className="grid grid-cols-12 h-full">
               <div className="col-span-8 p-4">
-                <GeneScoresChart chartData={[]} />
+                {/* <GeneScoresChart data={isLoading ? [] : data} /> */}
+                <Card>
+                  <CardContent>
+                    <CardHeader>
+                      <CardTitle>Gene Variant Flow</CardTitle>
+                    </CardHeader>
+
+                    {!isSankeyLoading && sankeyData && (
+                      <ScaleSVG width={1080} height={750}>
+                        <SankeyChart
+                          data={sankeyData}
+                          width={1080}
+                          height={750}
+                        />
+                      </ScaleSVG>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
               <div className="flex flex-col col-span-4 row-span-4 p-4 gap-2">
-                <Card className="h-[48%]">
-                  <CardContent></CardContent>
-                </Card>
-                <Card className="h-[48%]">
-                  <CardContent></CardContent>
-                </Card>
+                <GeneScoresChart data={isLoading ? [] : data} />
               </div>
             </section>
           </div>

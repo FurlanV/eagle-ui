@@ -18,7 +18,6 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 
-
 const chartConfig = {
   gene: {
     label: "gene",
@@ -26,28 +25,8 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export function GeneScoresChart({ chartData }: any) {
-
-  const data = [
-    {
-      gene: "DMD",
-      score: 32.5,
-    },
-    {
-      gene: "PIKA",
-      score: 11.5,
-    },
-    {
-      gene: "SHANK1",
-      score: 14.5,
-    },
-    {
-      gene: "SHANK3",
-      score: 21,
-    },
-  ]
-
-  const parsedChartData = [...chartData]
+export function GeneScoresChart({ data }: any) {
+  const parsedChartData = [...data]
     .sort((a: any, b: any) => {
       const dateA = new Date(a.created_at)
       const dateB = new Date(b.created_at)
@@ -64,27 +43,16 @@ export function GeneScoresChart({ chartData }: any) {
     <Card>
       <CardHeader>
         <CardTitle>Eagle Scores</CardTitle>
-        {/* <CardDescription>
-          Score Mean:{" "}
-          {parsedChartData.length > 0
-            ? (
-                parsedChartData.reduce(
-                  (sum, item) => sum + (item.score || 0),
-                  0
-                ) / parsedChartData.length
-              ).toFixed(2)
-            : "N/A"}
-        </CardDescription> */}
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[485px]">
+        <ChartContainer config={chartConfig} className="h-[765px] w-full">
           <BarChart accessibilityLayer data={data} layout="vertical">
             <XAxis type="number" dataKey="score" hide />
             <YAxis
               dataKey="gene"
               type="category"
               tickLine={false}
-              tickMargin={10}
+              tickMargin={0}
               axisLine={false}
               tickFormatter={(value) => value.slice(0, 10)}
             />

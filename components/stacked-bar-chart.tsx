@@ -36,19 +36,26 @@ export type BarStackProps = {
 }
 
 const defaultMargin = { top: 40, right: 0, bottom: 60, left: 0 }
-const background = "#fff"
+
+function getThemeColors(): string[] {
+  return [
+    `hsl(var(--chart-1))`,
+    `hsl(var(--chart-2))`,
+  ]
+}
+
+const background = "hsl(var(--background))"
 const tooltipStyles = {
   ...defaultStyles,
   minWidth: 80,
-  backgroundColor: "rgba(0,0,0,0.9)",
-  color: "white",
+  backgroundColor: "hsl(var(--background))",
+  color: "hsl(var(--foreground))",
 }
 
 const defaultKeys: InheritancePattern[] = [
   "De novo",
   "Inherited",
 ]
-const defaultColors: string[] = ["#4caf50", "#ff9800"] // Green for De novo, Orange for Inherited
 
 type AggregationData = {
   sex: string
@@ -61,7 +68,7 @@ export function StackedBarChart({
   margin = defaultMargin,
   data,
   keys = defaultKeys,
-  colors = defaultColors,
+  colors = getThemeColors(),
 }: BarStackProps) {
   const {
     tooltipOpen,
@@ -147,7 +154,7 @@ export function StackedBarChart({
           yScale={yScale}
           width={xMax}
           height={yMax}
-          stroke="#e0e0e0"
+          stroke="hsl(var(--muted-foreground))"
           strokeOpacity={0.5}
         />
         <Group top={margin.top} left={margin.left}>
@@ -196,10 +203,10 @@ export function StackedBarChart({
         <AxisBottom
           top={yMax + margin.top}
           scale={xScale}
-          stroke="#333"
-          tickStroke="#333"
+          stroke="hsl(var(--foreground))"
+          tickStroke="hsl(var(--foreground))"
           tickLabelProps={() => ({
-            fill: "#333",
+            fill: "hsl(var(--foreground))",
             fontSize: 12,
             textAnchor: "middle",
           })}
