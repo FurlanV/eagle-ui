@@ -84,16 +84,6 @@ export default function IndexPage() {
                         </ScaleSVG>
                       )}
                     </ParentSize>
-
-                    {/* {!isSankeyLoading && sankeyData && (
-                      <ScaleSVG width={1080} height={750}>
-                        <SankeyChart
-                          data={sankeyData}
-                          width={1080}
-                          height={750}
-                        />
-                      </ScaleSVG>
-                    )} */}
                   </CardContent>
                 </Card>
               </div>
