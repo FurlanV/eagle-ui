@@ -241,9 +241,9 @@ export default function CurationDetailsPage() {
                   />
 
                   {/* Score Rationale Section */}
-                  <ScoreRationale
+                  {/* <ScoreRationale
                     scoreRationale={reportData[0]?.score_rationale}
-                  />
+                  /> */}
 
                   {/* File Details */}
                   <FileDetails

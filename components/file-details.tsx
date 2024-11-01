@@ -56,7 +56,7 @@ export function FileDetails({
 
   return (
     <div>
-      <Button variant="ghost" size="sm" onClick={onBack}>
+      <Button variant="outline" size="sm" onClick={onBack} className="mb-2">
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back to Files
       </Button>

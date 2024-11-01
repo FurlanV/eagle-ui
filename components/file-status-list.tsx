@@ -201,13 +201,6 @@ export function FileStatusList({
 
   return (
     <div className="space-y-4">
-      {/* <input
-        type="text"
-        placeholder="Search files..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-      /> */}
       <DataTable
         columns={columns}
         data={filteredTasks}

@@ -121,9 +121,11 @@ export function DataTable<TData, TValue>({
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
-                    onClick={() => {
-                      onRowClick?.(row)
-                      row.toggleSelected()
+                    onClick={(event) => {
+                      if (!(event.target as HTMLElement).closest(".z-20")) {
+                        onRowClick?.(row)
+                        row.toggleSelected()
+                      }
                     }}
                   >
                     {/* Expand/Collapse Button */}
@@ -157,12 +159,22 @@ export function DataTable<TData, TValue>({
                     <TableRow>
                       <TableCell colSpan={row.getVisibleCells().length + 1}>
                         {/* Render Expanded Content */}
-                        <div className="p-4 bg-gray-50">
-                          {/* Customize the content as needed */}
-                          <strong>Detailed Information:</strong>
-                          <pre className="whitespace-pre-wrap">
-                            {JSON.stringify(row.original, null, 2)}
-                          </pre>
+                        <div className="p-4">
+                          <h3 className="text-lg font-semibold mb-2">
+                            Detailed Information
+                          </h3>
+                          <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {Object.entries(row.original).map(([key, value]) => (
+                              <div key={key} className="flex flex-col gap-1">
+                                <dt className="capitalize font-bold">
+                                  {key.replace(/_/g, " ")}
+                                </dt>
+                                <dd className="bg-muted p-2 rounded-md">
+                                  {value || "N/A"}
+                                </dd>
+                              </div>
+                            ))}
+                          </dl>
                         </div>
                       </TableCell>
                     </TableRow>
