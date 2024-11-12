@@ -109,3 +109,38 @@ body {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
+
+/* .MuiPaper-root {
+  box-shadow: none !important;
+  /* background-color: var(--background) !important;
+} */
+
+.MuiPaper-elevation {
+  box-shadow: none !important;
+}
+
+.MuiScopedCssBaseline-root.css-12wnono-MuiScopedCssBaseline-root {
+  background: var(--card) !important;
+}
+
+/* Option 1: Using display none */
+/* .css-10rokvf-container {
+  display: none;
+} */
+
+.css-jn2cxo-avoidParentStyle {
+  all: initial; /* Resets all properties to their initial values */
+  /* OR */
+  all: unset;   /* Resets all properties to their inherited value if they're inheritable, or to their initial value if not */
+}
+
+/* Option 2: Using visibility hidden */
+.css-10rokvf-container {
+  visibility: hidden;
+}
+
+/* Option 3: Using opacity */
+/* .css-10rokvf-container {
+  opacity: 0;
+  pointer-events: none;
+} */

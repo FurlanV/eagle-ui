@@ -2,7 +2,11 @@
 "use client"
 
 import React, { useMemo } from "react"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import {
+  useGetGeneInformationQuery,
+  useGetGeneReferencesQuery,
+} from "@/services/annotation/gene"
 import { ColumnDef } from "@tanstack/react-table"
 import {
   AlertCircle,
@@ -24,6 +28,7 @@ import { FileStatusList } from "@/components/file-status-list"
 
 import { Alerts } from "./components/alerts"
 import { CaseDetailsTable } from "./components/case-details-table"
+import { GenomeBrowser } from "./components/genome-browser"
 // Import separated components
 import { Header } from "./components/header"
 import { InheritancePatternsChart } from "./components/inheritance-pattern-chart"
@@ -61,6 +66,19 @@ export default function CurationDetailsPage() {
     setSelectedFile(task)
     setShowFileDetails(true)
   }
+
+  const pathname = usePathname()
+  const split_pathname = pathname.split("/")
+  const gene_name = split_pathname[split_pathname.length - 1]
+  if (!gene_name) return
+
+  const { data: annotationData } = useGetGeneReferencesQuery(gene_name)
+  const { data: geneInfoData = {} } = useGetGeneInformationQuery(
+    annotationData && annotationData[0].id,
+    {
+      skip: !annotationData || annotationData.length === 0,
+    }
+  )
 
   // Calculate Final Score Sum
   const reportData = selectedFile?.reports || []
@@ -196,6 +214,18 @@ export default function CurationDetailsPage() {
                     errorMessage={selectedJob?.error_message}
                     childrenError={!!childrenError}
                   />
+                  <Card className="relative h-full">
+                    <CardHeader>
+                      <CardTitle>Genome Browser</CardTitle>
+                    </CardHeader>
+                    <CardContent className="h-full">
+                      {geneInfoData && Object.keys(geneInfoData).length > 0 ? (
+                        <GenomeBrowser geneInfoData={geneInfoData} />
+                      ) : (
+                        <Spinner className="h-10 w-10" />
+                      )}
+                    </CardContent>
+                  </Card>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Word Clouds */}
@@ -239,11 +269,6 @@ export default function CurationDetailsPage() {
                     variants={variants}
                     impacts={impacts}
                   />
-
-                  {/* Score Rationale Section */}
-                  {/* <ScoreRationale
-                    scoreRationale={reportData[0]?.score_rationale}
-                  /> */}
 
                   {/* File Details */}
                   <FileDetails
