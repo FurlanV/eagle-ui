@@ -216,7 +216,7 @@ export default function CurationDetailsPage() {
                   />
                   <Card className="relative h-full">
                     <CardHeader>
-                      <CardTitle>Genome Browser</CardTitle>
+                      <CardTitle>{gene_name} Explorer</CardTitle>
                     </CardHeader>
                     <CardContent className="h-full">
                       {geneInfoData && Object.keys(geneInfoData).length > 0 ? (
@@ -375,8 +375,6 @@ export default function CurationDetailsPage() {
                     onBack={() => setShowFileDetails(false)}
                     isLoading={isChildrenLoading}
                   />
-                  {/* Uncomment and implement Report component if needed */}
-                  {/* <Report reportData={reportData} /> */}
                 </div>
               </div>
             )}

@@ -110,12 +110,16 @@ body {
   scrollbar-width: none;  /* Firefox */
 }
 
-/* .MuiPaper-root {
+.MuiPaper-root {
   box-shadow: none !important;
-  /* background-color: var(--background) !important;
-} */
+  /* background-color: var(--card) !important; */
+}
 
 .MuiPaper-elevation {
+  box-shadow: none !important;
+}
+
+.MuiPaper-elevation12 {
   box-shadow: none !important;
 }
 
@@ -123,13 +127,8 @@ body {
   background: var(--card) !important;
 }
 
-/* Option 1: Using display none */
-/* .css-10rokvf-container {
-  display: none;
-} */
-
 .css-jn2cxo-avoidParentStyle {
-  all: initial; /* Resets all properties to their initial values */
+  /* all: initial; Resets all properties to their initial values */
   /* OR */
   all: unset;   /* Resets all properties to their inherited value if they're inheritable, or to their initial value if not */
 }
@@ -137,10 +136,78 @@ body {
 /* Option 2: Using visibility hidden */
 .css-10rokvf-container {
   visibility: hidden;
+  background-color: var(--card) !important;
 }
 
-/* Option 3: Using opacity */
-/* .css-10rokvf-container {
-  opacity: 0;
-  pointer-events: none;
-} */
+.MuiPaper-root.MuiPaper-elevation.MuiPaper-rounded.MuiPaper-elevation12.css-munhbc-MuiPaper-root-viewContainer {
+  /* Remove elevation/shadow */
+  box-shadow: none !important;
+  --Paper-shadow: none !important;
+  
+  /* Reset other common Material-UI Paper styles */
+  background-color: var(--card) !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.css-1nc5bej-scalebarContig-scalebarContigForward-scalebarBorder {
+  border-color: var(--border) !important;
+  color: var(--border) !important;
+  outline-color: var(--border) !important;
+}
+
+.MuiAccordionSummary-root {
+  background-color: var(--card) !important;
+  visibility: hidden !important;
+  height: 0 !important;
+}
+
+.MuiAccordion-heading {
+  visibility: hidden !important;
+  height: 0 !important;
+}
+
+.MuiAccordionDetails-root {
+  margin-top: -3rem !important;
+  width: 100% !important;
+  max-width: 850px !important;
+}
+
+.MuiToolbar-root {
+  background-color: var(--card) !important;
+}
+
+/* Matches classes that end with your pattern */
+[class$="-fieldName"] {
+  width: 100% !important;
+  min-width: 7rem !important;
+  max-width: 7.5rem !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .css-1v770aq-scalebarContig-scalebarContigForward-scalebarBorder {
+    border-color: var(--border) !important;
+    color: var(--border) !important;
+    outline-color: var(--border) !important;
+    fill: var(--border) !important;
+    color: var(--border) !important;
+  }
+}
+
+.MuiTypography-body1, .MuiTypography-body2 {
+  color: var(--foreground) !important;
+}
+
+.css-1xadetr-MuiPaper-root-viewContainer, .css-15tb27m-MuiPaper-root-viewContainer {
+  background-color: var(--card) !important;
+}
+
+.css-10rokvf-container {
+  background-color: var(--card) !important;
+  box-shadow: none !important;
+}
+
+.MuiScopedCssBaseline-root {
+  background-color: var(--card) !important;
+}

@@ -20,11 +20,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
+import { useToast } from "@/components/ui/use-toast"
 import { LikertSlider } from "@/components/likert-slider"
 
 import { Icons } from "./icons"
 
 export function CurationReviewDialog({ job_id, job_name, job_status }: any) {
+  const { toast } = useToast()
+
   const [review, setReview] = useState({
     paperAnalysis: { rating: 0, comment: "" },
     evidenceSummary: { rating: 0, comment: "" },
@@ -69,8 +72,6 @@ export function CurationReviewDialog({ job_id, job_name, job_status }: any) {
     }
   }, [curationReviews])
 
-  //console.log(curationReviews)
-
   const handleRatingChange = (category: string, value: number) => {
     setReview((prev) => ({
       ...prev,
@@ -96,6 +97,10 @@ export function CurationReviewDialog({ job_id, job_name, job_status }: any) {
         evidence_score_rating: review.evidenceScore.rating,
         evidence_score_comment: review.evidenceScore.comment,
       })
+      toast({
+        title: "Curation review updated",
+        description: "Your curation review has been updated",
+      })
     } else {
       createCurationReview({
         ...curationReviews,
@@ -106,6 +111,10 @@ export function CurationReviewDialog({ job_id, job_name, job_status }: any) {
         evidence_summary_comment: review.evidenceSummary.comment,
         evidence_score_rating: review.evidenceScore.rating,
         evidence_score_comment: review.evidenceScore.comment,
+      })
+      toast({
+        title: "Thanks for your review!",
+        description: "Your curation review has been successfully created",
       })
     }
   }

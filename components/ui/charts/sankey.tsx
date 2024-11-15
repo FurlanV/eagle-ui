@@ -52,8 +52,6 @@ export default function Sankey({
 
   const sankeyData = sankey(data)
 
-  console.log("sankeyData", sankeyData)
-
   if (children) {
     return (
       <Group top={top} left={left} className={cx("vx-sankey", className)}>

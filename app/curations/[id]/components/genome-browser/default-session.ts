@@ -1,5 +1,4 @@
 const getSession = (geneInfo: any) => {
-    console.log(geneInfo)
     const session = {
         name: 'this session',
         margin: 0,
@@ -7,7 +6,7 @@ const getSession = (geneInfo: any) => {
             id: 'linearGenomeView',
             minimized: false,
             type: 'LinearGenomeView',
-            offsetPx: 550,
+            offsetPx: 1500,
             bpPerPx: 0.1554251851851852,
             displayedRegions: [
                 {
@@ -37,55 +36,6 @@ const getSession = (geneInfo: any) => {
                         },
                     ],
                 },
-                // {
-                //     id: 'T6uhrtY40O',
-                //     type: 'AlignmentsTrack',
-                //     configuration: 'NA12878.alt_bwamem_GRCh38DH.20150826.CEU.exome',
-                //     minimized: false,
-                //     displays: [
-                //         {
-                //             id: 'FinKswChSr',
-                //             type: 'LinearAlignmentsDisplay',
-                //             PileupDisplay: {
-                //                 id: 'YAAaF494z',
-                //                 type: 'LinearPileupDisplay',
-                //                 height: 134,
-                //                 configuration: {
-                //                     type: 'LinearPileupDisplay',
-                //                     displayId:
-                //                         'NA12878.alt_bwamem_GRCh38DH.20150826.CEU.exome-LinearAlignmentsDisplay_LinearPileupDisplay_xyz',
-                //                 },
-                //                 showSoftClipping: false,
-                //                 filterBy: {
-                //                     flagInclude: 0,
-                //                     flagExclude: 1540,
-                //                 },
-                //             },
-                //             SNPCoverageDisplay: {
-                //                 id: 'VTQ_VGbAVJ',
-                //                 type: 'LinearSNPCoverageDisplay',
-                //                 height: 45,
-                //                 configuration: {
-                //                     type: 'LinearSNPCoverageDisplay',
-                //                     displayId:
-                //                         'NA12878.alt_bwamem_GRCh38DH.20150826.CEU.exome-LinearAlignmentsDisplay_snpcoverage_xyz',
-                //                 },
-                //                 selectedRendering: '',
-                //                 resolution: 1,
-                //                 constraints: {},
-                //                 filterBy: {
-                //                     flagInclude: 0,
-                //                     flagExclude: 1540,
-                //                 },
-                //             },
-                //             snpCovHeight: 45,
-                //             configuration:
-                //                 'NA12878.alt_bwamem_GRCh38DH.20150826.CEU.exome-LinearAlignmentsDisplay',
-                //             height: 179,
-                //             lowerPanelType: 'LinearPileupDisplay',
-                //         },
-                //     ],
-                // },
                 {
                     id: 'EUnTnpVI6',
                     type: 'QuantitativeTrack',
@@ -116,6 +66,20 @@ const getSession = (geneInfo: any) => {
                             height: 100,
                             configuration:
                                 'ALL.wgs.shapeit2_integrated_snvindels_v2a.GRCh38.27022019.sites.vcf-LinearVariantDisplay',
+                        },
+                    ],
+                },
+                {
+                    id: 'clinvar',
+                    type: 'FeatureTrack',
+                    configuration:
+                        'clinvar',
+                    minimized: false,
+                    displays: [
+                        {
+                            id: 'dvXz01Wf6w',
+                            type: 'LinearVariantDisplay',
+                            height: 100,
                         },
                     ],
                 },

@@ -1,22 +1,25 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react"
 import {
   JBrowseLinearGenomeView,
+  ThemeProvider,
   createViewState,
 } from "@jbrowse/react-linear-genome-view"
 import { createRoot, hydrateRoot } from "react-dom/client"
 
 import assembly from "./assembly"
 import getSession from "./default-session"
-import theme from "./theme"
+import getTheme from "./theme"
 import tracks from "./tracks"
-
+import { useTheme } from "next-themes"
 type ViewModel = ReturnType<typeof createViewState>
 
 export function GenomeBrowser({ geneInfoData }: any) {
+  const { theme } = useTheme()
+  
   const [viewState, setViewState] = useState<ViewModel>()
   const [patches, setPatches] = useState("")
   const [stateSnapshot, setStateSnapshot] = useState("")
-
+  
   useEffect(() => {
     const defaultSession = getSession(geneInfoData)
 
@@ -28,7 +31,7 @@ export function GenomeBrowser({ geneInfoData }: any) {
       },
       defaultSession,
       configuration: {
-        theme,
+        theme: getTheme(theme === 'dark' ? true : false),
         rpc: {
           defaultDriver: "WebWorkerRpcDriver",
         },
@@ -40,7 +43,7 @@ export function GenomeBrowser({ geneInfoData }: any) {
       createRootFn: createRoot,
     })
     setViewState(state)
-  }, [])
+  }, [theme])
 
   if (!viewState) {
     return null
