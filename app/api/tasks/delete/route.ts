@@ -4,8 +4,8 @@ import { cookies } from 'next/headers'
 export async function GET(req: NextRequest) {
     const id = req.nextUrl.searchParams.get("id")
 
-    const cookie = cookies()
-    const authToken = cookie.get('AUTH_TOKEN')
+    const cookie = await cookies()
+    const authToken = await cookie.get('AUTH_TOKEN')
 
     if (!authToken) {
         return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })

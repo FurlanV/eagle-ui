@@ -1,11 +1,12 @@
-import React from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import React from "react"
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface ScoreRationaleProps {
-  scoreRationale?: string;
+  scoreRationale?: string
 }
 
-export const ScoreRationale: React.FC<ScoreRationaleProps> = ({ scoreRationale }) => {
+export const ScoreRationale: React.FC<any> = ({ scoreRationale }) => {
   return (
     <Card className="mt-6">
       <CardHeader>
@@ -13,9 +14,16 @@ export const ScoreRationale: React.FC<ScoreRationaleProps> = ({ scoreRationale }
       </CardHeader>
       <CardContent>
         <p className="text-muted-foreground">
-          {scoreRationale || "No score rationale available."}
+          {(scoreRationale &&
+            scoreRationale.map(
+              (caseItem: any) =>
+                `Genetic Evidence: ${caseItem.genetic_evidence_score_rationale}\n\n
+               Experimental Evidence Score: ${caseItem.experimental_evidence_score_rationale}\n\n
+               Score Adjustment Rationale: ${caseItem.score_adjustment_rationale}`
+            )) ||
+            ""}
         </p>
       </CardContent>
     </Card>
-  );
-};
+  )
+}

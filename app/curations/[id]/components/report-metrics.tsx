@@ -42,7 +42,7 @@ export const ReportMetrics: React.FC<ReportMetricsProps> = ({
           {variants && variants.length > 0 ? (
               <ul className="list-disc list-inside text-center max-h-40 md:max-h-48 overflow-y-auto w-full">
               {variants.map((variant, index) => (
-                <li key={index}>{variant}</li>
+                <li key={index}>{variant.cdna_hgvs}</li>
               ))}
             </ul>
           ) : (

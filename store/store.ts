@@ -2,6 +2,7 @@ import { configureStore } from "@reduxjs/toolkit"
 import { setupListeners } from '@reduxjs/toolkit/query'
 import { eagleAPI } from "@/services/eagle/jobs"
 import { eagleReportAPI } from "@/services/eagle/reports"
+import { eagleCasesAPI } from "@/services/eagle/cases"
 import { ensemblGeneAnnotationAPI } from "@/services/annotation/gene"
 import { curationReviewAPI } from "@/services/eagle/review"
 import { authAPI } from "@/services/auth"
@@ -16,6 +17,7 @@ export const makeStore = () => {
             jobs: jobSlice,
             [eagleAPI.reducerPath]: eagleAPI.reducer,
             [eagleReportAPI.reducerPath]: eagleReportAPI.reducer,
+            [eagleCasesAPI.reducerPath]: eagleCasesAPI.reducer,
             [ensemblGeneAnnotationAPI.reducerPath]: ensemblGeneAnnotationAPI.reducer,
             [authAPI.reducerPath]: authAPI.reducer,
             [tasksAPI.reducerPath]: tasksAPI.reducer,
@@ -25,6 +27,7 @@ export const makeStore = () => {
             getDefaultMiddleware().concat([
                 eagleAPI.middleware,
                 eagleReportAPI.middleware,
+                eagleCasesAPI.middleware,
                 ensemblGeneAnnotationAPI.middleware,
                 authAPI.middleware,
                 tasksAPI.middleware,

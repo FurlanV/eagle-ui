@@ -5,8 +5,8 @@ export async function GET(req: NextRequest) {
 
     const task_id = req.nextUrl.searchParams.get("task_id")
 
-    const cookie = cookies()
-    const authToken = cookie.get('AUTH_TOKEN')
+    const cookie = await cookies()
+    const authToken = await cookie.get('AUTH_TOKEN')
 
     if (!authToken) {
         return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })

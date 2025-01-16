@@ -78,7 +78,7 @@ export function FileStatusList({
           const task = row.original
           const totalSteps = task.steps.length || 0
           const completedSteps =
-            task.steps.filter((step) => step.status === "completed").length || 0
+            task?.steps?.filter((step) => step.status === "completed").length || 0
           const progress =
             totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0
           return (
@@ -193,7 +193,7 @@ export function FileStatusList({
   // Filter tasks based on search term
   const filteredTasks = React.useMemo(
     () =>
-      tasks.filter((task) =>
+      tasks?.filter((task) =>
         task.task_name.toLowerCase().includes(searchTerm.toLowerCase())
       ),
     [tasks, searchTerm]
@@ -203,7 +203,7 @@ export function FileStatusList({
     <div className="space-y-4">
       <DataTable
         columns={columns}
-        data={filteredTasks}
+        data={filteredTasks ?? []}
         initialPageSize={10}
         enableExpanding={false}
         onRowClick={(row) => {

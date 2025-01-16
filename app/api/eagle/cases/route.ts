@@ -3,10 +3,10 @@ import { cookies } from 'next/headers'
 
 export async function GET(req: NextRequest) {
 
-    const taskId = req.nextUrl.searchParams.get('task_id')
-
     const cookie = await cookies()
     const authToken = await cookie.get('AUTH_TOKEN')
+
+    const gene_name = req.nextUrl.searchParams.get("gene_name")
 
     if (!authToken) {
         return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
 
     const API_URL = process.env.NEXT_PUBLIC_API_URL
 
-    const res = await fetch(`${API_URL}/api/v1/task/${taskId}`, {
+    const res = await fetch(`${API_URL}/api/v1/eagle/cases/${gene_name}`, {
         method: "GET",
         headers: {
             Authorization: `Bearer ${token}`,
