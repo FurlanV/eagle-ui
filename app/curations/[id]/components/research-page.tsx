@@ -21,6 +21,7 @@ import {
   Users,
 } from "lucide-react"
 import { Bar, Doughnut, Pie, Scatter } from "react-chartjs-2"
+import ReactMarkdown from "react-markdown"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -135,6 +136,25 @@ export function PayloadVisualization({
   onBack,
 }: PayloadVisualizationProps) {
   const [selectedIndex, setSelectedIndex] = useState(0)
+
+  const annotations = useMemo(() => {
+    const annotationText = selectedFile?.steps
+      ?.find((step: any) => step.name === "Variant Annotation")
+      ?.output.split("Annotation:")[1]
+
+    if (!annotationText) return []
+
+    // Split by the case ID marker
+    const cases = annotationText.split("### CASE ID:")
+
+    // Filter out empty strings and trim each case
+    return cases
+      .filter((text: any) => text.trim())
+      .map((text: any) => ({
+        caseId: text.split("\n")[0].trim(),
+        content: text.substring(text.indexOf("\n")).trim(),
+      }))
+  }, [selectedFile])
 
   // Convert single payload to array if necessary - do this before any hooks
   const casesData = useMemo(() => {
@@ -437,7 +457,7 @@ export function PayloadVisualization({
                   Extraction Rationale
                 </Button>
               </DrawerTrigger>
-              <DrawerContent>
+              <DrawerContent className="max-h-full w-full">
                 <FileDetails
                   selectedFile={selectedFile}
                   handleRating={() => {}}
@@ -501,11 +521,15 @@ export function PayloadVisualization({
       {populationFrequencyBarData && (
         <Card>
           <CardHeader>
-            <CardTitle>Population Frequencies</CardTitle>
+            <CardTitle>Details</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px] w-full">
-              <Bar
+            <div className="h-full w-full">
+              <ReactMarkdown className="markdown prose prose-sm max-w-none dark:prose-invert">
+                {annotations[selectedIndex]?.content ||
+                  "No annotation available"}
+              </ReactMarkdown>
+              {/* <Bar
                 data={populationFrequencyBarData}
                 options={{
                   maintainAspectRatio: false,
@@ -514,7 +538,7 @@ export function PayloadVisualization({
                     y: { beginAtZero: true },
                   },
                 }}
-              />
+              /> */}
             </div>
           </CardContent>
         </Card>

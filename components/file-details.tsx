@@ -55,12 +55,7 @@ export function FileDetails({
   }
 
   return (
-    <div className="overflow-scroll">
-      <Button variant="outline" size="sm" onClick={onBack} className="mb-2">
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to Files
-      </Button>
-      <Card>
+      <Card className="overflow-scroll border-none">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">
             File: {selectedFile?.task_name}
@@ -152,6 +147,5 @@ export function FileDetails({
           )}
         </CardContent>
       </Card>
-    </div>
   )
 }
