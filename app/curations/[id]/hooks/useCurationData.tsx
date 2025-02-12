@@ -69,8 +69,8 @@ export const useCurationData = (selectedJob: Task | undefined) => {
       const variantCounts: Record<string, number> = {}
       childrenData.forEach((task) => {
         task.cases?.forEach((report: any) => {
-          const variant = report.variant
-          if (variant.cdna_hgvs) {
+          const variant = report?.variant
+          if (variant?.cdna_hgvs) {
             variantCounts[variant.cdna_hgvs] =
               (variantCounts[variant.cdna_hgvs] || 0) + 1
           }
@@ -118,17 +118,17 @@ export const useCurationData = (selectedJob: Task | undefined) => {
     allCasesData?.map((caseItem: any) => ({
       case_id: caseItem.case_id,
       sex: caseItem.sex,
-      variant_type: caseItem.variant.variant_type,
-      inheritance: caseItem.variant.inheritance_pattern,
-      total_case_score: caseItem.total_case_score,
-      phenotype_quality: caseItem.phenotype_quality,
-      notes: caseItem.variant_notes,
-      cognitive_ability_comment: caseItem.cognitive_ability_cautionary_comment,
-      notes: caseItem.notes,
+      variant_type: caseItem?.variant?.variant_type,
+      inheritance: caseItem?.variant?.inheritance_pattern,
+      total_case_score: caseItem?.total_case_score,
+      phenotype_quality: caseItem?.phenotype_quality,
+      notes: caseItem?.variant_notes,
+      cognitive_ability_comment: caseItem?.cognitive_ability_cautionary_comment,
+      notes: caseItem?.notes,
       score_rationale: `
-    **Genetic Evidence:** ${caseItem.genetic_evidence_score_rationale}\n\n
-    **Experimental Evidence:** ${caseItem.experimental_evidence_score_rationale}\n\n
-    **Score Adjustment Rationale:** ${caseItem.score_adjustment_rationale}`,
+    **Genetic Evidence:** ${caseItem?.genetic_evidence_score_rationale}\n\n
+    **Experimental Evidence:** ${caseItem?.experimental_evidence_score_rationale}\n\n
+    **Score Adjustment Rationale:** ${caseItem?.score_adjustment_rationale}`,
     })) || []
 
   return {
