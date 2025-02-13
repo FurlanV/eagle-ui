@@ -86,9 +86,7 @@ export default function CurationDetailsPage() {
   const selectedCase = casesData?.filter(
     (caseItem: any) => caseItem.task_id === taskInfo?.id
   )
-
-  console.log(selectedCase)
-
+  
   // // Extract Variants and Impacts
   const variants =
     selectedCase?.map((caseItem: any) => caseItem?.variant) || []

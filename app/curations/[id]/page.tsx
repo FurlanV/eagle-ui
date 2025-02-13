@@ -1,6 +1,15 @@
 "use client"
 
 import React from "react"
+import { usePathname } from "next/navigation"
+import {
+  useGetGeneInformationQuery,
+  useGetGeneReferencesQuery,
+} from "@/services/annotation/gene"
+
+import { useAppSelector } from "@/lib/hooks"
+
+import { useCurationData } from "./hooks/useCurationData"
 
 // A badge to highlight the Eagle Score with contrasting colors based on its value.
 function EagleScoreBadge({ score, label }: { score: number; label: string }) {
@@ -29,23 +38,84 @@ function HighlightCard({ title, children, accentClass }: HighlightCardProps) {
       className={`bg-white p-6 rounded-lg shadow hover:shadow-xl transition-shadow duration-300 border-l-4 ${accentClass}`}
     >
       <span className="block text-sm font-medium text-gray-500">{title}</span>
-      <div className="mt-2 text-2xl font-semibold text-gray-900">{children}</div>
+      <div className="mt-2 text-2xl font-semibold text-gray-900">
+        {children}
+      </div>
     </div>
   )
 }
 
 export default function GeneDetailsPage() {
-  const eagleScore = 41.5;
+  const pathname = usePathname()
+  const split_pathname = pathname.split("/")
+  const gene_name = split_pathname[split_pathname.length - 1]
+  if (!gene_name) return
+
+  const selectedJob = useAppSelector((state) => state.jobs.selectedJob)
+
+  const {
+    childrenData,
+    isChildrenLoading,
+    childrenError,
+    allTasksCompleted,
+    totalFinalScore,
+    variantWordCounts,
+    evidenceTypeCounts,
+    otherInsights,
+    selectedFile,
+    setSelectedFile,
+    showFileDetails,
+    setShowFileDetails,
+    searchTerm,
+    setSearchTerm,
+    taskInfo,
+    isTaskInfoLoading,
+    lastUpdateTime,
+    caseDetailsData,
+  } = useCurationData(selectedJob)
+
+  const { data: annotationData } = useGetGeneReferencesQuery(gene_name)
+  const { data: geneInfoData = {} } = useGetGeneInformationQuery(
+    annotationData && annotationData[0].id,
+    {
+      skip: !annotationData || annotationData.length === 0,
+    }
+  )
+
+  let scoreRelevance = ""
+  switch (true) {
+    case totalFinalScore >= 12:
+      scoreRelevance = "Definitive"
+      break
+    case totalFinalScore >= 9:
+      scoreRelevance = "Strong"
+      break
+    case totalFinalScore >= 6:
+      scoreRelevance = "Moderate"
+      break
+    case totalFinalScore >= 3:
+      scoreRelevance = "Limited"
+      break
+    default:
+      scoreRelevance = "No Support"
+  }
+
+  console.log(geneInfoData)
+  console.log(annotationData)
+
+  const eagleScore = 41.5
   // Determine the label based on the eagleScore
-  const eagleScoreLabel = eagleScore > 40 ? "Strong" : "Moderate";
+  const eagleScoreLabel = eagleScore > 40 ? "Strong" : "Moderate"
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
       {/* Hero Section */}
       <header className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl font-extrabold">ADNP</h1>
-          <p className="mt-2 text-lg">Activity-dependent neuroprotector homeobox</p>
+          <h1 className="text-4xl font-extrabold">{gene_name}</h1>
+          <p className="mt-2 text-lg">
+            {geneInfoData.description.split("[")[0]}
+          </p>
         </div>
       </header>
 
@@ -59,15 +129,15 @@ export default function GeneDetailsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <HighlightCard
               title="EAGLE Score"
-              accentClass={eagleScore > 40 ? "border-green-500" : "border-orange-500"}
+              accentClass={
+                totalFinalScore > 12 ? "border-green-500" : "border-orange-500"
+              }
             >
               <div className="flex flex-col">
                 <span className="text-2xl font-semibold text-gray-900">
-                  {eagleScore}
+                  {totalFinalScore}
                 </span>
-                <span className="text-sm text-gray-500">
-                  {eagleScoreLabel}
-                </span>
+                <span className="text-sm text-gray-500">{scoreRelevance}</span>
               </div>
             </HighlightCard>
 
@@ -85,7 +155,10 @@ export default function GeneDetailsPage() {
               192 / 0
             </HighlightCard>
 
-            <HighlightCard title="Chromosome Band" accentClass="border-purple-500">
+            <HighlightCard
+              title="Chromosome Band"
+              accentClass="border-purple-500"
+            >
               20q13.13
             </HighlightCard>
           </div>
@@ -124,10 +197,11 @@ export default function GeneDetailsPage() {
                 Associated Syndromes
               </span>
               <p className="mt-1 text-base text-gray-800">
-                Helsmoortel-Van der Aa syndrome, ASD, ID, Helsmoortel-van der Aa syndrome,
-                Helsmoortel-Van der Aa syndrome, DD, ID, Helsmoortel-van der Aa syndrome, DD,
-                Helsmoortel-van der Aa syndrome, ASD, DD, Helsmoortel-van der Aa syndrome,
-                ASD, DD, ID, Helsmoortel-van der Aa syndrome, ASD, DD, epilepsy,
+                Helsmoortel-Van der Aa syndrome, ASD, ID, Helsmoortel-van der Aa
+                syndrome, Helsmoortel-Van der Aa syndrome, DD, ID,
+                Helsmoortel-van der Aa syndrome, DD, Helsmoortel-van der Aa
+                syndrome, ASD, DD, Helsmoortel-van der Aa syndrome, ASD, DD, ID,
+                Helsmoortel-van der Aa syndrome, ASD, DD, epilepsy,
                 Helsmoortel-Van der Aa syndrome, ASD, ADHD, DD, ID
               </p>
             </div>
@@ -140,23 +214,32 @@ export default function GeneDetailsPage() {
             Relevance to Autism
           </h2>
           <p className="text-base leading-relaxed text-gray-800">
-            Recurrent mutations in the ADNP gene have been identified in multiple individuals
-            with ASD as described below. Two de novo frameshift variants in ADNP were identified
-            in unrelated simplex ASD cases in two reports by O'Roak and colleagues in 2012 (PMIDs
-            22495309 and 23160955). An additional seven de novo LoF variants were identified in patients
-            with ASD in Helsmoortel et al., 2014, giving a current total of nine de novo LoF variants
-            in ADNP gene in ASD cases; the probability of detecting eight or more de novo truncating events
-            in ADNP was given as P=2.65 x 10⁻¹⁸ in this report (PMID 24531329). Furthermore, the frequency
-            of shared clinical characteristics in ASD cases with LoF variants in ADNP (intellectual disability,
-            facial dysmorphisms) led Helsmoortel and colleagues to conclude that ADNP mutations resulted in an
-            autism syndrome. Analysis of rare coding variation in 3,871 ASD cases and 9,937 ancestry-matched or
-            paternal controls from the Autism Sequencing Consortium (ASC) in De Rubeis et al., 2014 identified
-            ADNP as a gene meeting high statistical significance with an FDR of 0.01, meaning that this gene had
-            a 99% chance of being a true autism gene (PMID 25363760). This gene was identified in Iossifov et al.
-            2015 as a strong candidate to be an ASD risk gene based on a combination of de novo mutational evidence
-            and the absence or very low frequency of mutations in controls (PMID 26401017). A two-stage analysis of
-            rare de novo and inherited coding variants in 42,607 ASD cases, including 35,130 new cases from the
-            SPARK cohort, in Zhou et al., 2022 identified ADNP as a gene reaching exome-wide significance (P &lt; 2.5E-06).
+            Recurrent mutations in the ADNP gene have been identified in
+            multiple individuals with ASD as described below. Two de novo
+            frameshift variants in ADNP were identified in unrelated simplex ASD
+            cases in two reports by O'Roak and colleagues in 2012 (PMIDs
+            22495309 and 23160955). An additional seven de novo LoF variants
+            were identified in patients with ASD in Helsmoortel et al., 2014,
+            giving a current total of nine de novo LoF variants in ADNP gene in
+            ASD cases; the probability of detecting eight or more de novo
+            truncating events in ADNP was given as P=2.65 x 10⁻¹⁸ in this report
+            (PMID 24531329). Furthermore, the frequency of shared clinical
+            characteristics in ASD cases with LoF variants in ADNP (intellectual
+            disability, facial dysmorphisms) led Helsmoortel and colleagues to
+            conclude that ADNP mutations resulted in an autism syndrome.
+            Analysis of rare coding variation in 3,871 ASD cases and 9,937
+            ancestry-matched or paternal controls from the Autism Sequencing
+            Consortium (ASC) in De Rubeis et al., 2014 identified ADNP as a gene
+            meeting high statistical significance with an FDR of 0.01, meaning
+            that this gene had a 99% chance of being a true autism gene (PMID
+            25363760). This gene was identified in Iossifov et al. 2015 as a
+            strong candidate to be an ASD risk gene based on a combination of de
+            novo mutational evidence and the absence or very low frequency of
+            mutations in controls (PMID 26401017). A two-stage analysis of rare
+            de novo and inherited coding variants in 42,607 ASD cases, including
+            35,130 new cases from the SPARK cohort, in Zhou et al., 2022
+            identified ADNP as a gene reaching exome-wide significance (P &lt;
+            2.5E-06).
           </p>
         </section>
 
@@ -166,9 +249,10 @@ export default function GeneDetailsPage() {
             Molecular Function
           </h2>
           <p className="text-base leading-relaxed text-gray-800">
-            Potential transcription factor that may mediate some of the neuroprotective peptide VIP-associated
-            effects involving normal growth and cancer proliferation. In brain, expression is stronger in the cerebellum
-            and cortex regions.
+            Potential transcription factor that may mediate some of the
+            neuroprotective peptide VIP-associated effects involving normal
+            growth and cancer proliferation. In brain, expression is stronger in
+            the cerebellum and cortex regions.
           </p>
         </section>
       </main>
@@ -177,8 +261,8 @@ export default function GeneDetailsPage() {
       <footer className="bg-white border-t border-gray-200 py-6">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-600">
           <p>
-            Data &amp; analysis based on curated research. Please refer to the original publications for additional
-            details.
+            Data &amp; analysis based on curated research. Please refer to the
+            original publications for additional details.
           </p>
         </div>
       </footer>
