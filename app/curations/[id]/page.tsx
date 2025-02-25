@@ -1,28 +1,21 @@
 "use client"
 
-import React from "react"
+import React, { useMemo, useState } from "react"
 import { usePathname } from "next/navigation"
 import {
   useGetGeneInformationQuery,
   useGetGeneReferencesQuery,
 } from "@/services/annotation/gene"
+import { ColumnDef } from "@tanstack/react-table"
 
 import { useAppSelector } from "@/lib/hooks"
-
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { CaseDetailsTable } from "./components/case-details-table"
 import { useCurationData } from "./hooks/useCurationData"
-
-// A badge to highlight the Eagle Score with contrasting colors based on its value.
-function EagleScoreBadge({ score, label }: { score: number; label: string }) {
-  const badgeColor =
-    score > 40 ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
-  return (
-    <span
-      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${badgeColor}`}
-    >
-      {label}
-    </span>
-  )
-}
+import { FileStatusList } from "@/components/file-status-list"
+import { Button } from "@/components/ui/button"
+import { MessageCircleIcon, X, BotMessageSquare, Bot } from "lucide-react"
+import AIChatCard from "@/components/ai-chat-card"
 
 // A reusable component to present each gene highlight in a card style.
 // The colored left-border (accent) immediately draws the user's eye to important values.
@@ -52,6 +45,7 @@ export default function GeneDetailsPage() {
   if (!gene_name) return
 
   const selectedJob = useAppSelector((state) => state.jobs.selectedJob)
+  const [isChatOpen, setIsChatOpen] = useState(false)
 
   const {
     childrenData,
@@ -100,21 +94,52 @@ export default function GeneDetailsPage() {
       scoreRelevance = "No Support"
   }
 
-  console.log(geneInfoData)
-  console.log(annotationData)
+  // console.log(geneInfoData)
+  // console.log(annotationData)
 
   const eagleScore = 41.5
   // Determine the label based on the eagleScore
   const eagleScoreLabel = eagleScore > 40 ? "Strong" : "Moderate"
 
+  const columns: ColumnDef<any, any>[] = useMemo(
+    () => [
+      {
+        accessorKey: "case_id",
+        header: "Case ID",
+        cell: (info) => info.getValue(),
+      },
+      {
+        accessorKey: "sex",
+        header: "Sex",
+        cell: (info) => info.getValue(),
+      },
+      {
+        accessorKey: "inheritance",
+        header: "Inheritance",
+        cell: (info) => info.getValue(),
+      },
+      {
+        accessorKey: "total_case_score",
+        header: "Final Score",
+        cell: (info) => info.getValue(),
+      },
+      {
+        accessorKey: "phenotype_quality",
+        header: "Phenotype Quality",
+        cell: (info) => info.getValue(),
+      },
+    ],
+    []
+  )
+
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
+    <div className="relative min-w-full min-h-screen bg-gray-50 text-gray-900">
       {/* Hero Section */}
       <header className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-4xl font-extrabold">{gene_name}</h1>
           <p className="mt-2 text-lg">
-            {geneInfoData.description.split("[")[0]}
+            {geneInfoData?.description?.split("[")[0]}
           </p>
         </div>
       </header>
@@ -124,7 +149,7 @@ export default function GeneDetailsPage() {
         {/* Gene Highlights Section */}
         <section>
           <h2 className="text-2xl font-semibold border-b-2 border-gray-300 pb-2 mb-6">
-            Key Gene Highlights
+            Gene Highlights
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <HighlightCard
@@ -256,9 +281,37 @@ export default function GeneDetailsPage() {
           </p>
         </section>
       </main>
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+        <Tabs defaultValue="papers">
+          <TabsList>
+            <TabsTrigger value="papers">Papers</TabsTrigger>
+            <TabsTrigger value="case-details">Cases</TabsTrigger>
+            <TabsTrigger value="variants">Variants</TabsTrigger>
+            <TabsTrigger value="protein-interactions">
+              Protein Interactions
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="papers">
+            <FileStatusList
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              handleFileClick={() => {}}
+              tasks={childrenData}
+            />
+          </TabsContent>
+          <TabsContent value="case-details">
+            <CaseDetailsTable
+              caseDetailsData={caseDetailsData}
+              columns={columns}
+              isLoading={isChildrenLoading}
+            />
+          </TabsContent>
+        </Tabs>
+      </div>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 py-6">
+      <footer className="bg-white border-t border-gray-200 py-6 mt-auto">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-600">
           <p>
             Data &amp; analysis based on curated research. Please refer to the
@@ -266,6 +319,76 @@ export default function GeneDetailsPage() {
           </p>
         </div>
       </footer>
+
+      {/* Chat button and card */}
+      <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-4">
+        {isChatOpen && (
+          <>
+            {/* Backdrop overlay */}
+            <div 
+              className="fixed inset-0 bg-black/20 backdrop-blur-sm transition-opacity duration-300 ease-in-out z-40"
+              onClick={() => setIsChatOpen(false)}
+              aria-hidden="true"
+            />
+            
+            {/* Chat card with animation */}
+            <div 
+              className="mb-2 z-50 transform transition-all duration-300 ease-in-out translate-y-0 opacity-100 scale-100 max-w-[90vw] sm:max-w-md"
+              role="dialog"
+              aria-labelledby="chat-title"
+              aria-modal="true"
+            >
+              <div className="relative">
+                {/* Close button for mobile accessibility */}
+                <button
+                  className="absolute -top-2 -right-2 bg-white dark:bg-zinc-800 rounded-full p-1 shadow-md sm:hidden"
+                  onClick={() => setIsChatOpen(false)}
+                  aria-label="Close chat"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                
+                <AIChatCard 
+                  chatName={`${gene_name} Assistant`} 
+                  messages={[
+                    {
+                      id: "1",
+                      content: `Welcome to the ${gene_name} gene information page. I can help you understand this gene and its relevance to autism.`,
+                      sender: {
+                        name: "AI Assistant",
+                        avatar: "",
+                        isOnline: true,
+                      },
+                      timestamp: "Just now",
+                      status: "read",
+                    },
+                    {
+                      id: "2",
+                      content: `You can ask me about ${gene_name}'s function, associated disorders, or specific research findings. What would you like to know?`,
+                      sender: {
+                        name: "AI Assistant",
+                        avatar: "",
+                        isOnline: true,
+                      },
+                      timestamp: "Just now",
+                      status: "read",
+                    }
+                  ]}
+                />
+              </div>
+            </div>
+          </>
+        )}
+        <Button 
+          onClick={() => setIsChatOpen(!isChatOpen)} 
+          className={`rounded-full p-3 shadow-lg transition-all duration-300 ${isChatOpen ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-600 hover:bg-blue-700'}`}
+          aria-label={isChatOpen ? "Close chat" : "Open chat"}
+          aria-expanded={isChatOpen}
+          aria-controls="gene-assistant-chat"
+        >
+          {isChatOpen ? <X className="w-5 h-5" /> : <BotMessageSquare className="w-5 h-5" />}
+        </Button>
+      </div>
     </div>
   )
 }
