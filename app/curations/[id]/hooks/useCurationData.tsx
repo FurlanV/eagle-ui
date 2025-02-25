@@ -32,7 +32,7 @@ export const useCurationData = (selectedJob: Task | undefined) => {
   } = useGetTaskChildrenQuery(selectedJob?.id, {
     skip: !selectedJob,
     refetchOnMountOrArgChange: true,
-    pollingInterval: stopPolling ? undefined : 10000,
+    //pollingInterval: stopPolling ? undefined : 10000,
   })
 
   const allTasksCompleted =

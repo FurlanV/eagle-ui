@@ -350,7 +350,7 @@ export default function GeneDetailsPage() {
                 
                 <AIChatCard 
                   chatName={`${gene_name} Assistant`} 
-                  messages={[
+                  predefinedMessages={[
                     {
                       id: "1",
                       content: `Welcome to the ${gene_name} gene information page. I can help you understand this gene and its relevance to autism.`,
