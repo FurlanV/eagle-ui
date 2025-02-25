@@ -49,12 +49,12 @@ export function NewJobDialog() {
         }
         formData.append("papers", file)
       })
-      formData.append("job_id", jobIdRef.current?.value ?? "TEST")
-      formData.append(
-        "interest_gene",
-        genesOfInterestRef.current?.value ?? "DMD, TP53"
-      )
-      formData.append("parent_task_id", "None")
+      // formData.append("job_id", jobIdRef.current?.value ?? "TEST")
+      // formData.append(
+      //   "interest_gene",
+      //   genesOfInterestRef.current?.value ?? "DMD, TP53"
+      // )
+      // formData.append("parent_task_id", "None")
 
       const authToken = Cookies.get("AUTH_TOKEN")
       const token = Buffer.from(authToken, "base64").toString("ascii")
@@ -111,7 +111,7 @@ export function NewJobDialog() {
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
+          {/* <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="job ID">Job ID [optional]</Label>
             <Input
               id="job_id"
@@ -120,16 +120,7 @@ export function NewJobDialog() {
               className="col-span-3"
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="genes of interest">Genes of interest</Label>
-            <Input
-              id="genes_of_interest"
-              placeholder="BRCA1, TP53, ..."
-              ref={genesOfInterestRef}
-              className="col-span-3"
-            />
-          </div>
-          <Separator orientation="horizontal" />
+          <Separator orientation="horizontal" /> */}
           <div className="flex flex-col w-full gap-4">
             <Label htmlFor="upload-files">Upload papers</Label>
             <FileUploadArea

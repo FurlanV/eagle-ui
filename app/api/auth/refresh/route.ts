@@ -6,9 +6,9 @@ export async function POST(req: NextRequest) {
 
     const API_URL = process.env.NEXT_PUBLIC_API_URL
 
-    const cookie = cookies()
-    const authToken = cookie.get('AUTH_TOKEN')
-    const refreshToken = cookie.get('REFRESH_TOKEN')
+    const cookie = await cookies()
+    const authToken = await cookie.get('AUTH_TOKEN')
+    const refreshToken = await cookie.get('REFRESH_TOKEN')
 
     if (!authToken || !refreshToken) {
         return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })

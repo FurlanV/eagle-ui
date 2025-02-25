@@ -4,8 +4,8 @@ import { cookies } from 'next/headers'
 export async function GET(req: NextRequest) {
 
     const job_id = req.nextUrl.searchParams.get('job_id')
-    const cookie = cookies()
-    const authToken = cookie.get('AUTH_TOKEN')
+    const cookie = await cookies()
+    const authToken = await cookie.get('AUTH_TOKEN')
 
     if (!authToken) {
         return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
@@ -28,8 +28,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
 
-    const cookie = cookies()
-    const authToken = cookie.get('AUTH_TOKEN')
+    const cookie = await cookies()
+    const authToken = await cookie.get('AUTH_TOKEN')
 
     if (!authToken) {
         return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })

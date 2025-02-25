@@ -69,18 +69,18 @@ export const SankeyChart: React.FC<SankeyChartProps> = ({
 
   const color = useMemo(() => 
     scaleOrdinal({
-      domain: data.nodes.map(n => n.name),
+      domain: data?.nodes?.map(n => n.name),
       range: getChartColors(),
-    }), [data.nodes]);
+    }), [data?.nodes]);
 
-  if (width < 10 || !data.nodes.length) return null;
+  if (width < 10 || !data?.nodes?.length) return null;
 
   const sankeyData = {
-    nodes: data.nodes.map((node, i) => ({
+    nodes: data?.nodes?.map((node, i) => ({
       ...node,
       index: i,
     })),
-    links: data.links.map(link => ({
+    links: data?.links?.map(link => ({
       ...link,
       width: link.value,
     }))
