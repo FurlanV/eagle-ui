@@ -14,7 +14,7 @@ import { CaseDetailsTable } from "./components/case-details-table"
 import { useCurationData } from "./hooks/useCurationData"
 import { FileStatusList } from "@/components/file-status-list"
 import { Button } from "@/components/ui/button"
-import { MessageCircleIcon, X, BotMessageSquare, Bot } from "lucide-react"
+import { X, BotMessageSquare } from "lucide-react"
 import AIChatCard from "@/components/ai-chat-card"
 
 // A reusable component to present each gene highlight in a card style.
@@ -325,11 +325,11 @@ export default function GeneDetailsPage() {
         {isChatOpen && (
           <>
             {/* Backdrop overlay */}
-            <div 
+            {/* <div 
               className="fixed inset-0 bg-black/20 backdrop-blur-sm transition-opacity duration-300 ease-in-out z-40"
               onClick={() => setIsChatOpen(false)}
               aria-hidden="true"
-            />
+            /> */}
             
             {/* Chat card with animation */}
             <div 
@@ -350,6 +350,7 @@ export default function GeneDetailsPage() {
                 
                 <AIChatCard 
                   chatName={`${gene_name} Assistant`} 
+                  gene_name={gene_name}
                   predefinedMessages={[
                     {
                       id: "1",
