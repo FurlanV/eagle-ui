@@ -31,10 +31,17 @@ interface Message {
   }>
 }
 
+interface ChatContext {
+  papers: string[]
+  variants: string[]
+  cases: string[]
+}
+
 interface AIChatCardProps {
   chatName?: string
   predefinedMessages?: Message[]
   gene_name: string
+  context?: ChatContext
   isMaximized?: boolean
   onToggleMaximize?: () => void
 }
@@ -43,11 +50,17 @@ export default function AIChatCard({
   chatName,
   predefinedMessages = [],
   gene_name,
+  context,
   isMaximized = false,
   onToggleMaximize,
 }: AIChatCardProps) {
   const [messages, setMessages] = useState<Message[]>([...predefinedMessages])
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [selectedContext, setSelectedContext] = useState<{
+    papers: string[];
+    variants: string[];
+    cases: string[];
+  }>({ papers: [], variants: [], cases: [] })
 
   const {
     completion,
@@ -61,6 +74,7 @@ export default function AIChatCard({
     api: "/eagle/api/chat",
     body: {
       gene_name,
+      selectedContext,
     },
   })
 
@@ -159,6 +173,27 @@ export default function AIChatCard({
     }
   }, [isMaximized, onToggleMaximize])
 
+  // Toggle selection of a context item
+  const toggleContextItem = (type: 'papers' | 'variants' | 'cases', item: string) => {
+    setSelectedContext(prev => {
+      const currentItems = [...prev[type]];
+      const index = currentItems.indexOf(item);
+      
+      if (index >= 0) {
+        // Remove item if already selected
+        currentItems.splice(index, 1);
+      } else {
+        // Add item if not selected
+        currentItems.push(item);
+      }
+      
+      return {
+        ...prev,
+        [type]: currentItems
+      };
+    });
+  };
+
   return (
     <div
       className={cn(
@@ -250,6 +285,168 @@ export default function AIChatCard({
             </div>
           </div>
         </div>
+
+        {/* Context selection section */}
+        {context && (Object.values(context).some(arr => arr.length > 0)) && (
+          <div className="px-5 py-3 border-b border-border bg-muted/30">
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-medium text-muted-foreground">Available Context</h4>
+                {selectedContext.papers.length > 0 || 
+                 selectedContext.variants.length > 0 || 
+                 selectedContext.cases.length > 0 ? (
+                  <button
+                    onClick={() => setSelectedContext({ papers: [], variants: [], cases: [] })}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Clear All
+                  </button>
+                ) : null}
+              </div>
+              
+              {/* Context categories */}
+              <div className="flex flex-wrap gap-2">
+                {context.papers && context.papers.length > 0 && (
+                  <div className="relative group inline-block">
+                    <button
+                      className={cn(
+                        "px-2 py-1 rounded-md text-xs font-medium",
+                        selectedContext.papers.length > 0
+                          ? "bg-primary/20 text-primary"
+                          : "bg-accent text-muted-foreground hover:text-foreground"
+                      )}
+                      onClick={() => {
+                        const dropdown = document.getElementById('papers-dropdown');
+                        if (dropdown) dropdown.classList.toggle('hidden');
+                      }}
+                    >
+                      Papers ({selectedContext.papers.length}/{context.papers.length})
+                    </button>
+                    <div 
+                      id="papers-dropdown"
+                      className="hidden absolute left-0 mt-1 w-64 max-h-48 overflow-y-auto z-10 bg-card border border-border rounded-md shadow-lg"
+                    >
+                      {context.papers.map((paper, index) => (
+                        <div 
+                          key={`paper-${index}`}
+                          className={cn(
+                            "px-3 py-2 text-xs cursor-pointer hover:bg-accent",
+                            selectedContext.papers.includes(paper) ? "bg-primary/10" : ""
+                          )}
+                          onClick={() => toggleContextItem('papers', paper)}
+                        >
+                          <div className="flex items-start gap-2">
+                            <div className="pt-0.5">
+                              <input 
+                                type="checkbox" 
+                                checked={selectedContext.papers.includes(paper)}
+                                readOnly
+                                className="rounded text-primary"
+                              />
+                            </div>
+                            <span className="line-clamp-2">{paper}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {context.variants && context.variants.length > 0 && (
+                  <div className="relative group inline-block">
+                    <button
+                      className={cn(
+                        "px-2 py-1 rounded-md text-xs font-medium",
+                        selectedContext.variants.length > 0
+                          ? "bg-primary/20 text-primary"
+                          : "bg-accent text-muted-foreground hover:text-foreground"
+                      )}
+                      onClick={() => {
+                        const dropdown = document.getElementById('variants-dropdown');
+                        if (dropdown) dropdown.classList.toggle('hidden');
+                      }}
+                    >
+                      Variants ({selectedContext.variants.length}/{context.variants.length})
+                    </button>
+                    <div 
+                      id="variants-dropdown"
+                      className="hidden absolute left-0 mt-1 w-64 max-h-48 overflow-y-auto z-10 bg-card border border-border rounded-md shadow-lg"
+                    >
+                      {context.variants.map((variant, index) => (
+                        <div 
+                          key={`variant-${index}`}
+                          className={cn(
+                            "px-3 py-2 text-xs cursor-pointer hover:bg-accent",
+                            selectedContext.variants.includes(variant) ? "bg-primary/10" : ""
+                          )}
+                          onClick={() => toggleContextItem('variants', variant)}
+                        >
+                          <div className="flex items-start gap-2">
+                            <div className="pt-0.5">
+                              <input 
+                                type="checkbox" 
+                                checked={selectedContext.variants.includes(variant)}
+                                readOnly
+                                className="rounded text-primary"
+                              />
+                            </div>
+                            <span className="line-clamp-2">{variant}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {context.cases && context.cases.length > 0 && (
+                  <div className="relative group inline-block">
+                    <button
+                      className={cn(
+                        "px-2 py-1 rounded-md text-xs font-medium",
+                        selectedContext.cases.length > 0
+                          ? "bg-primary/20 text-primary"
+                          : "bg-accent text-muted-foreground hover:text-foreground"
+                      )}
+                      onClick={() => {
+                        const dropdown = document.getElementById('cases-dropdown');
+                        if (dropdown) dropdown.classList.toggle('hidden');
+                      }}
+                    >
+                      Cases ({selectedContext.cases.length}/{context.cases.length})
+                    </button>
+                    <div 
+                      id="cases-dropdown"
+                      className="hidden absolute left-0 mt-1 w-64 max-h-48 overflow-y-auto z-10 bg-card border border-border rounded-md shadow-lg"
+                    >
+                      {context.cases.map((caseItem, index) => (
+                        <div 
+                          key={`case-${index}`}
+                          className={cn(
+                            "px-3 py-2 text-xs cursor-pointer hover:bg-accent",
+                            selectedContext.cases.includes(caseItem) ? "bg-primary/10" : ""
+                          )}
+                          onClick={() => toggleContextItem('cases', caseItem)}
+                        >
+                          <div className="flex items-start gap-2">
+                            <div className="pt-0.5">
+                              <input 
+                                type="checkbox" 
+                                checked={selectedContext.cases.includes(caseItem)}
+                                readOnly
+                                className="rounded text-primary"
+                              />
+                            </div>
+                            <span className="line-clamp-2">{caseItem}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         <div
           className={cn(

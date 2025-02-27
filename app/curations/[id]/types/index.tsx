@@ -48,6 +48,13 @@ export interface Paper {
   variants: Variant[];
 }
 
+export interface Cases {
+  id: number;
+  case_id: string;
+  phenotypes: string;
+  notes: string;
+}
+
 export interface GeneData {
   papers: Paper[];
   variants: Variant[];

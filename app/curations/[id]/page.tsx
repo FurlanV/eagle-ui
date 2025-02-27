@@ -9,25 +9,20 @@ import {
 import { ColumnDef } from "@tanstack/react-table"
 import { BotMessageSquare, ExternalLink, X } from "lucide-react"
 
-import { useAppSelector } from "@/lib/hooks"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import AIChatCard from "@/components/ai-chat-card"
-import { FileStatusList } from "@/components/file-status-list"
 
 import { CaseDetailsTable } from "./components/case-details-table"
 import { PapersTable } from "./components/papers-table"
 import { VariantsTable } from "./components/variants-table"
-import { useCurationData } from "./hooks/useCurationData"
-import { Paper, Variant } from "./types"
+import { Cases, Paper, Variant } from "./types"
 
-// A reusable component to present each gene highlight in a card style.
-// The colored left-border (accent) immediately draws the user's eye to important values.
 type HighlightCardProps = {
   title: string
   children: React.ReactNode
-  accentClass: string // A valid Tailwind border accent color class, e.g., "border-green-500"
+  accentClass: string
 }
 
 function HighlightCard({ title, children, accentClass }: HighlightCardProps) {
@@ -43,7 +38,6 @@ function HighlightCard({ title, children, accentClass }: HighlightCardProps) {
   )
 }
 
-// A component to display external database references with proper links
 type DatabaseReference = {
   db: string
   id: string
@@ -104,17 +98,17 @@ function DatabaseReferences({ otherRefs }: { otherRefs?: string }) {
 
 // Define interfaces for the API response data
 interface GeneInfo {
-  id?: string;
-  description?: string;
-  map_location?: string;
-  synonyms?: string;
-  summary?: string;
-  other_refs?: string;
+  id?: string
+  description?: string
+  map_location?: string
+  synonyms?: string
+  summary?: string
+  other_refs?: string
 }
 
 interface GenePapersAndVariants {
-  papers: Paper[];
-  variants: Variant[];
+  papers: Paper[]
+  variants: Variant[]
 }
 
 export default function GeneDetailsPage() {
@@ -123,64 +117,31 @@ export default function GeneDetailsPage() {
   const gene_name = split_pathname[split_pathname.length - 1]
   if (!gene_name) return
 
-  const selectedJob = useAppSelector((state) => state.jobs.selectedJob)
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [isChatMaximized, setIsChatMaximized] = useState(false)
 
-
-
-  //const { data: annotationData } = useGetGeneReferencesQuery(gene_name)
   const { data: geneInfo } = useGetGeneInformationQuery(gene_name)
-  // Safely cast the data to GeneInfo type
+
   const geneInfoData = (geneInfo || {}) as GeneInfo
-  
+
   // Only fetch variants if we have a gene ID
   const { data: variantData } = useGetGenePapersAndVariantsQuery(
-    geneInfoData?.id || "", 
+    geneInfoData?.id || "",
     { skip: !geneInfoData?.id }
   )
-  
+
   // Default empty data if nothing is returned
-  const papers = Array.isArray(variantData) ? [] : 
-    (variantData as any)?.papers || []
-  
-  const variants = Array.isArray(variantData) ? [] : 
-    (variantData as any)?.variants || []
+  const papers = Array.isArray(variantData)
+    ? []
+    : (variantData as any)?.papers || []
 
-  const cases = Array.isArray(variantData) ? [] : 
-    (variantData as any)?.cases || []
-  
-  const genePapersAndVariantsData = {
-    papers,
-    variants,
-    cases
-  }
+  const variants = Array.isArray(variantData)
+    ? []
+    : (variantData as any)?.variants || []
 
-  // let scoreRelevance = ""
-  // switch (true) {
-  //   case totalFinalScore >= 12:
-  //     scoreRelevance = "Definitive"
-  //     break
-  //   case totalFinalScore >= 9:
-  //     scoreRelevance = "Strong"
-  //     break
-  //   case totalFinalScore >= 6:
-  //     scoreRelevance = "Moderate"
-  //     break
-  //   case totalFinalScore >= 3:
-  //     scoreRelevance = "Limited"
-  //     break
-  //   default:
-  //     scoreRelevance = "No Support"
-  // }
-
-  // console.log(geneInfoData)
-  // console.log(genePapersAndVariantsData)
-
-
-  const eagleScore = 41.5
-  // Determine the label based on the eagleScore
-  const eagleScoreLabel = eagleScore > 40 ? "Strong" : "Moderate"
+  const cases = Array.isArray(variantData)
+    ? []
+    : (variantData as any)?.cases || []
 
   const columns: ColumnDef<any, any>[] = useMemo(
     () => [
@@ -220,9 +181,7 @@ export default function GeneDetailsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <HighlightCard
               title="EAGLE Score"
-              accentClass={
-                0 > 12 ? "border-green-500" : "border-orange-500"
-              }
+              accentClass={0 > 12 ? "border-green-500" : "border-orange-500"}
             >
               <div className="flex flex-col">
                 <span className="text-2xl font-semibold text-gray-900">
@@ -285,14 +244,14 @@ export default function GeneDetailsPage() {
                 Rare Single Gene Mutation, Syndromic, Functional
               </p>
             </div>
-            <div className="sm:col-span-2">
+            {/* <div className="sm:col-span-2">
               <span className="block text-sm font-medium text-gray-500">
                 Gene Summary
               </span>
               <p className="mt-1 text-base text-gray-800">
                 {geneInfoData?.summary}
               </p>
-            </div>
+            </div> */}
             <div className="sm:col-span-2">
               <span className="block text-sm font-medium text-gray-500">
                 External Database References
@@ -345,10 +304,7 @@ export default function GeneDetailsPage() {
             Molecular Function
           </h2>
           <p className="text-base leading-relaxed text-gray-800">
-            Potential transcription factor that may mediate some of the
-            neuroprotective peptide VIP-associated effects involving normal
-            growth and cancer proliferation. In brain, expression is stronger in
-            the cerebellum and cortex regions.
+            {geneInfoData?.summary}
           </p>
         </section>
       </main>
@@ -364,10 +320,7 @@ export default function GeneDetailsPage() {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="papers">
-            <PapersTable 
-              papers={papers} 
-              isLoading={false} 
-            />
+            <PapersTable papers={papers} isLoading={false} />
           </TabsContent>
           <TabsContent value="case-details">
             <CaseDetailsTable
@@ -377,10 +330,7 @@ export default function GeneDetailsPage() {
             />
           </TabsContent>
           <TabsContent value="variants">
-            <VariantsTable 
-              variants={variants} 
-              isLoading={false} 
-            />
+            <VariantsTable variants={variants} isLoading={false} />
           </TabsContent>
           <TabsContent value="protein-interactions">
             <div className="py-8 text-center text-gray-500">
@@ -440,6 +390,13 @@ export default function GeneDetailsPage() {
                   gene_name={gene_name}
                   isMaximized={isChatMaximized}
                   onToggleMaximize={() => setIsChatMaximized(!isChatMaximized)}
+                  context={{
+                    papers: papers.map((paper: Paper) => paper.title),
+                    variants: variants.map(
+                      (variant: Variant) => variant.variant
+                    ),
+                    cases: cases.map((cases: Cases) => cases.case_id),
+                  }}
                   predefinedMessages={[
                     {
                       id: "1",
