@@ -4,25 +4,25 @@ import React, { useMemo, useState } from "react"
 import { usePathname } from "next/navigation"
 import {
   useGetGeneInformationQuery,
-  useGetGeneReferencesQuery,
-} from "@/services/annotation/gene"
+  useGetGenePapersAndVariantsQuery,
+} from "@/services/gene/gene"
 import { ColumnDef } from "@tanstack/react-table"
+import { BotMessageSquare, ExternalLink, X } from "lucide-react"
 
-import { useAppSelector } from "@/lib/hooks"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CaseDetailsTable } from "./components/case-details-table"
-import { useCurationData } from "./hooks/useCurationData"
-import { FileStatusList } from "@/components/file-status-list"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { MessageCircleIcon, X, BotMessageSquare, Bot } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import AIChatCard from "@/components/ai-chat-card"
 
-// A reusable component to present each gene highlight in a card style.
-// The colored left-border (accent) immediately draws the user's eye to important values.
+import { CaseDetailsTable } from "./components/case-details-table"
+import { PapersTable } from "./components/papers-table"
+import { VariantsTable } from "./components/variants-table"
+import { Cases, Paper, Variant } from "./types"
+
 type HighlightCardProps = {
   title: string
   children: React.ReactNode
-  accentClass: string // A valid Tailwind border accent color class, e.g., "border-green-500"
+  accentClass: string
 }
 
 function HighlightCard({ title, children, accentClass }: HighlightCardProps) {
@@ -38,68 +38,110 @@ function HighlightCard({ title, children, accentClass }: HighlightCardProps) {
   )
 }
 
+type DatabaseReference = {
+  db: string
+  id: string
+  url: string
+}
+
+function parseOtherRefs(otherRefs?: string): DatabaseReference[] {
+  if (!otherRefs) return []
+
+  return otherRefs.split("|").map((ref) => {
+    const [db, id] = ref.split(":")
+
+    // Define URLs for different database types
+    let url = "#"
+    switch (db) {
+      case "MIM":
+        url = `https://www.omim.org/entry/${id}`
+        break
+      case "HGNC":
+        url = `https://www.genenames.org/data/gene-symbol-report/#!/hgnc_id/${id}`
+        break
+      case "Ensembl":
+        url = `https://ensembl.org/Homo_sapiens/Gene/Summary?g=${id}`
+        break
+      case "AllianceGenome":
+        url = `https://www.alliancegenome.org/gene/${id}`
+        break
+      default:
+        url = `#${db}-${id}`
+    }
+
+    return { db, id, url }
+  })
+}
+
+function DatabaseReferences({ otherRefs }: { otherRefs?: string }) {
+  const references = parseOtherRefs(otherRefs)
+
+  if (references.length === 0) return null
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {references.map((ref, index) => (
+        <a
+          key={index}
+          href={ref.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors"
+        >
+          {ref.db}
+          <ExternalLink className="ml-1 h-3 w-3" />
+        </a>
+      ))}
+    </div>
+  )
+}
+
+// Define interfaces for the API response data
+interface GeneInfo {
+  id?: string
+  description?: string
+  map_location?: string
+  synonyms?: string
+  summary?: string
+  other_refs?: string
+}
+
+interface GenePapersAndVariants {
+  papers: Paper[]
+  variants: Variant[]
+}
+
 export default function GeneDetailsPage() {
   const pathname = usePathname()
   const split_pathname = pathname.split("/")
   const gene_name = split_pathname[split_pathname.length - 1]
   if (!gene_name) return
 
-  const selectedJob = useAppSelector((state) => state.jobs.selectedJob)
   const [isChatOpen, setIsChatOpen] = useState(false)
+  const [isChatMaximized, setIsChatMaximized] = useState(false)
 
-  const {
-    childrenData,
-    isChildrenLoading,
-    childrenError,
-    allTasksCompleted,
-    totalFinalScore,
-    variantWordCounts,
-    evidenceTypeCounts,
-    otherInsights,
-    selectedFile,
-    setSelectedFile,
-    showFileDetails,
-    setShowFileDetails,
-    searchTerm,
-    setSearchTerm,
-    taskInfo,
-    isTaskInfoLoading,
-    lastUpdateTime,
-    caseDetailsData,
-  } = useCurationData(selectedJob)
+  const { data: geneInfo } = useGetGeneInformationQuery(gene_name)
 
-  const { data: annotationData } = useGetGeneReferencesQuery(gene_name)
-  const { data: geneInfoData = {} } = useGetGeneInformationQuery(
-    annotationData && annotationData[0].id,
-    {
-      skip: !annotationData || annotationData.length === 0,
-    }
+  const geneInfoData = (geneInfo || {}) as GeneInfo
+
+  // Only fetch variants if we have a gene ID
+  const { data: variantData } = useGetGenePapersAndVariantsQuery(
+    geneInfoData?.id || "",
+    { skip: !geneInfoData?.id }
   )
 
-  let scoreRelevance = ""
-  switch (true) {
-    case totalFinalScore >= 12:
-      scoreRelevance = "Definitive"
-      break
-    case totalFinalScore >= 9:
-      scoreRelevance = "Strong"
-      break
-    case totalFinalScore >= 6:
-      scoreRelevance = "Moderate"
-      break
-    case totalFinalScore >= 3:
-      scoreRelevance = "Limited"
-      break
-    default:
-      scoreRelevance = "No Support"
-  }
+  // Default empty data if nothing is returned
+  const papers = Array.isArray(variantData)
+    ? []
+    : (variantData as any)?.papers || []
 
-  // console.log(geneInfoData)
-  // console.log(annotationData)
+  const variants = Array.isArray(variantData)
+    ? []
+    : (variantData as any)?.variants || []
 
-  const eagleScore = 41.5
-  // Determine the label based on the eagleScore
-  const eagleScoreLabel = eagleScore > 40 ? "Strong" : "Moderate"
+  const cases = Array.isArray(variantData)
+    ? []
+    : (variantData as any)?.cases || []
 
   const columns: ColumnDef<any, any>[] = useMemo(
     () => [
@@ -111,22 +153,7 @@ export default function GeneDetailsPage() {
       {
         accessorKey: "sex",
         header: "Sex",
-        cell: (info) => info.getValue(),
-      },
-      {
-        accessorKey: "inheritance",
-        header: "Inheritance",
-        cell: (info) => info.getValue(),
-      },
-      {
-        accessorKey: "total_case_score",
-        header: "Final Score",
-        cell: (info) => info.getValue(),
-      },
-      {
-        accessorKey: "phenotype_quality",
-        header: "Phenotype Quality",
-        cell: (info) => info.getValue(),
+        cell: (info) => info.getValue() || "Not specified",
       },
     ],
     []
@@ -136,7 +163,7 @@ export default function GeneDetailsPage() {
     <div className="relative min-w-full min-h-screen bg-gray-50 text-gray-900">
       {/* Hero Section */}
       <header className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-4xl font-extrabold">{gene_name}</h1>
           <p className="mt-2 text-lg">
             {geneInfoData?.description?.split("[")[0]}
@@ -145,7 +172,7 @@ export default function GeneDetailsPage() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
+      <main className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
         {/* Gene Highlights Section */}
         <section>
           <h2 className="text-2xl font-semibold border-b-2 border-gray-300 pb-2 mb-6">
@@ -154,37 +181,35 @@ export default function GeneDetailsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <HighlightCard
               title="EAGLE Score"
-              accentClass={
-                totalFinalScore > 12 ? "border-green-500" : "border-orange-500"
-              }
+              accentClass={0 > 12 ? "border-green-500" : "border-orange-500"}
             >
               <div className="flex flex-col">
                 <span className="text-2xl font-semibold text-gray-900">
-                  {totalFinalScore}
+                  {0}
                 </span>
-                <span className="text-sm text-gray-500">{scoreRelevance}</span>
+                <span className="text-sm text-gray-500">{"No Support"}</span>
               </div>
             </HighlightCard>
 
             <HighlightCard
-              title="Autism Reports / Total Reports"
+              title="Total Autism Reports"
               accentClass="border-blue-500"
             >
-              44 / 90
+              {cases.length}
             </HighlightCard>
 
             <HighlightCard
               title="Rare Variants / Common Variants"
               accentClass="border-red-500"
             >
-              192 / 0
+              {variants.length} / {cases.length}
             </HighlightCard>
 
             <HighlightCard
               title="Chromosome Band"
               accentClass="border-purple-500"
             >
-              20q13.13
+              {geneInfoData?.map_location}
             </HighlightCard>
           </div>
         </section>
@@ -199,7 +224,9 @@ export default function GeneDetailsPage() {
               <span className="block text-sm font-medium text-gray-500">
                 Gene Aliases
               </span>
-              <p className="mt-1 text-base text-gray-800">ADNP, ADNP1</p>
+              <p className="mt-1 text-base text-gray-800">
+                {geneInfoData?.synonyms?.replaceAll("|", ", ")}
+              </p>
             </div>
             <div>
               <span className="block text-sm font-medium text-gray-500">
@@ -217,18 +244,21 @@ export default function GeneDetailsPage() {
                 Rare Single Gene Mutation, Syndromic, Functional
               </p>
             </div>
-            <div className="sm:col-span-2">
+            {/* <div className="sm:col-span-2">
               <span className="block text-sm font-medium text-gray-500">
-                Associated Syndromes
+                Gene Summary
               </span>
               <p className="mt-1 text-base text-gray-800">
-                Helsmoortel-Van der Aa syndrome, ASD, ID, Helsmoortel-van der Aa
-                syndrome, Helsmoortel-Van der Aa syndrome, DD, ID,
-                Helsmoortel-van der Aa syndrome, DD, Helsmoortel-van der Aa
-                syndrome, ASD, DD, Helsmoortel-van der Aa syndrome, ASD, DD, ID,
-                Helsmoortel-van der Aa syndrome, ASD, DD, epilepsy,
-                Helsmoortel-Van der Aa syndrome, ASD, ADHD, DD, ID
+                {geneInfoData?.summary}
               </p>
+            </div> */}
+            <div className="sm:col-span-2">
+              <span className="block text-sm font-medium text-gray-500">
+                External Database References
+              </span>
+              <div className="mt-2">
+                <DatabaseReferences otherRefs={geneInfoData?.other_refs} />
+              </div>
             </div>
           </div>
         </section>
@@ -274,15 +304,12 @@ export default function GeneDetailsPage() {
             Molecular Function
           </h2>
           <p className="text-base leading-relaxed text-gray-800">
-            Potential transcription factor that may mediate some of the
-            neuroprotective peptide VIP-associated effects involving normal
-            growth and cancer proliferation. In brain, expression is stronger in
-            the cerebellum and cortex regions.
+            {geneInfoData?.summary}
           </p>
         </section>
       </main>
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         <Tabs defaultValue="papers">
           <TabsList>
             <TabsTrigger value="papers">Papers</TabsTrigger>
@@ -293,19 +320,22 @@ export default function GeneDetailsPage() {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="papers">
-            <FileStatusList
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              handleFileClick={() => {}}
-              tasks={childrenData}
-            />
+            <PapersTable papers={papers} isLoading={false} />
           </TabsContent>
           <TabsContent value="case-details">
             <CaseDetailsTable
-              caseDetailsData={caseDetailsData}
+              caseDetailsData={cases || []}
               columns={columns}
-              isLoading={isChildrenLoading}
+              isLoading={false}
             />
+          </TabsContent>
+          <TabsContent value="variants">
+            <VariantsTable variants={variants} isLoading={false} />
+          </TabsContent>
+          <TabsContent value="protein-interactions">
+            <div className="py-8 text-center text-gray-500">
+              Protein interaction data coming soon
+            </div>
           </TabsContent>
         </Tabs>
       </div>
@@ -324,33 +354,50 @@ export default function GeneDetailsPage() {
       <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-4">
         {isChatOpen && (
           <>
-            {/* Backdrop overlay */}
-            <div 
-              className="fixed inset-0 bg-black/20 backdrop-blur-sm transition-opacity duration-300 ease-in-out z-40"
-              onClick={() => setIsChatOpen(false)}
-              aria-hidden="true"
-            />
-            
             {/* Chat card with animation */}
-            <div 
-              className="mb-2 z-50 transform transition-all duration-300 ease-in-out translate-y-0 opacity-100 scale-100 max-w-[90vw] sm:max-w-md"
+            <div
+              className={cn(
+                "mb-2 transform transition-all duration-300 ease-in-out translate-y-0 opacity-100 scale-100",
+                isChatMaximized
+                  ? "fixed inset-0 z-[90] flex items-center justify-center w-full h-full"
+                  : "max-w-[90vw] sm:max-w-md z-50"
+              )}
               role="dialog"
               aria-labelledby="chat-title"
               aria-modal="true"
             >
-              <div className="relative">
+              <div
+                className={cn(
+                  "relative",
+                  isChatMaximized
+                    ? "w-full h-full flex items-center justify-center"
+                    : ""
+                )}
+              >
                 {/* Close button for mobile accessibility */}
-                <button
-                  className="absolute -top-2 -right-2 bg-white dark:bg-zinc-800 rounded-full p-1 shadow-md sm:hidden"
-                  onClick={() => setIsChatOpen(false)}
-                  aria-label="Close chat"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-                
-                <AIChatCard 
-                  chatName={`${gene_name} Assistant`} 
-                  messages={[
+                {!isChatMaximized && (
+                  <button
+                    className="absolute -top-2 -right-2 bg-white dark:bg-zinc-800 rounded-full p-1 shadow-md sm:hidden"
+                    onClick={() => setIsChatOpen(false)}
+                    aria-label="Close chat"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+
+                <AIChatCard
+                  chatName={`${gene_name} Assistant`}
+                  gene_name={gene_name}
+                  isMaximized={isChatMaximized}
+                  onToggleMaximize={() => setIsChatMaximized(!isChatMaximized)}
+                  context={{
+                    papers: papers.map((paper: Paper) => paper.title),
+                    variants: variants.map(
+                      (variant: Variant) => variant.variant
+                    ),
+                    cases: cases.map((cases: Cases) => cases.case_id),
+                  }}
+                  predefinedMessages={[
                     {
                       id: "1",
                       content: `Welcome to the ${gene_name} gene information page. I can help you understand this gene and its relevance to autism.`,
@@ -372,21 +419,29 @@ export default function GeneDetailsPage() {
                       },
                       timestamp: "Just now",
                       status: "read",
-                    }
+                    },
                   ]}
                 />
               </div>
             </div>
           </>
         )}
-        <Button 
-          onClick={() => setIsChatOpen(!isChatOpen)} 
-          className={`rounded-full p-3 shadow-lg transition-all duration-300 ${isChatOpen ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-600 hover:bg-blue-700'}`}
+        <Button
+          onClick={() => setIsChatOpen(!isChatOpen)}
+          className={`rounded-full p-3 shadow-lg transition-all duration-300 ${
+            isChatOpen
+              ? "bg-red-500 hover:bg-red-600"
+              : "bg-blue-600 hover:bg-blue-700"
+          } ${isChatMaximized ? "hidden" : ""}`}
           aria-label={isChatOpen ? "Close chat" : "Open chat"}
           aria-expanded={isChatOpen}
           aria-controls="gene-assistant-chat"
         >
-          {isChatOpen ? <X className="w-5 h-5" /> : <BotMessageSquare className="w-5 h-5" />}
+          {isChatOpen ? (
+            <X className="w-5 h-5" />
+          ) : (
+            <BotMessageSquare className="w-5 h-5" />
+          )}
         </Button>
       </div>
     </div>

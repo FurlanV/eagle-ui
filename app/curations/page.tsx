@@ -1,5 +1,6 @@
 "use client"
 
+import { useGetGenesWithCasesQuery } from "@/services/gene/gene"
 import {
   useGetJobInformationQuery,
   useGetUserTasksQuery,
@@ -9,6 +10,7 @@ import { setSelectedJob } from "@/store/eagle/job-slice"
 import { EagleJob } from "@/types/eagle-job"
 import { useAppDispatch } from "@/lib/hooks"
 import { AuthWrapper } from "@/components/auth-wrapper"
+import { GenesTable } from "@/components/genes-table"
 import { JobsTable } from "@/components/jobs-table"
 
 export default function CurationsPage() {
@@ -25,11 +27,13 @@ export default function CurationsPage() {
 
   const dispatch = useAppDispatch()
 
+  const { data: genesWithCasesData = [] } = useGetGenesWithCasesQuery()
+
   return (
     <AuthWrapper>
       <div className="flex flex-col p-4 space-y-6">
         <header className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Curations</h1>
+          <h1 className="text-2xl font-bold">Genes</h1>
         </header>
 
         {error && (
@@ -42,12 +46,17 @@ export default function CurationsPage() {
           </div>
         )}
 
-        <JobsTable
-          data={data}
-          setJob={(job: EagleJob) => dispatch(setSelectedJob(job))}
-          isLoading={isFetching}
-          refetch={() => refetch()}
-        />
+        <GenesTable data={genesWithCasesData} />
+
+        {/* <div>
+            <h2 className="text-xl font-semibold mb-4">Jobs</h2>
+            <JobsTable
+              data={data}
+              setJob={(job: EagleJob) => dispatch(setSelectedJob(job))}
+              isLoading={isFetching}
+              refetch={() => refetch()}
+            />
+          </div> */}
       </div>
     </AuthWrapper>
   )

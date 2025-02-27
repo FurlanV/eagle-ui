@@ -46,7 +46,7 @@ export function DataTable<TData, TValue>({
   data,
   initialPageSize = 10,
   hidePagination = false,
-  enableExpanding = true,
+  enableExpanding = false,
   onRowClick,
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({})
