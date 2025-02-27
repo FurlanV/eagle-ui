@@ -19,6 +19,11 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { FileUploadArea } from "@/components/file-upload-area"
 
 import { Icons } from "./icons"
@@ -98,29 +103,19 @@ export function NewJobDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="default">
-          <Icons.upload className="w-4 h-4 mr-2" />
-          New Job
+        <Button variant="ghost" size="icon">
+          <Icons.upload className="h-[1.3rem] w-[1.3rem]" />
+          <span className="sr-only">Upload Paper</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[650px]">
         <DialogHeader>
-          <DialogTitle>New Job</DialogTitle>
+          <DialogTitle>Paper Upload</DialogTitle>
           <DialogDescription>
-            Launch a new curation job to start reviewing cases
+            Upload papers to start a new curation job
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          {/* <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="job ID">Job ID [optional]</Label>
-            <Input
-              id="job_id"
-              placeholder="my-curation"
-              ref={jobIdRef}
-              className="col-span-3"
-            />
-          </div>
-          <Separator orientation="horizontal" /> */}
           <div className="flex flex-col w-full gap-4">
             <Label htmlFor="upload-files">Upload papers</Label>
             <FileUploadArea
@@ -146,7 +141,11 @@ export function NewJobDialog() {
             onClick={() => uploadFiles(files)}
             disabled={isUploading}
           >
-            {isUploading ? "Uploading..." : "Run"}
+            {isUploading ? (
+              "Uploading..."
+            ) : (
+              <Icons.upload className="h-4 w-4 m-2" />
+            )}
           </Button>
           <DialogClose asChild>
             <Button variant="outline" disabled={isUploading}>

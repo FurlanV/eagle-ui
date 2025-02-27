@@ -3,10 +3,8 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
-  CandlestickChart,
   Dna,
   Home,
-  PersonStanding,
   Settings,
   TestTubeDiagonal,
 } from "lucide-react"
@@ -19,6 +17,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { NewJobDialog } from "@/components/new-job-dialog"
+
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -65,28 +65,14 @@ export function Sidebar() {
                 )}
               >
                 <TestTubeDiagonal className="h-5 w-5" />
-                <span className="sr-only">Curations</span>
+                <span className="sr-only">Genes</span>
               </Link>
             </TooltipTrigger>
-            <TooltipContent side="right">Curations</TooltipContent>
+            <TooltipContent side="right">Genes</TooltipContent>
           </Tooltip>
-          {/* <Tooltip>
-            <TooltipTrigger asChild>
-              <Link
-                href="/eval"
-                className={cn(
-                  "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8",
-                  current === "analyses" && "text-accent-foreground bg-accent"
-                )}
-              >
-                <CandlestickChart className="h-5 w-5" />
-                <span className="sr-only">Evaluations</span>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side="right">Evaluations</TooltipContent>
-          </Tooltip> */}
         </nav>
-        <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
+        <nav className="mt-auto flex flex-col items-center gap-4 px-2 py-5">
+          <NewJobDialog />
           <ThemeToggle />
           <Tooltip>
             <TooltipTrigger asChild>

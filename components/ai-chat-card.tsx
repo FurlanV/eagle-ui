@@ -6,13 +6,12 @@ import {
   Maximize2,
   Minimize2,
   MoreHorizontal,
-  Send,
-  SmilePlus,
   Users,
 } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 
 import { cn } from "@/lib/utils"
+import AIInput from "./ai-input"
 
 interface Message {
   id: string
@@ -61,6 +60,7 @@ export default function AIChatCard({
     variants: string[];
     cases: string[];
   }>({ papers: [], variants: [], cases: [] })
+  const [useDeepResearch, setUseDeepResearch] = useState<boolean>(false)
 
   const {
     completion,
@@ -75,10 +75,9 @@ export default function AIChatCard({
     body: {
       gene_name,
       selectedContext,
+      useDeepResearch,
     },
   })
-
-  console.log(selectedContext)
 
   const [streamingMessage, setStreamingMessage] = useState<string>("")
   const [isStreaming, setIsStreaming] = useState<boolean>(false)
@@ -126,17 +125,15 @@ export default function AIChatCard({
   }, [isLoading, completion, isStreaming])
 
   // Custom submit handler
-  const handleMessageSubmit = (e?: React.FormEvent) => {
-    if (e) e.preventDefault()
-
-    if (!input.trim()) return
+  const handleMessageSubmit = (value: string) => {
+    if (!value.trim()) return;
 
     // Add user message
     setMessages((prevMessages) => [
       ...prevMessages,
       {
         id: String(prevMessages.length + 1),
-        content: input,
+        content: value,
         sender: { name: "User", avatar: "", isOnline: true },
         timestamp: new Date().toLocaleTimeString([], {
           hour: "2-digit",
@@ -144,19 +141,14 @@ export default function AIChatCard({
         }),
         status: "sent",
       },
-    ])
+    ]);
 
+    // Set the input value for the AI completion
+    handleInputChange({ target: { value } } as React.ChangeEvent<HTMLInputElement>);
+    
     // Submit to AI
-    handleSubmit()
-  }
-
-  // Handle keyboard events
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleMessageSubmit()
-    }
-  }
+    handleSubmit(new Event('submit') as any);
+  };
 
   // Handle Escape key to minimize the chat
   useEffect(() => {
@@ -592,56 +584,12 @@ export default function AIChatCard({
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="p-4 border-t border-border mt-auto">
-          <form
+        <div className="border-t border-border">
+          <AIInput 
             onSubmit={handleMessageSubmit}
-            className="flex items-center gap-3"
-          >
-            <div className="relative flex-1">
-              <input
-                type="text"
-                placeholder="Write a message..."
-                value={input}
-                onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
-                className={cn(
-                  "w-full px-4 py-2.5 pr-10",
-                  "bg-accent/50",
-                  "border border-input",
-                  "rounded-xl",
-                  "text-sm text-foreground",
-                  "placeholder:text-muted-foreground",
-                  "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30",
-                  "transition-all duration-200"
-                )}
-              />
-              <button
-                type="button"
-                className={cn(
-                  "absolute right-2 top-1/2 -translate-y-1/2",
-                  "p-1.5 rounded-lg",
-                  "hover:bg-accent text-muted-foreground hover:text-foreground",
-                  "transition-colors duration-200"
-                )}
-              >
-                <SmilePlus className="w-4 h-4" />
-              </button>
-            </div>
-            <button
-              type="submit"
-              className={cn(
-                "p-2.5 rounded-xl",
-                "bg-primary text-primary-foreground",
-                "hover:bg-primary/90",
-                "transition-colors duration-200",
-                "focus:outline-none focus:ring-2 focus:ring-primary/20",
-                isLoading ? "opacity-50 cursor-not-allowed" : ""
-              )}
-              disabled={isLoading}
-            >
-              <Send className="w-4 h-4" />
-            </button>
-          </form>
+            useDeepResearch={useDeepResearch}
+            setUseDeepResearch={setUseDeepResearch}
+          />
         </div>
       </div>
     </div>

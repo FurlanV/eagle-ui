@@ -75,7 +75,7 @@ export function TopVariantsChart({ data }: TopVariantsChartProps) {
           <BarChart 
             data={chartData} 
             layout="vertical" 
-            margin={{ left: 120, right: 20, top: 20, bottom: 20 }}
+            margin={{ left: 60, right: 20, top: 20, bottom: 20 }}
           >
             <CartesianGrid strokeDasharray="3 3" horizontal={false} />
             <XAxis type="number" domain={[0, 'dataMax + 1']} />
