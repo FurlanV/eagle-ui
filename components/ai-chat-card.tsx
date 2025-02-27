@@ -7,6 +7,7 @@ import {
   Minimize2,
   MoreHorizontal,
   Users,
+  Search,
 } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 
@@ -81,6 +82,7 @@ export default function AIChatCard({
 
   const [streamingMessage, setStreamingMessage] = useState<string>("")
   const [isStreaming, setIsStreaming] = useState<boolean>(false)
+  const [isDeepResearching, setIsDeepResearching] = useState<boolean>(false)
 
   // Scroll to bottom whenever messages change or streaming content updates
   const scrollToBottom = () => {
@@ -98,6 +100,10 @@ export default function AIChatCard({
       if (!isStreaming) {
         setIsStreaming(true)
         setStreamingMessage("")
+        // If deep research is enabled, show the deep research loading state
+        if (useDeepResearch) {
+          setIsDeepResearching(true)
+        }
       }
 
       // Update the streaming message
@@ -121,8 +127,9 @@ export default function AIChatCard({
       // Reset streaming state
       setIsStreaming(false)
       setStreamingMessage("")
+      setIsDeepResearching(false)
     }
-  }, [isLoading, completion, isStreaming])
+  }, [isLoading, completion, isStreaming, useDeepResearch])
 
   // Custom submit handler
   const handleMessageSubmit = (value: string) => {
@@ -554,9 +561,26 @@ export default function AIChatCard({
                       })}
                     </span>
                   </div>
-                  {streamingMessage ? (
+                  {isDeepResearching && !streamingMessage ? (
                     <div className="p-3 rounded-xl bg-accent/50 text-foreground text-sm">
-                      {streamingMessage}
+                      <div className="flex flex-col space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Search className="w-4 h-4 text-green-500 animate-pulse" />
+                          <span className="font-medium">Deep Research in progress...</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-1.5">
+                          <div className="bg-green-500 h-1.5 rounded-full animate-pulse" style={{ width: '100%' }}></div>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Searching the web for information about {gene_name}. This may take a moment.
+                        </p>
+                      </div>
+                    </div>
+                  ) : streamingMessage ? (
+                    <div className="p-3 rounded-xl bg-accent/50 text-foreground text-sm">
+                      <ReactMarkdown className="markdown prose prose-sm max-w-none dark:prose-invert">
+                        {streamingMessage}
+                      </ReactMarkdown>
                       <span className="inline-block w-1.5 h-4 ml-0.5 bg-primary/50 animate-pulse rounded-sm"></span>
                     </div>
                   ) : (
