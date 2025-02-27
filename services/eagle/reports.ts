@@ -1,23 +1,44 @@
-import { createApi } from '@reduxjs/toolkit/query/react'
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 import type { Report } from '@/types/report'
-import { createBaseQueryWithReauth } from '@/services/base-query'
+import { DashboardStats } from "@/types/dashboard"
+import { createBaseQueryWithReauth } from "@/services/base-query"
 
-const baseQueryWithReauth = createBaseQueryWithReauth('/eagle/api/report/')
+const baseQueryWithReauth = createBaseQueryWithReauth('/eagle/api/eagle')
 
 export const eagleReportAPI = createApi({
     reducerPath: 'eagleReportAPI',
     baseQuery: baseQueryWithReauth,
     endpoints: (builder) => ({
         getReportsByGene: builder.query<Report[], string>({
-            query: (gene_symbol: string) => `gene?symbol=${gene_symbol}`,
-        }),
-        getReportsByCaseId: builder.query<Report[], string>({
-            query: (caseId: string) => `cases?case_id=${caseId}`,
+            query: (geneId) => `/reports/gene/${geneId}`,
         }),
         getAllReports: builder.query<Report[], void>({
-            query: () => '',
+            query: () => `/reports`,
+        }),
+        getReportsByCaseId: builder.query<Report[], string>({
+            query: (caseId) => `/reports/case/${caseId}`,
+        }),
+        getBasicReportInfo: builder.query<Report[], string>({
+            query: (reportId) => `/reports/${reportId}/basic`,
+        }),
+        getFinalScorePerGene: builder.query<Report[], void>({
+            query: () => `/reports/gene-scores`,
+        }),
+        getSankeyData: builder.query<Report[], void>({
+            query: () => `/reports/sankey`,
+        }),
+        getDashboardStats: builder.query<DashboardStats, void>({
+            query: () => `/dashboard`,
         }),
     }),
 })
 
-export const { useGetReportsByGeneQuery, useGetAllReportsQuery, useGetReportsByCaseIdQuery } = eagleReportAPI
+export const {
+    useGetReportsByGeneQuery,
+    useGetAllReportsQuery,
+    useGetReportsByCaseIdQuery,
+    useGetBasicReportInfoQuery,
+    useGetFinalScorePerGeneQuery,
+    useGetSankeyDataQuery,
+    useGetDashboardStatsQuery,
+} = eagleReportAPI

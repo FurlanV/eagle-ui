@@ -1,76 +1,151 @@
 "use client"
 
-import { useGetJobPapersQuery } from "@/services/eagle/jobs"
-import { Separator } from "@radix-ui/react-separator"
-import Markdown from "react-markdown"
-import remarkGfm from "remark-gfm"
-
-import { Button } from "@/components/ui/button"
-import { Card, CardHeader } from "@/components/ui/card"
+import { useCallback, useEffect, useState } from "react"
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+  useCreateCurationReviewMutation,
+  useGetCurationReviewsByJobIdQuery,
+  useUpdateCurationReviewMutation,
+} from "@/services/eagle/review"
 
-export function CurationReviewDialog({ job_id, job_name, job_status }: any) {
-  const { data, error, isLoading } = useGetJobPapersQuery(job_id)
+import { CurationReview } from "@/types/curation-review"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { useToast } from "@/components/ui/use-toast"
+import { LikertSlider } from "@/components/likert-slider"
+
+export function CurationReviewDialog({ job_id }: any) {
+  const { toast } = useToast()
+
+  const [review, setReview] = useState({
+    paperAnalysis: { rating: 0, comment: "" },
+    evidenceSummary: { rating: 0, comment: "" },
+    evidenceScore: { rating: 0, comment: "" },
+  })
+
+  const { data: curationReviews, isLoading: isLoadingCurationReviews } =
+    useGetCurationReviewsByJobIdQuery(job_id, {
+      skip: !job_id,
+      refetchOnMountOrArgChange: true,
+    })
+  const [createCurationReview, { isLoading: isCreatingCurationReview }] =
+    useCreateCurationReviewMutation()
+  const [updateCurationReview, { isLoading: isUpdatingCurationReview }] =
+    useUpdateCurationReviewMutation()
+
+  // Add useEffect to populate review state when curation reviews are loaded
+
+  const setReviewData = useCallback(
+    (curationReviews: CurationReview) => {
+      setReview({
+        paperAnalysis: {
+          rating: curationReviews.paper_analysis_rating || 0,
+          comment: curationReviews.paper_analysis_comment || "",
+        },
+        evidenceSummary: {
+          rating: curationReviews.evidence_summary_rating || 0,
+          comment: curationReviews.evidence_summary_comment || "",
+        },
+        evidenceScore: {
+          rating: curationReviews.evidence_score_rating || 0,
+          comment: curationReviews.evidence_score_comment || "",
+        },
+      })
+    },
+    [curationReviews]
+  )
+
+  useEffect(() => {
+    if (curationReviews) {
+      setReviewData(curationReviews)
+    }
+  }, [curationReviews])
+
+  const handleRatingChange = (category: string, value: number) => {
+    setReview((prev) => ({
+      ...prev,
+      [category]: { ...prev[category as keyof typeof prev], rating: value },
+    }))
+  }
+
+  const handleCommentChange = (category: string, value: string) => {
+    setReview((prev) => ({
+      ...prev,
+      [category]: { ...prev[category as keyof typeof prev], comment: value },
+    }))
+  }
+
+  const handleSave = () => {
+    if (curationReviews) {
+      updateCurationReview({
+        ...curationReviews,
+        paper_analysis_rating: review.paperAnalysis.rating,
+        paper_analysis_comment: review.paperAnalysis.comment,
+        evidence_summary_rating: review.evidenceSummary.rating,
+        evidence_summary_comment: review.evidenceSummary.comment,
+        evidence_score_rating: review.evidenceScore.rating,
+        evidence_score_comment: review.evidenceScore.comment,
+      })
+      toast({
+        title: "Curation review updated",
+        description: "Your curation review has been updated",
+      })
+    } else {
+      createCurationReview({
+        ...curationReviews,
+        job_id: job_id,
+        paper_analysis_rating: review.paperAnalysis.rating,
+        paper_analysis_comment: review.paperAnalysis.comment,
+        evidence_summary_rating: review.evidenceSummary.rating,
+        evidence_summary_comment: review.evidenceSummary.comment,
+        evidence_score_rating: review.evidenceScore.rating,
+        evidence_score_comment: review.evidenceScore.comment,
+      })
+      toast({
+        title: "Thanks for your review!",
+        description: "Your curation review has been successfully created",
+      })
+    }
+  }
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Card key={job_id}>
-          <CardHeader>
-            <h3 className="text-sm font-bold">{job_name}</h3>
-            <p className="text-sm text-muted-foreground">{job_status}</p>
-          </CardHeader>
-        </Card>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[calc(100vw-100px)] sm:max-h-[780px] m-4">
-        <DialogHeader>
-          <DialogTitle>{job_name}</DialogTitle>
-          <DialogDescription>{job_status}</DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="flex flex-row  w-full">
-            <div className="flex flex-col w-[480px] gap-2 overflow-scroll h-72">
-              {data &&
-                data.map((paper: any) => (
-                  <div
-                    key={paper.id}
-                    className="flex items-center justify-between space-x-4 px-4"
-                  >
-                    <div
-                      className="rounded-md border px-4 py-2 font-mono text-sm shadow-sm cursor-pointer w-full text-center"
-                      onClick={() => {}}
-                    >
-                      {paper.title}
-                    </div>
-                  </div>
-                ))}
+    <div>
+      <div className="flex-1 overflow-y-auto p-2">
+        <div className="space-y-6">
+          {Object.entries(review).map(([category, values]) => (
+            <div key={category} className="space-y-3">
+              <div className="flex flex-col gap-2">
+                <h4 className="font-medium capitalize text-base">
+                  {category
+                    .replace(/([A-Z])/g, " $1")
+                    .trim()
+                    .toLowerCase()}
+                </h4>
+                <div className="w-full">
+                  <LikertSlider
+                    value={values.rating}
+                    onChange={(value) => handleRatingChange(category, value)}
+                  />
+                </div>
+              </div>
+              <Textarea
+                placeholder={`Add your ${category} comment here...`}
+                value={values.comment}
+                onChange={(e) => handleCommentChange(category, e.target.value)}
+                className="h-24 resize-none"
+              />
             </div>
-            <Separator orientation="vertical" asChild />
-            <div className="rounded-md border overflow-scroll w-full h-[620px]">
-              <Markdown
-                className="flex flex-col overflow-scroll p-4 markdown"
-                remarkPlugins={[remarkGfm]}
-              >
-                {/* {selectedOutput?.output} */}
-              </Markdown>
-            </div>
-          </div>
+          ))}
         </div>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">Close</Button>
-          </DialogClose>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      </div>
+      <div className="flex justify-end m-2">
+        <Button
+          variant="outline"
+          disabled={isCreatingCurationReview || isUpdatingCurationReview}
+          onClick={handleSave}
+        >
+          Save
+        </Button>
+      </div>
+    </div>
   )
 }

@@ -189,7 +189,7 @@ export function JobsTable({
 
   const stickyTable = useReactTable({
     data,
-    columns: stickyColumns,
+    columns: stickyColumns ?? [],
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -234,8 +234,9 @@ export function JobsTable({
           <Input
             placeholder="Filter Jobs..."
             value={
-              (stickyTable.getColumn("task_name")?.getFilterValue() as string) ??
-              ""
+              (stickyTable
+                .getColumn("task_name")
+                ?.getFilterValue() as string) ?? ""
             }
             onChange={(event) =>
               stickyTable
@@ -275,8 +276,8 @@ export function JobsTable({
                 stickyTable.getRowModel().rows.map((row) => (
                   <>
                     <TableRow
-                      className="border-none cursor-pointer"
                       key={row.id}
+                      className="border-none cursor-pointer"
                       data-state={row.getIsSelected() && "selected"}
                       onClick={() => {
                         setJob(row.original)

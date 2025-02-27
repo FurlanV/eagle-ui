@@ -1,22 +1,32 @@
-# next-template
+## Project Structure
 
-A Next.js 13 template for building apps with Radix UI and Tailwind CSS.
-
-## Usage
-
-```bash
-npx create-next-app -e https://github.com/shadcn/next-template
-```
-
-## Features
-
-- Next.js 13 App Directory
-- Radix UI Primitives
-- Tailwind CSS
-- Icons from [Lucide](https://lucide.dev)
-- Dark mode with `next-themes`
-- Tailwind CSS class sorting, merging and linting.
-
-## License
-
-Licensed under the [MIT license](https://github.com/shadcn/ui/blob/main/LICENSE.md).
+gendex-ui/
+├── app/
+│   └── curations/
+│       └── [id]/
+│           ├── components/
+│           │   ├── Header.tsx
+│           │   ├── OverviewCards.tsx
+│           │   ├── Alerts.tsx
+│           │   ├── WordClouds.tsx
+│           │   ├── InheritancePatternsChart.tsx
+│           │   ├── CaseDetailsTable.tsx
+│           │   ├── ReportMetrics.tsx
+│           │   └── ScoreRationale.tsx
+│           ├── hooks/
+│           │   └── useCurationData.ts
+│           ├── types/
+│           │   └── index.ts
+│           └── page.tsx
+├── components/
+│   └── ui/
+│       ├── alert/
+│       ├── badge/
+│       ├── button/
+│       └── ... (other UI components)
+├── services/
+│   └── tasks.ts
+├── lib/
+│   └── hooks.ts
+└── types/
+    └── eagle-job.ts

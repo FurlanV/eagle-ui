@@ -16,7 +16,7 @@ import { Button } from "./ui/button"
 export function ConfirmationDialog({ title, description, onDelete }: any) {
   return (
     <Dialog>
-      <DialogTrigger asChild>
+      <DialogTrigger className="z-20">
         <Button size="icon" variant="destructive" className="h-8 w-8">
           <Trash2 className="h-3.5 w-3.5" />
         </Button>

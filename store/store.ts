@@ -2,11 +2,14 @@ import { configureStore } from "@reduxjs/toolkit"
 import { setupListeners } from '@reduxjs/toolkit/query'
 import { eagleAPI } from "@/services/eagle/jobs"
 import { eagleReportAPI } from "@/services/eagle/reports"
+import { eagleCasesAPI } from "@/services/eagle/cases"
 import { ensemblGeneAnnotationAPI } from "@/services/annotation/gene"
+import { curationReviewAPI } from "@/services/eagle/review"
 import { authAPI } from "@/services/auth"
 import { tasksAPI } from "@/services/tasks"
 import jobSlice from "./eagle/job-slice"
 import authSlice from "./auth/auth-slice"
+import { geneAPI } from "@/services/gene/gene"
 
 export const makeStore = () => {
     return configureStore({
@@ -15,17 +18,23 @@ export const makeStore = () => {
             jobs: jobSlice,
             [eagleAPI.reducerPath]: eagleAPI.reducer,
             [eagleReportAPI.reducerPath]: eagleReportAPI.reducer,
+            [eagleCasesAPI.reducerPath]: eagleCasesAPI.reducer,
             [ensemblGeneAnnotationAPI.reducerPath]: ensemblGeneAnnotationAPI.reducer,
             [authAPI.reducerPath]: authAPI.reducer,
-            [tasksAPI.reducerPath]: tasksAPI.reducer
+            [tasksAPI.reducerPath]: tasksAPI.reducer,
+            [curationReviewAPI.reducerPath]: curationReviewAPI.reducer,
+            [geneAPI.reducerPath]: geneAPI.reducer
         },
         middleware: (getDefaultMiddleware) =>
             getDefaultMiddleware().concat([
                 eagleAPI.middleware,
                 eagleReportAPI.middleware,
+                eagleCasesAPI.middleware,
                 ensemblGeneAnnotationAPI.middleware,
                 authAPI.middleware,
-                tasksAPI.middleware
+                tasksAPI.middleware,
+                curationReviewAPI.middleware,
+                geneAPI.middleware
             ]),
     })
 }
