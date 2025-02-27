@@ -3,11 +3,14 @@ import { useCompletion } from "@ai-sdk/react"
 import {
   Check,
   CheckCheck,
+  Maximize2,
+  Minimize2,
   MoreHorizontal,
   Send,
   SmilePlus,
   Users,
 } from "lucide-react"
+import ReactMarkdown from "react-markdown"
 
 import { cn } from "@/lib/utils"
 
@@ -32,12 +35,16 @@ interface AIChatCardProps {
   chatName?: string
   predefinedMessages?: Message[]
   gene_name: string
+  isMaximized?: boolean
+  onToggleMaximize?: () => void
 }
 
 export default function AIChatCard({
   chatName,
   predefinedMessages = [],
   gene_name,
+  isMaximized = false,
+  onToggleMaximize,
 }: AIChatCardProps) {
   const [messages, setMessages] = useState<Message[]>([...predefinedMessages])
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -135,18 +142,45 @@ export default function AIChatCard({
     }
   }
 
+  // Handle Escape key to minimize the chat
+  useEffect(() => {
+    const handleEscapeKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isMaximized && onToggleMaximize) {
+        onToggleMaximize()
+      }
+    }
+
+    if (isMaximized) {
+      document.addEventListener("keydown", handleEscapeKey)
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEscapeKey)
+    }
+  }, [isMaximized, onToggleMaximize])
+
   return (
-    <div className="w-full max-w-md mx-auto">
+    <div
+      className={cn(
+        "w-full mx-auto transition-all duration-300",
+        isMaximized
+          ? "fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          : "max-w-md"
+      )}
+    >
       <div
         className={cn(
-          "relative overflow-hidden",
+          "relative overflow-hidden flex flex-col",
           "bg-card text-card-foreground",
           "backdrop-blur-xl",
           "border border-border",
           "rounded-2xl",
           "transition-all duration-300",
           "hover:shadow-xl hover:shadow-primary/10",
-          "hover:border-primary/20"
+          "hover:border-primary/20",
+          isMaximized
+            ? "w-[95%] h-[95%] md:w-[90%] md:h-[90%] max-w-5xl"
+            : "w-full"
         )}
       >
         <div className="px-5 py-4 border-b border-border">
@@ -178,20 +212,51 @@ export default function AIChatCard({
                 </h3>
               </div>
             </div>
-            <button
-              type="button"
-              className={cn(
-                "p-2 rounded-xl",
-                "hover:bg-accent text-muted-foreground hover:text-foreground",
-                "transition-colors duration-200"
+            <div className="flex items-center gap-2">
+              {onToggleMaximize && (
+                <button
+                  type="button"
+                  onClick={onToggleMaximize}
+                  className={cn(
+                    "p-2 rounded-xl",
+                    "hover:bg-accent text-muted-foreground hover:text-foreground",
+                    "transition-colors duration-200",
+                    "relative group"
+                  )}
+                  aria-label={isMaximized ? "Minimize chat" : "Maximize chat"}
+                >
+                  {isMaximized ? (
+                    <>
+                      <Minimize2 className="w-5 h-5" />
+                      <span className="absolute -top-10 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                        Press ESC to exit
+                      </span>
+                    </>
+                  ) : (
+                    <Maximize2 className="w-5 h-5" />
+                  )}
+                </button>
               )}
-            >
-              <MoreHorizontal className="w-5 h-5" />
-            </button>
+              <button
+                type="button"
+                className={cn(
+                  "p-2 rounded-xl",
+                  "hover:bg-accent text-muted-foreground hover:text-foreground",
+                  "transition-colors duration-200"
+                )}
+              >
+                <MoreHorizontal className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="h-[350px] overflow-y-auto p-5 space-y-5">
+        <div
+          className={cn(
+            "overflow-y-auto p-5 space-y-5 flex-grow",
+            isMaximized ? "h-[calc(100%-160px)]" : "h-[350px]"
+          )}
+        >
           {messages.map((message) => (
             <div key={message.id} className="group/message">
               <div className="flex items-start gap-3 mb-1">
@@ -235,7 +300,9 @@ export default function AIChatCard({
                         : "bg-primary/10 text-foreground"
                     )}
                   >
-                    {message.content}
+                    <ReactMarkdown className="markdown prose prose-sm max-w-none dark:prose-invert">
+                      {message.content}
+                    </ReactMarkdown>
                   </div>
                 </div>
                 <div className="flex items-center gap-1 pt-1">
@@ -326,7 +393,7 @@ export default function AIChatCard({
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="p-4 border-t border-border">
+        <div className="p-4 border-t border-border mt-auto">
           <form
             onSubmit={handleMessageSubmit}
             className="flex items-center gap-3"

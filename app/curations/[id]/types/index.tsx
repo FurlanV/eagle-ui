@@ -22,3 +22,33 @@ export interface ReportData {
   notes?: string;
   score_rationale?: string;
 }
+
+export interface Variant {
+  id: number;
+  variant: string;
+  chromosome: string;
+  position: string;
+  variant_type: string;
+  zygosity: string;
+  rsid: string;
+  inheritance_pattern?: string;
+  linkage_to_asd?: boolean;
+  sift_score?: number;
+  polyphen_score?: number;
+  cadd_score?: number;
+}
+
+export interface Paper {
+  id: number;
+  title: string;
+  year: number;
+  first_author: string;
+  associated_disorders: string;
+  asd_relevance_summary: string;
+  variants: Variant[];
+}
+
+export interface GeneData {
+  papers: Paper[];
+  variants: Variant[];
+}
