@@ -78,6 +78,8 @@ export default function AIChatCard({
     },
   })
 
+  console.log(selectedContext)
+
   const [streamingMessage, setStreamingMessage] = useState<string>("")
   const [isStreaming, setIsStreaming] = useState<boolean>(false)
 

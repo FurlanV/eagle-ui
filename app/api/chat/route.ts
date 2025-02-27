@@ -19,8 +19,10 @@ export async function POST(req: Request) {
     You are a helpful assistant that generates optimized queries for a RAG database.
     
     Your task:
-    1. Analyze the user's question: "${payload.prompt}"
-    2. Extract key concepts, entities, and relationships from the question
+    1. Analyze the user's question: "${payload.prompt}" and the context:
+    cases: ${payload.selectedContext.cases?.join(',') || ''} 
+    variants: ${payload.selectedContext.variants.join(',') || ''}
+    2. Extract key concepts, entities, and relationships from the question and context
     3. Identify relevant tags from the list below that match the question's content
     4. Reformulate the question to improve semantic matching with document chunks
     5. Return both the optimized query and the relevant tags
@@ -32,7 +34,7 @@ export async function POST(req: Request) {
     - Emphasizing the core information need
     
     Available tags (select only those relevant to the query):
-    • Gene names (e.g., SCN2A, SHANK3, MECP2)
+    • Gene names in ORIGINAL CASE (e.g., SCN2A, SHANK3, MECP2)
     • Variant identifiers (e.g., c.1234A>G, p.R123C)
     • Evidence types (e.g. functional_study, family_study, gwas)
     • Case report evidence types (e.g. case_report)
@@ -42,25 +44,29 @@ export async function POST(req: Request) {
     • Functional consequences (e.g., loss_of_function, gain_of_function, altered_expression)
     • Study methodologies (e.g., case_control, cohort_study, family_based, genome_wide)
     • Animal models mentioned (e.g., mouse, rat, zebrafish)
+    • If relevant to EAGLE curation, include the tag 'relevant_to_eagle_curation'
+
+    EAGLE Curation Guidelines for relevance:
+    Include 'relevant_to_eagle_curation' ONLY if the query relates to:
+    1. Direct evidence linking a specific gene or genetic variant to ASD
+    2. Evidence types used in EAGLE scoring (e.g., case_report)
+    3. Detailed information about ASD phenotype, diagnostic method, or functional impact of variants
+    4. Specific variant identifiers or detailed mutation descriptions
 
     You must output the tags in a comma separated list.
-    eg. "DMD, SHANK1, case_report, functional_study"
+    eg. "DMD, SHANK1, SCN2A, case_report, functional_study, asd_diagnosis"
     `,
   });
 
   //&tags=${[].join(',')}
-  const rag_context = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/rag/query?question=${payload.prompt}`, {
+  const rag_context = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/rag/query?question=${object.query}&paper_title=${payload.selectedContext.papers.join(',')}`, {
     method: "POST",
   });
 
   const rag_context_str = await rag_context.json();
 
-  console.log(object);
-  console.log(rag_context_str);
-  console.log(payload.gene_name);
-
   const prompt = `
-  You are a specialized scientific assistant with expertise in genetics and neurodevelopmental disorders.
+  You are a specialized scientific assistant with expertise in genetics and neurodevelopmental disorders, particularly focused on autism spectrum disorder (ASD) genetics.
   
   Your task is to provide accurate, evidence-based answers about the ${payload.gene_name} gene and its associations with autism spectrum disorder and related conditions.
   
@@ -77,31 +83,57 @@ export async function POST(req: Request) {
   ${rag_context_str}
   
   ================================================================================================================
-  
+
   When answering, please:
   1. Prioritize information directly from the provided context
-  2. Use the tags to find the most relevant chunks
-  3. Quote the source of the information
-  4. Clearly distinguish between established findings and hypotheses
-  5. Cite specific papers when possible (e.g., "Smith et al. found...")
-  6. Acknowledge limitations or contradictions in the evidence
-  7. Use precise scientific terminology while remaining accessible
-  8. When applicable, refer to EAGLE's evidence classification system to indicate the strength of gene-ASD associations
-  9. CRITICAL: First analyze the user's question - if it relates to the EAGLE answer the question based on the EAGLE framework. If the question doesn't directly relate to evidence classification, focus on generating insights and answers from the scientific context while still quoting the relevant papers and sources. Always cite the specific papers or sources from which you're drawing information.
-  10. CRITICAL: Pay special attention to the ${payload.gene_name} gene specifically. Your response should focus primarily on this gene and its relationship to autism spectrum disorder. Filter and prioritize all information (from both the EAGLE framework and scientific context) that relates specifically to ${payload.gene_name}.
+  2. Quote specific passages from the literature when relevant
+  3. Clearly distinguish between established findings and hypotheses
+  4. Cite specific papers when possible (e.g., "Smith et al. found...")
+  5. Acknowledge limitations or contradictions in the evidence
+  6. Use precise scientific terminology while maintaining clarity
+  7. When applicable, refer to EAGLE's evidence classification system to indicate the strength of gene-ASD associations
+  8. CRITICAL: First analyze the user's question - if it relates to the EAGLE framework, answer the question based on that framework. If not, focus on generating insights from the scientific context while still citing relevant sources.
+  9. CRITICAL: Focus primarily on the ${payload.gene_name} gene and its relationship to autism spectrum disorder. Prioritize information specifically about ${payload.gene_name}.
+  10. CRITICAL: For variant-specific questions, provide detailed information about the functional impact, inheritance patterns, and clinical significance when available.
+  
+  Additional guidelines:
+  - Organize your response with clear sections and logical flow
+  - Be comprehensive and detailed - the user is an expert who values thoroughness
+  - When discussing evidence, specify the type (e.g., case reports, functional studies, animal models)
+  - If multiple studies present conflicting findings, summarize the different perspectives
+  - If information is limited or uncertain, acknowledge this explicitly
+  - When appropriate, mention implications for diagnosis, prognosis, or treatment
+  - For complex mechanisms, explain the molecular/cellular pathways involved
+  
+  - The user is a highly experienced analyst, no need to simplify it, be as detailed as possible and make sure your response is correct.
+  - Be highly organized.
+  - Suggest solutions that I didn't think about.
+  - Be proactive and anticipate my needs.
+  - Treat me as an expert in all subject matter.
+  - Mistakes erode my trust, so be accurate and thorough.
+  - Provide detailed explanations, I'm comfortable with lots of detail.
+  - Value good arguments over authorities.
+  - Consider new technologies and contrarian ideas, not just the conventional wisdom.
+  - You may use high levels of speculation or prediction, just flag it for me.
+  
   
   Question: ${payload.prompt}
   `;
 
-  console.log(prompt);
 
   const result = streamText({
-    model: openai('gpt-4o'),
+    model: openai('o3-mini'),
     system: `You are a specialized scientific assistant with expertise in genetics and neurodevelopmental disorders.
     Your task is to provide accurate, evidence-based answers about the ${payload.gene_name} gene and its associations with autism spectrum disorder and related conditions.
     use the context to answer the question.
     `,
     prompt: prompt,
+    maxTokens: 16384,
+    providerOptions: {
+      openai: {
+        reasoningEffort: 'low',
+      },
+    },
   });
 
   return result.toDataStreamResponse();
