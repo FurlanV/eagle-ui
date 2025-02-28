@@ -2,12 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import {
-  Dna,
-  Home,
-  Settings,
-  TestTubeDiagonal,
-} from "lucide-react"
+import { Book, Dna, Home, Settings, TestTubeDiagonal } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import {
@@ -16,16 +11,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { ThemeToggle } from "@/components/theme-toggle"
 import { NewJobDialog } from "@/components/new-job-dialog"
-
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export function Sidebar() {
   const pathname = usePathname()
   const split_pathname = pathname.split("/")
   const current = split_pathname[split_pathname.length - 1]
 
-  if(current === 'login') {
+  if (current === "login") {
     return null
   }
 
@@ -64,11 +58,26 @@ export function Sidebar() {
                   current === "curations" && "text-accent-foreground bg-accent"
                 )}
               >
-                <TestTubeDiagonal className="h-5 w-5" />
+                <Dna className="h-5 w-5" />
                 <span className="sr-only">Genes</span>
               </Link>
             </TooltipTrigger>
             <TooltipContent side="right">Genes</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                href="/papers"
+                className={cn(
+                  "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8",
+                  current === "papers" && "text-accent-foreground bg-accent"
+                )}
+              >
+                <Book className="h-5 w-5" />
+                <span className="sr-only">Papers</span>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="right">Papers</TooltipContent>
           </Tooltip>
         </nav>
         <nav className="mt-auto flex flex-col items-center gap-4 px-2 py-5">

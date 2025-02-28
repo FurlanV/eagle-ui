@@ -27,17 +27,23 @@ export default function AIInput({
   onSubmit,
   useDeepResearch,
   setUseDeepResearch,
+  useMemory,
+  setUseMemory,
 }: {
   onSubmit?: (value: string) => void
   useDeepResearch?: boolean
   setUseDeepResearch?: (value: boolean) => void
+  useMemory?: boolean
+  setUseMemory?: (value: boolean) => void
 }) {
   const [value, setValue] = useState("")
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({
     minHeight: 96,
     maxHeight: 300,
   })
-  const [useMemory, setUseMemory] = useState(false)
+  const [localUseMemory, setLocalUseMemory] = useState(false)
+  const effectiveUseMemory = useMemory !== undefined ? useMemory : localUseMemory
+  const effectiveSetUseMemory = setUseMemory || setLocalUseMemory
   const [isRecording, setIsRecording] = useState(false)
 
   const TOOLBAR_BUTTONS: ToolbarButton[] = [
@@ -80,19 +86,19 @@ export default function AIInput({
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full p-2">
       <div className="bg-card rounded-2xl p-4 shadow-sm border border-border">
         {/* Toggles section */}
         <div className="flex items-center justify-start gap-4 mb-3">
           <button
             type="button"
-            onClick={() => setUseMemory(!useMemory)}
+            onClick={() => effectiveSetUseMemory(!effectiveUseMemory)}
             className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
             <Brain
               className={cn(
                 "w-3.5 h-3.5",
-                useMemory
+                effectiveUseMemory
                   ? "text-blue-500 dark:text-blue-400"
                   : "text-muted-foreground"
               )}
@@ -101,13 +107,13 @@ export default function AIInput({
             <div
               className={cn(
                 "relative inline-flex h-4 w-7 items-center rounded-full transition-colors",
-                useMemory ? "bg-blue-500 dark:bg-blue-400" : "bg-muted"
+                effectiveUseMemory ? "bg-blue-500 dark:bg-blue-400" : "bg-muted"
               )}
             >
               <div
                 className={cn(
                   "absolute h-3 w-3 transform rounded-full bg-white transition-transform",
-                  useMemory ? "translate-x-3.5" : "translate-x-0.5"
+                  effectiveUseMemory ? "translate-x-3.5" : "translate-x-0.5"
                 )}
               />
             </div>
