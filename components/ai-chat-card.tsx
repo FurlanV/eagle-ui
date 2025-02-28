@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react"
-import { useCompletion } from "@ai-sdk/react"
 import {
   Check,
   CheckCheck,
@@ -10,6 +9,7 @@ import {
   Search,
 } from "lucide-react"
 import ReactMarkdown from "react-markdown"
+import remarkGfm from 'remark-gfm'
 
 import { cn } from "@/lib/utils"
 import AIInput from "./ai-input"
@@ -29,6 +29,11 @@ interface Message {
     count: number
     reacted: boolean
   }>
+  tokenUsage?: {
+    promptTokens: number
+    completionTokens: number
+    totalTokens: number
+  }
 }
 
 interface ChatContext {
@@ -62,24 +67,6 @@ export default function AIChatCard({
     cases: string[];
   }>({ papers: [], variants: [], cases: [] })
   const [useDeepResearch, setUseDeepResearch] = useState<boolean>(false)
-
-  const {
-    completion,
-    input,
-    handleInputChange,
-    handleSubmit,
-    stop,
-    isLoading,
-    error,
-  } = useCompletion({
-    api: "/eagle/api/chat",
-    body: {
-      gene_name,
-      selectedContext,
-      useDeepResearch,
-    },
-  })
-
   const [streamingMessage, setStreamingMessage] = useState<string>("")
   const [isStreaming, setIsStreaming] = useState<boolean>(false)
   const [isDeepResearching, setIsDeepResearching] = useState<boolean>(false)
@@ -93,28 +80,92 @@ export default function AIChatCard({
     scrollToBottom()
   }, [messages, streamingMessage])
 
-  // Handle streaming completion
-  useEffect(() => {
-    if (isLoading) {
-      // Start streaming
-      if (!isStreaming) {
-        setIsStreaming(true)
-        setStreamingMessage("")
-        // If deep research is enabled, show the deep research loading state
-        if (useDeepResearch) {
-          setIsDeepResearching(true)
+  // Custom function to call the API directly
+  const callChatAPI = async (prompt: string) => {
+    try {
+      setIsStreaming(true);
+      setStreamingMessage("");
+      
+      if (useDeepResearch) {
+        setIsDeepResearching(true);
+      }
+      
+      const response = await fetch("/eagle/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt,
+          gene_name,
+          selectedContext,
+          useDeepResearch,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("Response body is null");
+      
+      const decoder = new TextDecoder();
+      let result = "";
+      let tokenUsage: Message['tokenUsage'] = undefined;
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        
+        // Extract text content from the chunk
+        const textContent = extractTextFromChunk(chunk);
+        if (textContent) {
+          result += textContent;
+          setStreamingMessage(result);
+        }
+        
+        // Try to extract token usage information
+        const usageInfo = extractTokenUsage(chunk);
+        if (usageInfo) {
+          tokenUsage = usageInfo;
         }
       }
-
-      // Update the streaming message
-      setStreamingMessage(completion)
-    } else if (isStreaming && completion) {
-      // Streaming finished, add the complete message
+      
+      // Add the AI response to messages
       setMessages((prevMessages) => [
         ...prevMessages,
         {
           id: String(prevMessages.length + 1),
-          content: completion,
+          content: result,
+          sender: { name: "AI", avatar: "", isOnline: true },
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          status: "sent",
+          tokenUsage: tokenUsage,
+        },
+      ]);
+      
+      // Reset streaming state
+      setIsStreaming(false);
+      setStreamingMessage("");
+      setIsDeepResearching(false);
+      
+    } catch (error) {
+      console.error("Error calling chat API:", error);
+      setIsStreaming(false);
+      setIsDeepResearching(false);
+      
+      // Add error message
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        {
+          id: String(prevMessages.length + 1),
+          content: "Sorry, there was an error processing your request. Please try again.",
           sender: { name: "AI", avatar: "", isOnline: true },
           timestamp: new Date().toLocaleTimeString([], {
             hour: "2-digit",
@@ -122,14 +173,80 @@ export default function AIChatCard({
           }),
           status: "sent",
         },
-      ])
-
-      // Reset streaming state
-      setIsStreaming(false)
-      setStreamingMessage("")
-      setIsDeepResearching(false)
+      ]);
     }
-  }, [isLoading, completion, isStreaming, useDeepResearch])
+  };
+
+  // Helper function to extract text from the specific format we're seeing
+  const extractTextFromChunk = (chunk: string): string => {
+    try {
+      // The format we're seeing is like: f:{...} 0:"text" 0:" more" 0:" text" e:{...} d:{...}
+      // We need to extract all the text parts
+      
+      // Extract all text parts using regex
+      const regex = /\d+:"([^"]+)"/g;
+      let match;
+      let text = '';
+      
+      while ((match = regex.exec(chunk)) !== null) {
+        text += match[1];
+      }
+      
+      return text;
+    } catch (error) {
+      console.error('Error extracting text from chunk:', error);
+      return '';
+    }
+  };
+
+  // Helper function to extract token usage from the response
+  const extractTokenUsage = (chunk: string): { promptTokens: number, completionTokens: number, totalTokens: number } | undefined => {
+    try {
+      // Look for usage information in the chunk
+      // The format is typically like: e:{"finishReason":"stop","usage":{"promptTokens":13743,"completionTokens":1738},"isContinued":false}
+      const usageMatch = chunk.match(/e:{"finishReason":"[^"]+","usage":({[^}]+}),"isContinued":/);
+      if (usageMatch && usageMatch[1]) {
+        try {
+          const usageStr = usageMatch[1];
+          const usage = JSON.parse(usageStr);
+          
+          if (usage.promptTokens !== undefined && usage.completionTokens !== undefined) {
+            return {
+              promptTokens: usage.promptTokens,
+              completionTokens: usage.completionTokens,
+              totalTokens: usage.promptTokens + usage.completionTokens
+            };
+          }
+        } catch (e) {
+          console.error('Error parsing usage JSON:', e);
+        }
+      }
+      
+      // Alternative format: d:{"finishReason":"stop","usage":{"promptTokens":13743,"completionTokens":1738}}
+      const altUsageMatch = chunk.match(/d:{"finishReason":"[^"]+","usage":({[^}]+})}/);
+      if (altUsageMatch && altUsageMatch[1]) {
+        try {
+          const usageStr = altUsageMatch[1];
+          const usage = JSON.parse(usageStr);
+          
+          if (usage.promptTokens !== undefined && usage.completionTokens !== undefined) {
+            return {
+              promptTokens: usage.promptTokens,
+              completionTokens: usage.completionTokens,
+              totalTokens: usage.promptTokens + usage.completionTokens
+            };
+          }
+        } catch (e) {
+          console.error('Error parsing alternative usage JSON:', e);
+        }
+      }
+      
+      return undefined;
+    } catch (error) {
+      console.error('Error extracting token usage:', error);
+      return undefined;
+    }
+  };
 
   // Custom submit handler
   const handleMessageSubmit = (value: string) => {
@@ -149,12 +266,9 @@ export default function AIChatCard({
         status: "sent",
       },
     ]);
-
-    // Set the input value for the AI completion
-    handleInputChange({ target: { value } } as React.ChangeEvent<HTMLInputElement>);
     
-    // Submit to AI
-    handleSubmit(new Event('submit') as any);
+    // Call the API directly
+    callChatAPI(value);
   };
 
   // Handle Escape key to minimize the chat
@@ -195,6 +309,46 @@ export default function AIChatCard({
     });
   };
 
+  // Helper function to preprocess message content for proper markdown rendering
+  const preprocessMarkdown = (content: string): string => {
+    if (!content) return '';
+    
+    // Replace escaped newlines with actual newlines
+    let processed = content.replace(/\\n/g, '\n');
+    
+    // Replace special dividers with markdown horizontal rules
+    processed = processed.replace(/─+/g, '---');
+    
+    // Handle section dividers (common in AI responses)
+    processed = processed.replace(/^(.*?)─+$(.*?)$/gm, '## $1\n\n$2');
+    
+    // Ensure proper spacing for lists and headings
+    processed = processed.replace(/•\s*/g, '* ');
+    
+    // Convert numbered lists with dot notation to markdown format
+    processed = processed.replace(/(\d+)\.\s+/g, '$1. ');
+    
+    // Ensure headers have space after the # symbol
+    processed = processed.replace(/^(#{1,6})([^#\s])/gm, '$1 $2');
+    
+    // Convert sections with titles to proper markdown headers
+    processed = processed.replace(/^(\d+)\.\s+([^\n]+)$/gm, '### $1. $2');
+    
+    // Ensure proper spacing after horizontal rules
+    processed = processed.replace(/---\n([^\n])/g, '---\n\n$1');
+    
+    // Ensure proper spacing before horizontal rules
+    processed = processed.replace(/([^\n])\n---/g, '$1\n\n---');
+    
+    // Handle lettered lists (a., b., etc.)
+    processed = processed.replace(/^([a-z])\.\s+/gm, '* ');
+    
+    // Add extra newlines before headers for better spacing
+    processed = processed.replace(/([^\n])\n(#{1,6}\s)/g, '$1\n\n$2');
+    
+    return processed;
+  };
+
   return (
     <div
       className={cn(
@@ -215,7 +369,7 @@ export default function AIChatCard({
           "hover:shadow-xl hover:shadow-primary/10",
           "hover:border-primary/20",
           isMaximized
-            ? "w-[95%] h-[95%] md:w-[90%] md:h-[90%] max-w-5xl"
+            ? "w-[95%] h-[95%] md:w-[90%] md:h-[90%] max-w-8xl"
             : "w-full"
         )}
       >
@@ -498,9 +652,18 @@ export default function AIChatCard({
                         : "bg-primary/10 text-foreground"
                     )}
                   >
-                    <ReactMarkdown className="markdown prose prose-sm max-w-none dark:prose-invert">
-                      {message.content}
+                    <ReactMarkdown 
+                      className="markdown prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-pre:my-1 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-hr:my-3 prose-hr:border-border/30 prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs"
+                      remarkPlugins={[remarkGfm]}
+                    >
+                      {preprocessMarkdown(message.content)}
                     </ReactMarkdown>
+                    
+                    {message.tokenUsage && (
+                      <div className="mt-2 pt-2 border-t border-border/30 text-xs text-muted-foreground">
+                        <span>Tokens: {message.tokenUsage.completionTokens} generated | {message.tokenUsage.promptTokens} prompt | {message.tokenUsage.totalTokens} total</span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-1 pt-1">
@@ -578,8 +741,11 @@ export default function AIChatCard({
                     </div>
                   ) : streamingMessage ? (
                     <div className="p-3 rounded-xl bg-accent/50 text-foreground text-sm">
-                      <ReactMarkdown className="markdown prose prose-sm max-w-none dark:prose-invert">
-                        {streamingMessage}
+                      <ReactMarkdown 
+                        className="markdown prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-pre:my-1 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-hr:my-3 prose-hr:border-border/30 prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs"
+                        remarkPlugins={[remarkGfm]}
+                      >
+                        {preprocessMarkdown(streamingMessage)}
                       </ReactMarkdown>
                       <span className="inline-block w-1.5 h-4 ml-0.5 bg-primary/50 animate-pulse rounded-sm"></span>
                     </div>
