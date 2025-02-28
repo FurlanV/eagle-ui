@@ -86,7 +86,7 @@ export default function AIInput({
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full p-2">
       <div className="bg-card rounded-2xl p-4 shadow-sm border border-border">
         {/* Toggles section */}
         <div className="flex items-center justify-start gap-4 mb-3">

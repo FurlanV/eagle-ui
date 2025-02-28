@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import {
   Check,
   CheckCheck,
+  Copy,
   Maximize2,
   Minimize2,
   MoreHorizontal,
@@ -128,6 +129,7 @@ export default function AIChatCard({
   const [isStreaming, setIsStreaming] = useState<boolean>(false)
   const [isDeepResearching, setIsDeepResearching] = useState<boolean>(false)
   const [hasStoredMessages, setHasStoredMessages] = useState<boolean>(false)
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
 
   // Load messages from local storage on component mount
   useEffect(() => {
@@ -441,6 +443,25 @@ export default function AIChatCard({
     setMessages([])
     setHasStoredMessages(false)
   }
+
+  // Function to copy message content to clipboard
+  const copyToClipboard = (content: string, messageId: string) => {
+    if (typeof navigator !== 'undefined') {
+      navigator.clipboard.writeText(content)
+        .then(() => {
+          // Set the copied message ID to show visual feedback
+          setCopiedMessageId(messageId);
+          
+          // Reset after 2 seconds
+          setTimeout(() => {
+            setCopiedMessageId(null);
+          }, 2000);
+        })
+        .catch(err => {
+          console.error('Failed to copy content: ', err);
+        });
+    }
+  };
 
   return (
     <div
@@ -765,6 +786,26 @@ export default function AIChatCard({
                         : "bg-primary/10 text-foreground"
                     )}
                   >
+                    {message.sender.name === "AI" && (
+                      <div className="flex justify-end mb-1 opacity-0 group-hover/message:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => copyToClipboard(message.content, message.id)}
+                          className={cn(
+                            "p-1 rounded-md transition-colors",
+                            copiedMessageId === message.id
+                              ? "bg-green-500/20 text-green-500"
+                              : "hover:bg-accent text-muted-foreground hover:text-foreground"
+                          )}
+                          title={copiedMessageId === message.id ? "Copied!" : "Copy to clipboard"}
+                        >
+                          {copiedMessageId === message.id ? (
+                            <Check className="w-3.5 h-3.5" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                      </div>
+                    )}
                     <ReactMarkdown 
                       className="markdown prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-pre:my-1 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-hr:my-3 prose-hr:border-border/30 prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs"
                       remarkPlugins={[remarkGfm]}
@@ -854,6 +895,24 @@ export default function AIChatCard({
                     </div>
                   ) : streamingMessage ? (
                     <div className="p-3 rounded-xl bg-accent/50 text-foreground text-sm">
+                      <div className="flex justify-end mb-1 opacity-0 group-hover/message:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => copyToClipboard(streamingMessage, String(messages.length + 1))}
+                          className={cn(
+                            "p-1 rounded-md transition-colors",
+                            copiedMessageId === String(messages.length + 1)
+                              ? "bg-green-500/20 text-green-500"
+                              : "hover:bg-accent text-muted-foreground hover:text-foreground"
+                          )}
+                          title={copiedMessageId === String(messages.length + 1) ? "Copied!" : "Copy to clipboard"}
+                        >
+                          {copiedMessageId === String(messages.length + 1) ? (
+                            <Check className="w-3.5 h-3.5" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                      </div>
                       <ReactMarkdown 
                         className="markdown prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-pre:my-1 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-hr:my-3 prose-hr:border-border/30 prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs"
                         remarkPlugins={[remarkGfm]}

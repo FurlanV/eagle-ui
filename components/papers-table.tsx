@@ -1,302 +1,240 @@
 "use client"
 
 import * as React from "react"
-import {
-  CaretSortIcon,
-  ChevronDownIcon,
-  DotsHorizontalIcon,
-} from "@radix-ui/react-icons"
+import { useRouter } from "next/navigation"
 import {
   ColumnDef,
   ColumnFiltersState,
+  Row,
   SortingState,
-  VisibilityState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
 } from "@tanstack/react-table"
+import { ExternalLink, Info } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import { DataTable } from "@/components/ui/data-table"
+import { Spinner } from "@/components/ui/spinner"
 import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { Paper } from "@/services/paper/paper"
 
-export type Papers = {
-  id: string
-  doi: string
-  patient: string
-  sex: string
-  age: number
-  phenotype: string
-  phenotypingNotes: string
-  ASD: string
-  genotypingMethod: string
-  variant: string
-  impact: string
-  inheritance: string
-  typeOfMutation: string
-  phenotypeQuality: string
-  cautionaryComment: string
-  evidenceType: string
-  points: number
-  score: number
+// Component to render the expanded row content
+const ExpandedPaperRow = ({ data }: { data: Paper }) => {
+  return (
+    <div className="p-4 bg-gray-50 rounded-md border border-gray-200 space-y-4 mt-2 mb-4">
+      {data.abstract && (
+        <div>
+          <h4 className="font-medium text-gray-900 mb-1">Abstract</h4>
+          <p className="text-sm text-gray-700">{data.abstract}</p>
+        </div>
+      )}
+
+      {data.associated_disorders && (
+        <div>
+          <h4 className="font-medium text-gray-900 mb-1">Associated Disorders</h4>
+          <p className="text-sm text-gray-700">{data.associated_disorders}</p>
+        </div>
+      )}
+
+      {data.asd_relevance_summary && (
+        <div>
+          <h4 className="font-medium text-gray-900 mb-1">ASD Relevance Summary</h4>
+          <p className="text-sm text-gray-700">{data.asd_relevance_summary}</p>
+        </div>
+      )}
+    </div>
+  )
 }
-
-export const columns: ColumnDef<Papers>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "doi",
-    header: "pmid/doi",
-    cell: ({ row }) => <div>{row.getValue("pmid")??row.getValue("doi")}</div>,
-  },
-  {
-    accessorKey: "title",
-    header: "Title",
-    cell: ({ row }) => <div>{row.getValue("title")}</div>,
-  },
-  {
-    accessorKey: "year",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Date
-          <CaretSortIcon className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
-    cell: ({ row }) => (
-      <div className="text-center font-bold">
-        {row.getValue("year") ?? row.getValue("pubDate")}
-      </div>
-    ),
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const payment = row.original
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <DotsHorizontalIcon className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(payment.id)}
-            >
-              Copy DOI
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>View Authors</DropdownMenuItem>
-            <DropdownMenuItem>View Analysis</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
-    },
-  },
-]
 
 export function PapersTable({
   data,
   className,
-  setShowFileUpload,
-  searchPapers,
-}: any) {
+  isLoading = false,
+}: {
+  data: Paper[]
+  className?: string
+  isLoading?: boolean
+}) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   )
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({})
-  const [rowSelection, setRowSelection] = React.useState({})
+  const [expandedRows, setExpandedRows] = React.useState<
+    Record<number, boolean>
+  >({})
+  const [searchQuery, setSearchQuery] = React.useState("")
 
-  const table = useReactTable({
-    data,
-    columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
+  const router = useRouter()
+
+  // Function to toggle row expansion
+  const toggleRowExpanded = (id: number) => {
+    setExpandedRows((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }))
+  }
+
+  // Default sorting by year (descending)
+  React.useEffect(() => {
+    setSorting([{ id: "year", desc: true }])
+  }, [])
+
+  // Update column filters when search query changes
+  React.useEffect(() => {
+    setColumnFilters(searchQuery ? [{ id: "title", value: searchQuery }] : [])
+  }, [searchQuery])
+
+  const columns: ColumnDef<Paper>[] = [
+    {
+      accessorKey: "title",
+      header: ({ column }) => {
+        return <div className="text-left font-medium px-4">Title</div>
+      },
+      cell: ({ row }) => (
+        <div className="font-medium text-primary hover:text-primary/80 cursor-pointer px-4 py-2">
+          {row.getValue("title")}
+        </div>
+      ),
     },
-  })
+    {
+      accessorKey: "first_author",
+      header: ({ column }) => {
+        return <div className="text-left font-medium px-4">Author</div>
+      },
+      cell: ({ row }) => {
+        const author = row.getValue("first_author") as string | null
+        return (
+          <div className="text-left px-4 py-2">
+            {author || "Unknown"}
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "year",
+      header: ({ column }) => {
+        return <div className="text-center font-medium px-4">Year</div>
+      },
+      cell: ({ row }) => {
+        const year = row.getValue("year") as number | null
+        return (
+          <div className="text-center px-4 py-2">
+            {year || "N/A"}
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "doi",
+      header: ({ column }) => {
+        return <div className="text-center font-medium px-4">DOI</div>
+      },
+      cell: ({ row }) => {
+        const doi = row.getValue("doi") as string | null
+        const link = row.original.link
+        
+        if (!doi && !link) return <div className="text-center px-4 py-2">N/A</div>
+        
+        return (
+          <div className="text-center px-4 py-2">
+            {(doi || link) && (
+              <a 
+                href={link || `https://doi.org/${doi}`} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center justify-center text-primary hover:text-primary/80"
+              >
+                <ExternalLink className="h-4 w-4 mr-1" />
+                {doi ? "DOI" : "Link"}
+              </a>
+            )}
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "autism_report",
+      header: ({ column }) => {
+        return <div className="text-center font-medium px-4">ASD Report</div>
+      },
+      cell: ({ row }) => {
+        const hasAutismReport = row.getValue("autism_report") as boolean
+        return (
+          <div className="text-center px-4 py-2">
+            {hasAutismReport ? "Yes" : "No"}
+          </div>
+        )
+      },
+    },
+    {
+      id: "details",
+      header: () => <div className="w-10"></div>,
+      cell: ({ row }) => (
+        <div className="flex justify-center w-10 mx-auto">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation()
+              toggleRowExpanded(row.original.id)
+            }}
+            className="p-0 h-8 w-8"
+          >
+            <Info className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ]
+
+  const handleRowClick = (row: Row<Paper>) => {
+    // Navigate to paper details page if needed
+    // router.push(`/papers/${row.original.id}`)
+    
+    // For now, just toggle expansion
+    toggleRowExpanded(row.original.id)
+  }
+
+  // Filter data based on search query
+  const filteredData = React.useMemo(() => {
+    if (!searchQuery) return data
+    return data.filter((paper) =>
+      paper.title.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  }, [data, searchQuery])
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <Spinner />
+      </div>
+    )
+  }
 
   return (
-    <div className={cn("w-full h-full", className)}>
-      <div className="flex items-center py-3">
-        <Input
-          placeholder="Filter Papers..."
-          value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("title")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
+    <div className={cn("w-full", className)}>
+      <div className="overflow-hidden">
+        <DataTable
+          columns={columns}
+          data={filteredData}
+          initialPageSize={10}
+          onRowClick={handleRowClick}
         />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Columns <ChevronDownIcon className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                )
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <Button
-          variant="outline"
-          className="ml-2"
-          onClick={() => setShowFileUpload(true)}
-        >
-          Upload
-        </Button>
       </div>
-      <div className="rounded-md border overflow-scroll h-[39rem]">
-        <Table>
-          <TableHeader className="w-full">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  )
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
 
-          <TableBody className="overflow-scroll">
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
-        </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
+      {/* Render expanded rows */}
+      {filteredData.map(
+        (row) =>
+          expandedRows[row.id] && (
+            <div key={`expanded-${row.id}`}>
+              <ExpandedPaperRow data={row} />
+            </div>
+          )
+      )}
     </div>
   )
 }
