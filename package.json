@@ -21,7 +21,7 @@
     "@hookform/resolvers": "^3.3.4",
     "@jbrowse/react-app": "^2.16.1",
     "@jbrowse/react-linear-genome-view": "^2.16.1",
-    "@mendable/firecrawl-js": "^1.18.4",
+    "@mendable/firecrawl-js": "^1.18.5",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-avatar": "^1.1.0",
     "@radix-ui/react-checkbox": "^1.0.4",
