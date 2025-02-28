@@ -14,6 +14,62 @@ import remarkGfm from 'remark-gfm'
 import { cn } from "@/lib/utils"
 import AIInput from "./ai-input"
 
+// Local storage key format
+const CHAT_STORAGE_KEY_PREFIX = "gendex-chat-"
+
+// Helper functions for local storage
+const getChatStorageKey = (gene_name: string) => {
+  // Get current user info - in a real app, you'd get this from auth
+  const user = "User" // Replace with actual user identification when available
+  return `${CHAT_STORAGE_KEY_PREFIX}${user}-${gene_name}`
+}
+
+const saveMessagesToLocalStorage = (gene_name: string, messages: Message[]) => {
+  if (typeof window === 'undefined') return // SSR check
+  
+  try {
+    const key = getChatStorageKey(gene_name)
+    const data = {
+      user: "User", // Replace with actual user identification when available
+      gene: gene_name,
+      messages,
+      lastUpdated: new Date().toISOString()
+    }
+    localStorage.setItem(key, JSON.stringify(data))
+  } catch (error) {
+    console.error("Error saving chat to local storage:", error)
+  }
+}
+
+const loadMessagesFromLocalStorage = (gene_name: string): Message[] => {
+  if (typeof window === 'undefined') return [] // SSR check
+  
+  try {
+    const key = getChatStorageKey(gene_name)
+    const data = localStorage.getItem(key)
+    
+    if (data) {
+      const parsed = JSON.parse(data)
+      return parsed.messages || []
+    }
+  } catch (error) {
+    console.error("Error loading chat from local storage:", error)
+  }
+  
+  return []
+}
+
+const clearChatHistory = (gene_name: string) => {
+  if (typeof window === 'undefined') return // SSR check
+  
+  try {
+    const key = getChatStorageKey(gene_name)
+    localStorage.removeItem(key)
+  } catch (error) {
+    console.error("Error clearing chat history:", error)
+  }
+}
+
 interface Message {
   id: string
   content: string
@@ -59,6 +115,7 @@ export default function AIChatCard({
   isMaximized = false,
   onToggleMaximize,
 }: AIChatCardProps) {
+  const [useMemory, setUseMemory] = useState<boolean>(false)
   const [messages, setMessages] = useState<Message[]>([...predefinedMessages])
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [selectedContext, setSelectedContext] = useState<{
@@ -70,6 +127,35 @@ export default function AIChatCard({
   const [streamingMessage, setStreamingMessage] = useState<string>("")
   const [isStreaming, setIsStreaming] = useState<boolean>(false)
   const [isDeepResearching, setIsDeepResearching] = useState<boolean>(false)
+  const [hasStoredMessages, setHasStoredMessages] = useState<boolean>(false)
+
+  // Load messages from local storage on component mount
+  useEffect(() => {
+    if (useMemory) {
+      const storedMessages = loadMessagesFromLocalStorage(gene_name)
+      if (storedMessages.length > 0) {
+        setMessages(storedMessages)
+        setHasStoredMessages(true)
+      } else {
+        setHasStoredMessages(false)
+      }
+    }
+  }, [gene_name, useMemory])
+
+  // Save messages to local storage when they change
+  useEffect(() => {
+    if (useMemory && messages.length > 0) {
+      // Only save if there are actual changes (not just on initial load)
+      const storedMessages = loadMessagesFromLocalStorage(gene_name)
+      const currentMessagesJson = JSON.stringify(messages)
+      const storedMessagesJson = JSON.stringify(storedMessages)
+      
+      if (currentMessagesJson !== storedMessagesJson) {
+        saveMessagesToLocalStorage(gene_name, messages)
+        setHasStoredMessages(true)
+      }
+    }
+  }, [messages, gene_name, useMemory])
 
   // Scroll to bottom whenever messages change or streaming content updates
   const scrollToBottom = () => {
@@ -349,6 +435,13 @@ export default function AIChatCard({
     return processed;
   };
 
+  // Function to clear chat history
+  const handleClearChatHistory = () => {
+    clearChatHistory(gene_name)
+    setMessages([])
+    setHasStoredMessages(false)
+  }
+
   return (
     <div
       className={cn(
@@ -400,9 +493,29 @@ export default function AIChatCard({
                 <h3 className="text-sm font-semibold text-foreground">
                   {chatName || "AI Assistant"}
                 </h3>
+                {useMemory && (
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
+                    <span className="text-xs text-blue-500">Memory active</span>
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {/* Clear chat history button - only show when useMemory is true and there are stored messages */}
+              {useMemory && hasStoredMessages && (
+                <button
+                  type="button"
+                  onClick={handleClearChatHistory}
+                  className={cn(
+                    "px-2 py-1 rounded-lg text-xs",
+                    "bg-red-500/10 text-red-500 hover:bg-red-500/20",
+                    "transition-colors duration-200"
+                  )}
+                >
+                  Clear History
+                </button>
+              )}
               {onToggleMaximize && (
                 <button
                   type="button"
@@ -779,6 +892,8 @@ export default function AIChatCard({
             onSubmit={handleMessageSubmit}
             useDeepResearch={useDeepResearch}
             setUseDeepResearch={setUseDeepResearch}
+            useMemory={useMemory}
+            setUseMemory={setUseMemory}
           />
         </div>
       </div>
