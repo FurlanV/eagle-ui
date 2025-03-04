@@ -5,9 +5,12 @@ import { usePathname } from "next/navigation"
 import {
   useGetGeneInformationQuery,
   useGetGenePapersAndVariantsQuery,
+  useUpdateGeneASDRelavanceMutation,
 } from "@/services/gene/gene"
+import { UpdateIcon } from "@radix-ui/react-icons"
 import { ColumnDef } from "@tanstack/react-table"
 import { BotMessageSquare, ExternalLink, X } from "lucide-react"
+import Markdown from "react-markdown"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -104,6 +107,11 @@ interface GeneInfo {
   synonyms?: string
   summary?: string
   other_refs?: string
+  relevance_to_autism?: string
+  molecular_function?: string
+  associated_syndromes?: string
+  associated_disorders?: string
+  genetic_category?: string
 }
 
 interface GenePapersAndVariants {
@@ -119,6 +127,9 @@ export default function GeneDetailsPage() {
 
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [isChatMaximized, setIsChatMaximized] = useState(false)
+
+  const [updateGeneASDRelavance, { isLoading: isUpdating }] =
+    useUpdateGeneASDRelavanceMutation()
 
   const { data: geneInfo } = useGetGeneInformationQuery(gene_name)
 
@@ -159,7 +170,7 @@ export default function GeneDetailsPage() {
     []
   )
 
-  console.log(cases)
+  //console.log(cases)
 
   return (
     <div className="relative min-w-full min-h-screen bg-gray-50 text-gray-900">
@@ -269,36 +280,22 @@ export default function GeneDetailsPage() {
 
         {/* Relevance to Autism Section */}
         <section>
-          <h2 className="text-2xl font-semibold border-b-2 border-gray-300 pb-2 mb-6">
-            Relevance to Autism
-          </h2>
-          <p className="text-base leading-relaxed text-gray-800">
-            Recurrent mutations in the ADNP gene have been identified in
-            multiple individuals with ASD as described below. Two de novo
-            frameshift variants in ADNP were identified in unrelated simplex ASD
-            cases in two reports by O'Roak and colleagues in 2012 (PMIDs
-            22495309 and 23160955). An additional seven de novo LoF variants
-            were identified in patients with ASD in Helsmoortel et al., 2014,
-            giving a current total of nine de novo LoF variants in ADNP gene in
-            ASD cases; the probability of detecting eight or more de novo
-            truncating events in ADNP was given as P=2.65 x 10⁻¹⁸ in this report
-            (PMID 24531329). Furthermore, the frequency of shared clinical
-            characteristics in ASD cases with LoF variants in ADNP (intellectual
-            disability, facial dysmorphisms) led Helsmoortel and colleagues to
-            conclude that ADNP mutations resulted in an autism syndrome.
-            Analysis of rare coding variation in 3,871 ASD cases and 9,937
-            ancestry-matched or paternal controls from the Autism Sequencing
-            Consortium (ASC) in De Rubeis et al., 2014 identified ADNP as a gene
-            meeting high statistical significance with an FDR of 0.01, meaning
-            that this gene had a 99% chance of being a true autism gene (PMID
-            25363760). This gene was identified in Iossifov et al. 2015 as a
-            strong candidate to be an ASD risk gene based on a combination of de
-            novo mutational evidence and the absence or very low frequency of
-            mutations in controls (PMID 26401017). A two-stage analysis of rare
-            de novo and inherited coding variants in 42,607 ASD cases, including
-            35,130 new cases from the SPARK cohort, in Zhou et al., 2022
-            identified ADNP as a gene reaching exome-wide significance (P &lt;
-            2.5E-06).
+          <div className="flex flex-row gap-4 border-b-2 border-gray-300 pb-2 mb-6 items-center">
+            <h2 className="text-2xl font-semibold">Relevance to Autism</h2>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                updateGeneASDRelavance(geneInfoData?.id || "")
+              }}
+              disabled={isUpdating}
+            >
+              <UpdateIcon className="w-4 h-4" />
+            </Button>
+          </div>
+
+          <p className="markdown prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-pre:my-1 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-hr:my-3 prose-hr:border-border/30 prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs">
+            {geneInfoData?.relevance_to_autism}
           </p>
         </section>
 
