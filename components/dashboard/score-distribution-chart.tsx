@@ -48,7 +48,7 @@ export function ScoreDistributionChart({ data }: ScoreDistributionChartProps) {
         <CardTitle>Case Score Distribution</CardTitle>
         <CardDescription>Distribution of cases by score range</CardDescription>
       </CardHeader>
-      <CardContent className="h-[300px]">
+      <CardContent className="h-[350px]">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie

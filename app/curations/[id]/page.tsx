@@ -159,6 +159,8 @@ export default function GeneDetailsPage() {
     []
   )
 
+  console.log(cases)
+
   return (
     <div className="relative min-w-full min-h-screen bg-gray-50 text-gray-900">
       {/* Hero Section */}
@@ -185,7 +187,9 @@ export default function GeneDetailsPage() {
             >
               <div className="flex flex-col">
                 <span className="text-2xl font-semibold text-gray-900">
-                  {0}
+                  {cases
+                    ?.reduce((a: number, b: any) => a + b.total_case_score, 0)
+                    .toFixed(2)}
                 </span>
                 <span className="text-sm text-gray-500">{"No Support"}</span>
               </div>

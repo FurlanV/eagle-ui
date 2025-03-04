@@ -26,6 +26,7 @@ export type Gene = {
   symbol: string
   chromosome: string
   cases: number
+  total_score: number
   // Additional fields that might be useful for expanded view
   description?: string
   aliases?: string[]
@@ -113,10 +114,14 @@ export function GenesTable({
     {
       accessorKey: "symbol",
       header: ({ column }) => {
-        return <div className="text-left font-medium px-4">Gene Symbol</div>
+        return (
+          <div className="text-left font-semibold text-gray-700 px-4">
+            Gene Symbol
+          </div>
+        )
       },
       cell: ({ row }) => (
-        <div className="font-medium text-primary hover:text-primary/80 cursor-pointer px-4 py-2">
+        <div className="font-medium text-blue-600 hover:text-blue-800 transition-colors cursor-pointer px-4 py-2">
           {row.getValue("symbol")}
         </div>
       ),
@@ -124,22 +129,69 @@ export function GenesTable({
     {
       accessorKey: "chromosome",
       header: ({ column }) => {
-        return <div className="text-center font-medium px-4">Chromosome</div>
+        return <div className="text-center font-semibold text-gray-700 px-4">Chr</div>
       },
       cell: ({ row }) => {
         const chromosome = row.getValue("chromosome") as string
-        let textClass = "text-foreground"
+        let textClass = "text-gray-600"
 
-        // Color-code chromosomes with subtle text styling
         if (chromosome === "X") {
-          textClass = "text-primary"
+          textClass = "text-purple-600"
         } else if (chromosome === "Y") {
-          textClass = "text-secondary"
+          textClass = "text-indigo-600"
         }
 
         return (
-          <div className={`font-medium ${textClass} text-center px-4 py-2`}>
+          <div className={`font-medium ${textClass} text-center w-full px-4 py-2`}>
             {chromosome}
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "total_score",
+      header: ({ column }) => {
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="text-center font-semibold text-gray-700 px-4 cursor-help">
+                  Score
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="text-sm">Total confidence score for this gene</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )
+      },
+      cell: ({ row }) => {
+        const score = row.getValue("total_score") as number
+        let textClass = "text-gray-600"
+        let bgClass = "bg-gray-50"
+
+        if (score >= 8) {
+          textClass = "text-green-700"
+          bgClass = "bg-green-50"
+        } else if (score >= 6) {
+          textClass = "text-blue-700"
+          bgClass = "bg-blue-50"
+        } else if (score >= 4) {
+          textClass = "text-yellow-700"
+          bgClass = "bg-yellow-50"
+        } else {
+          textClass = "text-gray-700"
+          bgClass = "bg-gray-50"
+        }
+
+        return (
+          <div className="flex justify-center w-full px-4 py-2">
+            <div className={`rounded-full px-3 py-1 ${bgClass}`}>
+              <span className={`font-medium ${textClass}`}>
+                {score.toFixed(2)}
+              </span>
+            </div>
           </div>
         )
       },
@@ -147,39 +199,45 @@ export function GenesTable({
     {
       accessorKey: "cases",
       header: ({ column }) => {
-        return <div className="text-right font-medium px-4">Cases</div>
-      },
-      cell: ({ row }) => {
-        const cases = row.getValue("cases") as number
-        let textClass = "text-foreground"
-        let fontWeight = "font-normal"
-
-        // Highlight case counts with different text styles based on count
-        if (cases > 10) {
-          textClass = "text-destructive"
-          fontWeight = "font-semibold"
-        } else if (cases > 5) {
-          textClass = "text-primary"
-          fontWeight = "font-medium"
-        } else if (cases > 2) {
-          textClass = "text-secondary"
-        }
-
         return (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div
-                  className={`text-right ${textClass} ${fontWeight} px-4 py-2`}
-                >
-                  {cases}
+                <div className="text-center font-semibold text-gray-700 px-4 cursor-help">
+                  Cases
                 </div>
               </TooltipTrigger>
               <TooltipContent>
-                <p>{cases} reported cases</p>
+                <p className="text-sm">Number of reported cases</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+        )
+      },
+      cell: ({ row }) => {
+        const cases = row.getValue("cases") as number
+        let textClass = "text-gray-600"
+        let bgClass = "bg-gray-50"
+
+        if (cases > 10) {
+          textClass = "text-red-700"
+          bgClass = "bg-red-50"
+        } else if (cases > 5) {
+          textClass = "text-orange-700"
+          bgClass = "bg-orange-50"
+        } else if (cases > 2) {
+          textClass = "text-yellow-700"
+          bgClass = "bg-yellow-50"
+        }
+
+        return (
+          <div className="flex justify-center w-full px-4 py-2">
+            <div className={`rounded-full px-3 py-1 ${bgClass}`}>
+              <span className={`font-medium ${textClass}`}>
+                {cases}
+              </span>
+            </div>
+          </div>
         )
       },
     },
