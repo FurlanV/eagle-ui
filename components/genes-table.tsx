@@ -282,26 +282,7 @@ export function GenesTable({
           </div>
         )
       },
-    },
-    {
-      id: "details",
-      header: () => <div className="w-10"></div>,
-      cell: ({ row }) => (
-        <div className="flex justify-center w-full">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation()
-              toggleRowExpanded(row.original.id)
-            }}
-            className="p-0 h-8 w-8"
-          >
-            <Info className="h-4 w-4" />
-          </Button>
-        </div>
-      ),
-    },
+    }
   ]
 
   const table = useReactTable({
