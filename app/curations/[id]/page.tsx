@@ -170,8 +170,6 @@ export default function GeneDetailsPage() {
     []
   )
 
-  //console.log(cases)
-
   return (
     <div className="relative min-w-full min-h-screen bg-gray-50 text-gray-900">
       {/* Hero Section */}

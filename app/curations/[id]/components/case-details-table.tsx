@@ -1,6 +1,6 @@
 import React, { useState } from "react"
-import { ColumnDef, Row, CellContext } from "@tanstack/react-table"
-import { ChevronDown, ChevronRight, Info } from "lucide-react"
+import { ColumnDef, Row, CellContext, SortingState } from "@tanstack/react-table"
+import { ChevronDown, ChevronRight, Info, ArrowUpDown } from "lucide-react"
 
 import { DataTable } from "@/components/ui/data-table"
 import { Spinner } from "@/components/ui/spinner"
@@ -16,6 +16,7 @@ export interface CaseData {
   phenotypes: string;
   notes: string | null;
   description: string;
+  total_case_score: number;
 }
 
 interface CaseDetailsTableProps {
@@ -58,6 +59,7 @@ export const CaseDetailsTable: React.FC<CaseDetailsTableProps> = ({
   isLoading,
 }) => {
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
+  const [sorting, setSorting] = useState<SortingState>([]);
 
   // Function to toggle row expansion
   const toggleRowExpanded = (id: number) => {
@@ -132,6 +134,47 @@ export const CaseDetailsTable: React.FC<CaseDetailsTableProps> = ({
         </Button>
       ),
     },
+    {
+      id: 'total_case_score',
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="text-center w-full"
+          >
+            Score
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
+      cell: ({ row }) => {
+        const score = row.original.total_case_score;
+        let textClass = "text-gray-600";
+        let bgClass = "bg-gray-50";
+
+        if (score >= 8) {
+          textClass = "text-green-700";
+          bgClass = "bg-green-50";
+        } else if (score >= 6) {
+          textClass = "text-blue-700";
+          bgClass = "bg-blue-50";
+        } else if (score >= 4) {
+          textClass = "text-yellow-700";
+          bgClass = "bg-yellow-50";
+        }
+
+        return (
+          <div className="flex justify-center w-full">
+            <div className={`rounded-full px-3 py-1 ${bgClass}`}>
+              <span className={`font-medium ${textClass}`}>
+                {score.toFixed(2)}
+              </span>
+            </div>
+          </div>
+        );
+      },
+    },
   ];
 
   if (isLoading) {
@@ -147,7 +190,9 @@ export const CaseDetailsTable: React.FC<CaseDetailsTableProps> = ({
       <DataTable 
         columns={enhancedColumns} 
         data={caseDetailsData} 
-        initialPageSize={10} 
+        initialPageSize={10}
+        sorting={sorting}
+        onSortingChange={setSorting}
       />
       
       {/* Render expanded rows */}

@@ -7,19 +7,40 @@ import {
   ColumnFiltersState,
   Row,
   SortingState,
+  VisibilityState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
 } from "@tanstack/react-table"
-import { Info } from "lucide-react"
+import { Info, ChevronDownIcon, ArrowUpDown } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { DataTable } from "@/components/ui/data-table"
-import { Spinner } from "@/components/ui/spinner"
+import { Input } from "@/components/ui/input"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { Spinner } from "@/components/ui/spinner"
 
 export type Gene = {
   id: number
@@ -82,12 +103,9 @@ export function GenesTable({
   isLoading?: boolean
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  )
-  const [expandedRows, setExpandedRows] = React.useState<
-    Record<number, boolean>
-  >({})
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
+  const [expandedRows, setExpandedRows] = React.useState<Record<number, boolean>>({})
   const [searchQuery, setSearchQuery] = React.useState("")
 
   const router = useRouter()
@@ -102,7 +120,7 @@ export function GenesTable({
 
   // Default sorting by cases count (descending)
   React.useEffect(() => {
-    setSorting([{ id: "cases", desc: true }])
+    setSorting([{ id: "total_score", desc: true }])
   }, [])
 
   // Update column filters when search query changes
@@ -115,13 +133,18 @@ export function GenesTable({
       accessorKey: "symbol",
       header: ({ column }) => {
         return (
-          <div className="text-left font-semibold text-gray-700 px-4">
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="text-left"
+          >
             Gene Symbol
-          </div>
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
         )
       },
       cell: ({ row }) => (
-        <div className="font-medium text-blue-600 hover:text-blue-800 transition-colors cursor-pointer px-4 py-2">
+        <div className="font-medium text-blue-600 hover:text-blue-800 transition-colors cursor-pointer text-left">
           {row.getValue("symbol")}
         </div>
       ),
@@ -129,7 +152,16 @@ export function GenesTable({
     {
       accessorKey: "chromosome",
       header: ({ column }) => {
-        return <div className="text-center font-semibold text-gray-700 px-4">Chr</div>
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="text-center w-full"
+          >
+            Chr
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        )
       },
       cell: ({ row }) => {
         const chromosome = row.getValue("chromosome") as string
@@ -142,7 +174,7 @@ export function GenesTable({
         }
 
         return (
-          <div className={`font-medium ${textClass} text-center w-full px-4 py-2`}>
+          <div className={`font-medium ${textClass} text-center w-full`}>
             {chromosome}
           </div>
         )
@@ -155,9 +187,14 @@ export function GenesTable({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="text-center font-semibold text-gray-700 px-4 cursor-help">
+                <Button
+                  variant="ghost"
+                  onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                  className="cursor-help text-center w-full"
+                >
                   Score
-                </div>
+                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
               </TooltipTrigger>
               <TooltipContent>
                 <p className="text-sm">Total confidence score for this gene</p>
@@ -186,7 +223,7 @@ export function GenesTable({
         }
 
         return (
-          <div className="flex justify-center w-full px-4 py-2">
+          <div className="flex justify-center w-full">
             <div className={`rounded-full px-3 py-1 ${bgClass}`}>
               <span className={`font-medium ${textClass}`}>
                 {score.toFixed(2)}
@@ -203,9 +240,14 @@ export function GenesTable({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="text-center font-semibold text-gray-700 px-4 cursor-help">
+                <Button
+                  variant="ghost"
+                  onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                  className="cursor-help text-center w-full"
+                >
                   Cases
-                </div>
+                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
               </TooltipTrigger>
               <TooltipContent>
                 <p className="text-sm">Number of reported cases</p>
@@ -231,7 +273,7 @@ export function GenesTable({
         }
 
         return (
-          <div className="flex justify-center w-full px-4 py-2">
+          <div className="flex justify-center w-full">
             <div className={`rounded-full px-3 py-1 ${bgClass}`}>
               <span className={`font-medium ${textClass}`}>
                 {cases}
@@ -245,7 +287,7 @@ export function GenesTable({
       id: "details",
       header: () => <div className="w-10"></div>,
       cell: ({ row }) => (
-        <div className="flex justify-center w-10 mx-auto">
+        <div className="flex justify-center w-full">
           <Button
             variant="ghost"
             size="sm"
@@ -262,17 +304,26 @@ export function GenesTable({
     },
   ]
 
+  const table = useReactTable({
+    data,
+    columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+    },
+  })
+
   const handleRowClick = (row: Row<Gene>) => {
     router.push(`/curations/${row.original.symbol}`)
   }
-
-  // Filter data based on search query
-  const filteredData = React.useMemo(() => {
-    if (!searchQuery) return data
-    return data.filter((gene) =>
-      gene.symbol.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  }, [data, searchQuery])
 
   if (isLoading) {
     return (
@@ -283,35 +334,117 @@ export function GenesTable({
   }
 
   return (
-    <div className={cn("w-full", className)}>
-      {/*<div className="flex items-center justify-between py-4">
-         <div className="relative max-w-sm">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Filter genes..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 pr-4 py-2 border-input bg-background text-sm focus-visible:ring-1 focus-visible:ring-primary"
-          />
-        </div> 
-        <div className="flex items-center">
-          <p className="text-sm text-muted-foreground">
-            {filteredData.length} genes found
-          </p>
-        </div>
-      </div> */}
-
-      <div className="overflow-hidden">
-        <DataTable
-          columns={columns}
-          data={filteredData}
-          initialPageSize={10}
-          onRowClick={handleRowClick}
+    <div className={cn("w-full h-full", className)}>
+      <div className="flex items-center py-3">
+        <Input
+          placeholder="Filter genes..."
+          value={(table.getColumn("symbol")?.getFilterValue() as string) ?? ""}
+          onChange={(event) =>
+            table.getColumn("symbol")?.setFilterValue(event.target.value)
+          }
+          className="max-w-sm"
         />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="ml-auto">
+              Columns <ChevronDownIcon className="ml-2 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {table
+              .getAllColumns()
+              .filter((column) => column.getCanHide())
+              .map((column) => {
+                return (
+                  <DropdownMenuCheckboxItem
+                    key={column.id}
+                    className="capitalize"
+                    checked={column.getIsVisible()}
+                    onCheckedChange={(value) =>
+                      column.toggleVisibility(!!value)
+                    }
+                  >
+                    {column.id}
+                  </DropdownMenuCheckboxItem>
+                )
+              })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <div className="rounded-md border overflow-scroll h-[39rem]">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  return (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  )
+                })}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  className="cursor-pointer hover:bg-gray-50"
+                  onClick={() => handleRowClick(row)}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  No results.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="flex items-center justify-end space-x-2 py-4">
+        <div className="space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            Next
+          </Button>
+        </div>
       </div>
 
       {/* Render expanded rows */}
-      {filteredData.map(
+      {data.map(
         (row) =>
           expandedRows[row.id] && (
             <div key={`expanded-${row.id}`}>

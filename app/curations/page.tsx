@@ -7,9 +7,7 @@ import { GenesTable } from "@/components/genes-table"
 
 export default function CurationsPage() {
   const { error, data: genesWithCasesData = [] } = useGetGenesWithCasesQuery()
-
-  console.log(genesWithCasesData)
-
+  
   return (
     <AuthWrapper>
       <div className="flex flex-col p-4 space-y-6">
