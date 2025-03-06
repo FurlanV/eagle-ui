@@ -58,6 +58,7 @@
     "@visx/text": "^3.3.0",
     "@visx/tooltip": "^3.3.0",
     "@visx/wordcloud": "^3.3.0",
+    "@xyflow/react": "^12.4.4",
     "ai": "^4.1.46",
     "async-mutex": "^0.5.0",
     "axios": "^1.7.5",
