@@ -10,7 +10,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { ArrowUpDown, ChevronDown, ChevronRight, Info } from "lucide-react"
+import { ArrowUpDown, ChevronDown, ChevronRight, Info, ThumbsUp, ThumbsDown, Flag } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
@@ -28,6 +28,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 // Updated interface to match the new data structure
 export interface CaseData {
@@ -127,6 +136,9 @@ export const CaseDetailsTable: React.FC<CaseDetailsTableProps> = ({
 }) => {
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({})
   const [sorting, setSorting] = useState<SortingState>([])
+  const [likedCases, setLikedCases] = useState<Record<number, boolean>>({})
+  const [dislikedCases, setDislikedCases] = useState<Record<number, boolean>>({})
+  const [flaggedCases, setFlaggedCases] = useState<Record<number, boolean>>({})
 
   // Function to toggle row expansion
   const toggleRowExpanded = (id: number) => {
@@ -134,6 +146,58 @@ export const CaseDetailsTable: React.FC<CaseDetailsTableProps> = ({
       ...prev,
       [id]: !prev[id],
     }))
+  }
+
+  // Function to handle like
+  const handleLike = (id: number) => {
+    const isCurrentlyLiked = likedCases[id] || false;
+    
+    // If disliked, remove dislike
+    if (dislikedCases[id]) {
+      setDislikedCases((prev) => ({
+        ...prev,
+        [id]: false,
+      }));
+    }
+    
+    // Toggle like
+    setLikedCases((prev) => ({
+      ...prev,
+      [id]: !isCurrentlyLiked,
+    }));
+    
+    console.log(`Case ${id} liked: ${!isCurrentlyLiked}`);
+  }
+  
+  // Function to handle dislike
+  const handleDislike = (id: number) => {
+    const isCurrentlyDisliked = dislikedCases[id] || false;
+    
+    // If liked, remove like
+    if (likedCases[id]) {
+      setLikedCases((prev) => ({
+        ...prev,
+        [id]: false,
+      }));
+    }
+    
+    // Toggle dislike
+    setDislikedCases((prev) => ({
+      ...prev,
+      [id]: !isCurrentlyDisliked,
+    }));
+    
+    console.log(`Case ${id} disliked: ${!isCurrentlyDisliked}`);
+  }
+  
+  // Function to flag a case for deletion
+  const flagCase = (id: number) => {
+    setFlaggedCases((prev) => ({
+      ...prev,
+      [id]: true,
+    }));
+    
+    console.log(`Case ${id} flagged for deletion`);
   }
 
   // Enhanced columns with expand/collapse functionality
@@ -229,6 +293,68 @@ export const CaseDetailsTable: React.FC<CaseDetailsTableProps> = ({
                 {score.toFixed(2)}
               </span>
             </div>
+          </div>
+        )
+      },
+    },
+    {
+      id: "feedback",
+      header: "Feedback",
+      cell: ({ row }) => {
+        const id = row.original.id
+        const isLiked = likedCases[id] || false
+        const isDisliked = dislikedCases[id] || false
+        const isFlagged = flaggedCases[id] || false
+        
+        return (
+          <div className="flex items-center justify-center space-x-2" onClick={(e) => e.stopPropagation()}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleLike(id)}
+              className={`p-1 ${isLiked ? 'text-green-500' : 'text-gray-400'}`}
+            >
+              <ThumbsUp className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleDislike(id)}
+              className={`p-1 ${isDisliked ? 'text-red-500' : 'text-gray-400'}`}
+            >
+              <ThumbsDown className="h-4 w-4" />
+            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`p-1 ${isFlagged ? 'text-red-500' : 'text-gray-400'}`}
+                >
+                  <Flag className="h-4 w-4" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Flag Case for Deletion</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to flag this case for deletion? This action can be reviewed by an administrator.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="outline" onClick={(e) => e.stopPropagation()}>Cancel</Button>
+                  <Button 
+                    variant="destructive" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      flagCase(id);
+                    }}
+                  >
+                    Flag for Deletion
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         )
       },

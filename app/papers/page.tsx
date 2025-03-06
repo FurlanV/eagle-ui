@@ -1,8 +1,6 @@
 "use client"
 
 import { useGetAllPapersQuery } from "@/services/paper/paper"
-
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AuthWrapper } from "@/components/auth-wrapper"
 import { PapersTable } from "@/components/papers-table"
 
