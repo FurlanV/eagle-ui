@@ -2,6 +2,9 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
+import { useGetPaperRelationshipsQuery } from "@/services/eagle/relationships"
+import { Paper } from "@/services/paper/paper"
+import { CaretSortIcon } from "@radix-ui/react-icons"
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -14,19 +17,21 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
+import {
+  Background,
+  Controls,
+  ReactFlow,
+  useEdgesState,
+  useNodesState,
+  Node,
+  Edge,
+} from "@xyflow/react"
 import { ExternalLink, Info } from "lucide-react"
-import { CaretSortIcon } from "@radix-ui/react-icons"
+import { useState, useEffect } from "react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { Paper } from "@/services/paper/paper"
 import {
   Table,
   TableBody,
@@ -35,34 +40,183 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-// Component to render the expanded row content
+import "@xyflow/react/dist/style.css"
+
+// Add type definition for relationships data
+interface RelationshipsData {
+  nodes: Node[];
+  edges: Edge[];
+  raw_relationships?: any;
+}
+
 const ExpandedPaperRow = ({ data }: { data: Paper }) => {
+  const [activeTab, setActiveTab] = useState("paper_info")
+  const [isGraphLoading, setIsGraphLoading] = useState(true)
+  const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false)
+  
+  // Fetch relationships data with skip option to control when it loads
+  const { data: relationships, isLoading, isError, refetch } = useGetPaperRelationshipsQuery(
+    data.id.toString(),
+    {
+      // Force refetch when component mounts to ensure fresh data
+      refetchOnMountOrArgChange: true
+    }
+  )
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(relationships?.nodes || [])
+  const [edges, setEdges, onEdgesChange] = useEdgesState(relationships?.edges || [])
+
+  // Update loading state and nodes/edges when relationships data changes
+  useEffect(() => {
+    if (relationships) {
+      // Only update if we have actual data
+      if (relationships.nodes && relationships.edges) {
+        setNodes(relationships.nodes)
+        setEdges(relationships.edges)
+      }
+      setIsGraphLoading(false)
+      setHasAttemptedLoad(true)
+    }
+  }, [relationships, setNodes, setEdges])
+
+  useEffect(() => {
+    // Trigger a refetch when component mounts to ensure we have fresh data
+    refetch()
+  }, [refetch])
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value)
+    
+    // If switching to relationships tab, ensure data is loaded
+    if (value === "relationships") {
+      if (isLoading || (!hasAttemptedLoad && !relationships)) {
+        setIsGraphLoading(true)
+        refetch()
+      }
+    }
+  }
+
+  // Determine if we have valid graph data
+  const hasValidGraphData = 
+    relationships && 
+    relationships.nodes && 
+    relationships.nodes.length > 0 && 
+    relationships.edges && 
+    relationships.edges.length > 0
+
   return (
     <TableRow>
-      <TableCell colSpan={6} className="p-4 bg-gray-50 border-t border-gray-200">
-        <div className="space-y-4">
-          {data.abstract && (
-            <div>
-              <h4 className="font-medium text-gray-900 mb-1">Abstract</h4>
-              <p className="text-sm text-gray-700">{data.abstract}</p>
-            </div>
-          )}
+      <TableCell
+        colSpan={6}
+        className="p-4 bg-gray-50 border-t border-gray-200"
+      >
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
+          <TabsList>
+            <TabsTrigger value="paper_info">Paper Info</TabsTrigger>
+            <TabsTrigger value="relationships">
+              Relationships
+              {isGraphLoading && (
+                <span className="ml-2 inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              )}
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="paper_info">
+            <div className="space-y-4">
+              {data.abstract && (
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-1">Abstract</h4>
+                  <p className="text-sm text-gray-700">{data.abstract}</p>
+                </div>
+              )}
 
-          {data.associated_disorders && (
-            <div>
-              <h4 className="font-medium text-gray-900 mb-1">Associated Disorders</h4>
-              <p className="text-sm text-gray-700">{data.associated_disorders}</p>
-            </div>
-          )}
+              {data.associated_disorders && (
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-1">
+                    Associated Disorders
+                  </h4>
+                  <p className="text-sm text-gray-700">
+                    {data.associated_disorders}
+                  </p>
+                </div>
+              )}
 
-          {data.asd_relevance_summary && (
-            <div>
-              <h4 className="font-medium text-gray-900 mb-1">ASD Relevance Summary</h4>
-              <p className="text-sm text-gray-700">{data.asd_relevance_summary}</p>
+              {data.asd_relevance_summary && (
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-1">
+                    ASD Relevance Summary
+                  </h4>
+                  <p className="text-sm text-gray-700">
+                    {data.asd_relevance_summary}
+                  </p>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </TabsContent>
+          <TabsContent value="relationships">
+            <div className="space-y-4 h-[450px]">
+              {isLoading || isGraphLoading ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+                    <p className="text-gray-600">Loading relationship graph...</p>
+                  </div>
+                </div>
+              ) : isError ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="flex flex-col items-center space-y-4 text-center">
+                    <div className="rounded-full h-12 w-12 bg-red-100 flex items-center justify-center">
+                      <span className="text-red-500 text-xl">!</span>
+                    </div>
+                    <p className="text-gray-600">Failed to load relationship data</p>
+                    <button 
+                      onClick={() => {
+                        setIsGraphLoading(true)
+                        setHasAttemptedLoad(false)
+                        refetch()
+                      }}
+                      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                </div>
+              ) : hasValidGraphData ? (
+                <ReactFlow
+                  key={`flow-${data.id}`} // Add key to force re-render
+                  nodes={nodes}
+                  edges={edges}
+                  fitView
+                  fitViewOptions={{ padding: 0.2 }}
+                  onNodesChange={onNodesChange}
+                  onEdgesChange={onEdgesChange}
+                  nodesDraggable={true}
+                  elementsSelectable={true}
+                >
+                  <Controls />
+                  <Background />
+                </ReactFlow>
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <div className="flex flex-col items-center space-y-4 text-center">
+                    <p className="text-gray-600">No relationship data available for this paper</p>
+                    <button 
+                      onClick={() => {
+                        setIsGraphLoading(true)
+                        setHasAttemptedLoad(false)
+                        refetch()
+                      }}
+                      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                    >
+                      Refresh Data
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
       </TableCell>
     </TableRow>
   )
@@ -78,8 +232,12 @@ export function PapersTable({
   isLoading?: boolean
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [expandedRows, setExpandedRows] = React.useState<Record<number, boolean>>({})
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    []
+  )
+  const [expandedRows, setExpandedRows] = React.useState<
+    Record<number, boolean>
+  >({})
   const [searchQuery, setSearchQuery] = React.useState("")
 
   const router = useRouter()
@@ -178,15 +336,15 @@ export function PapersTable({
       cell: ({ row }) => {
         const doi = row.getValue("doi") as string | null
         const link = row.original.link
-        
+
         if (!doi && !link) return <div className="text-center">N/A</div>
-        
+
         return (
           <div className="text-center">
             {(doi || link) && (
-              <a 
-                href={link || `https://doi.org/${doi}`} 
-                target="_blank" 
+              <a
+                href={link || `https://doi.org/${doi}`}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center text-primary hover:text-primary/80"
               >
@@ -214,7 +372,9 @@ export function PapersTable({
       },
       cell: ({ row }) => {
         const hasAutismReport = row.getValue("autism_report") as boolean
-        return <div className="text-center">{hasAutismReport ? "Yes" : "No"}</div>
+        return (
+          <div className="text-center">{hasAutismReport ? "Yes" : "No"}</div>
+        )
       },
     },
     {

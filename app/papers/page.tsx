@@ -1,7 +1,6 @@
 "use client"
 
 import { useGetAllPapersQuery } from "@/services/paper/paper"
-
 import { AuthWrapper } from "@/components/auth-wrapper"
 import { PapersTable } from "@/components/papers-table"
 
