@@ -1,7 +1,6 @@
 "use client"
 
-import { useCallback, useRef, useState } from "react"
-import { Separator } from "@radix-ui/react-separator"
+import { useCallback, useState } from "react"
 import axios from "axios"
 import Cookies from "js-cookie"
 
@@ -16,7 +15,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 import { FileUploadArea } from "@/components/file-upload-area"
@@ -27,9 +25,6 @@ import { useToast } from "./ui/use-toast"
 const MAXFILESIZE = 500 // in MB
 
 export function NewJobDialog() {
-  const jobIdRef = useRef<HTMLInputElement>(null)
-  const genesOfInterestRef = useRef<HTMLInputElement>(null)
-
   const [files, setFiles] = useState<File[]>([])
   const [uploadProgress, setUploadProgress] = useState(0)
   const [isUploading, setIsUploading] = useState(false)
@@ -49,12 +44,6 @@ export function NewJobDialog() {
         }
         formData.append("papers", file)
       })
-      // formData.append("job_id", jobIdRef.current?.value ?? "TEST")
-      // formData.append(
-      //   "interest_gene",
-      //   genesOfInterestRef.current?.value ?? "DMD, TP53"
-      // )
-      // formData.append("parent_task_id", "None")
 
       const authToken = Cookies.get("AUTH_TOKEN")
       const token = Buffer.from(authToken, "base64").toString("ascii")
@@ -98,29 +87,19 @@ export function NewJobDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="default">
-          <Icons.upload className="w-4 h-4 mr-2" />
-          New Job
+        <Button variant="ghost" size="icon">
+          <Icons.upload className="h-[1.3rem] w-[1.3rem]" />
+          <span className="sr-only">Upload Paper</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[650px]">
         <DialogHeader>
-          <DialogTitle>New Job</DialogTitle>
+          <DialogTitle>Paper Upload</DialogTitle>
           <DialogDescription>
-            Launch a new curation job to start reviewing cases
+            Upload papers to start a new curation job
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          {/* <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="job ID">Job ID [optional]</Label>
-            <Input
-              id="job_id"
-              placeholder="my-curation"
-              ref={jobIdRef}
-              className="col-span-3"
-            />
-          </div>
-          <Separator orientation="horizontal" /> */}
           <div className="flex flex-col w-full gap-4">
             <Label htmlFor="upload-files">Upload papers</Label>
             <FileUploadArea
@@ -146,7 +125,11 @@ export function NewJobDialog() {
             onClick={() => uploadFiles(files)}
             disabled={isUploading}
           >
-            {isUploading ? "Uploading..." : "Run"}
+            {isUploading ? (
+              "Uploading..."
+            ) : (
+              <Icons.upload className="h-4 w-4 m-2" />
+            )}
           </Button>
           <DialogClose asChild>
             <Button variant="outline" disabled={isUploading}>

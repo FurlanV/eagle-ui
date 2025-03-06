@@ -48,7 +48,7 @@ export function ScoreDistributionChart({ data }: ScoreDistributionChartProps) {
         <CardTitle>Case Score Distribution</CardTitle>
         <CardDescription>Distribution of cases by score range</CardDescription>
       </CardHeader>
-      <CardContent className="h-[300px]">
+      <CardContent className="h-[480px]">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -56,7 +56,7 @@ export function ScoreDistributionChart({ data }: ScoreDistributionChartProps) {
               cx="50%"
               cy="50%"
               labelLine={false}
-              outerRadius={120}
+              outerRadius={150}
               fill="#8884d8"
               dataKey="value"
               label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}

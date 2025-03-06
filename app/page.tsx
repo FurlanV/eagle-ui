@@ -21,8 +21,6 @@ export default function IndexPage() {
   const user = useAppSelector((state) => state.auth.user)
   const { data, isLoading } = useGetDashboardStatsQuery()
 
-  console.log(data)
-
   return (
     <AuthWrapper>
       <main className="flex flex-row">

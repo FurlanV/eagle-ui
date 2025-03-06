@@ -1,18 +1,75 @@
 import { useEffect, useRef, useState } from "react"
-import { useCompletion } from "@ai-sdk/react"
 import {
   Check,
   CheckCheck,
+  Copy,
   Maximize2,
   Minimize2,
   MoreHorizontal,
-  Send,
-  SmilePlus,
   Users,
+  Search,
 } from "lucide-react"
 import ReactMarkdown from "react-markdown"
+import remarkGfm from 'remark-gfm'
 
 import { cn } from "@/lib/utils"
+import AIInput from "./ai-input"
+
+// Local storage key format
+const CHAT_STORAGE_KEY_PREFIX = "gendex-chat-"
+
+// Helper functions for local storage
+const getChatStorageKey = (gene_name: string) => {
+  // Get current user info - in a real app, you'd get this from auth
+  const user = "User" // Replace with actual user identification when available
+  return `${CHAT_STORAGE_KEY_PREFIX}${user}-${gene_name}`
+}
+
+const saveMessagesToLocalStorage = (gene_name: string, messages: Message[]) => {
+  if (typeof window === 'undefined') return // SSR check
+  
+  try {
+    const key = getChatStorageKey(gene_name)
+    const data = {
+      user: "User", // Replace with actual user identification when available
+      gene: gene_name,
+      messages,
+      lastUpdated: new Date().toISOString()
+    }
+    localStorage.setItem(key, JSON.stringify(data))
+  } catch (error) {
+    console.error("Error saving chat to local storage:", error)
+  }
+}
+
+const loadMessagesFromLocalStorage = (gene_name: string): Message[] => {
+  if (typeof window === 'undefined') return [] // SSR check
+  
+  try {
+    const key = getChatStorageKey(gene_name)
+    const data = localStorage.getItem(key)
+    
+    if (data) {
+      const parsed = JSON.parse(data)
+      return parsed.messages || []
+    }
+  } catch (error) {
+    console.error("Error loading chat from local storage:", error)
+  }
+  
+  return []
+}
+
+const clearChatHistory = (gene_name: string) => {
+  if (typeof window === 'undefined') return // SSR check
+  
+  try {
+    const key = getChatStorageKey(gene_name)
+    localStorage.removeItem(key)
+  } catch (error) {
+    console.error("Error clearing chat history:", error)
+  }
+}
 
 interface Message {
   id: string
@@ -29,6 +86,11 @@ interface Message {
     count: number
     reacted: boolean
   }>
+  tokenUsage?: {
+    promptTokens: number
+    completionTokens: number
+    totalTokens: number
+  }
 }
 
 interface ChatContext {
@@ -54,6 +116,7 @@ export default function AIChatCard({
   isMaximized = false,
   onToggleMaximize,
 }: AIChatCardProps) {
+  const [useMemory, setUseMemory] = useState<boolean>(false)
   const [messages, setMessages] = useState<Message[]>([...predefinedMessages])
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [selectedContext, setSelectedContext] = useState<{
@@ -61,27 +124,40 @@ export default function AIChatCard({
     variants: string[];
     cases: string[];
   }>({ papers: [], variants: [], cases: [] })
-
-  const {
-    completion,
-    input,
-    handleInputChange,
-    handleSubmit,
-    stop,
-    isLoading,
-    error,
-  } = useCompletion({
-    api: "/eagle/api/chat",
-    body: {
-      gene_name,
-      selectedContext,
-    },
-  })
-
-  console.log(selectedContext)
-
+  const [useDeepResearch, setUseDeepResearch] = useState<boolean>(false)
   const [streamingMessage, setStreamingMessage] = useState<string>("")
   const [isStreaming, setIsStreaming] = useState<boolean>(false)
+  const [isDeepResearching, setIsDeepResearching] = useState<boolean>(false)
+  const [hasStoredMessages, setHasStoredMessages] = useState<boolean>(false)
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
+
+  // Load messages from local storage on component mount
+  useEffect(() => {
+    if (useMemory) {
+      const storedMessages = loadMessagesFromLocalStorage(gene_name)
+      if (storedMessages.length > 0) {
+        setMessages(storedMessages)
+        setHasStoredMessages(true)
+      } else {
+        setHasStoredMessages(false)
+      }
+    }
+  }, [gene_name, useMemory])
+
+  // Save messages to local storage when they change
+  useEffect(() => {
+    if (useMemory && messages.length > 0) {
+      // Only save if there are actual changes (not just on initial load)
+      const storedMessages = loadMessagesFromLocalStorage(gene_name)
+      const currentMessagesJson = JSON.stringify(messages)
+      const storedMessagesJson = JSON.stringify(storedMessages)
+      
+      if (currentMessagesJson !== storedMessagesJson) {
+        saveMessagesToLocalStorage(gene_name, messages)
+        setHasStoredMessages(true)
+      }
+    }
+  }, [messages, gene_name, useMemory])
 
   // Scroll to bottom whenever messages change or streaming content updates
   const scrollToBottom = () => {
@@ -92,24 +168,92 @@ export default function AIChatCard({
     scrollToBottom()
   }, [messages, streamingMessage])
 
-  // Handle streaming completion
-  useEffect(() => {
-    if (isLoading) {
-      // Start streaming
-      if (!isStreaming) {
-        setIsStreaming(true)
-        setStreamingMessage("")
+  // Custom function to call the API directly
+  const callChatAPI = async (prompt: string) => {
+    try {
+      setIsStreaming(true);
+      setStreamingMessage("");
+      
+      if (useDeepResearch) {
+        setIsDeepResearching(true);
       }
-
-      // Update the streaming message
-      setStreamingMessage(completion)
-    } else if (isStreaming && completion) {
-      // Streaming finished, add the complete message
+      
+      const response = await fetch("/eagle/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt,
+          gene_name,
+          selectedContext,
+          useDeepResearch,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("Response body is null");
+      
+      const decoder = new TextDecoder();
+      let result = "";
+      let tokenUsage: Message['tokenUsage'] = undefined;
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        
+        // Extract text content from the chunk
+        const textContent = extractTextFromChunk(chunk);
+        if (textContent) {
+          result += textContent;
+          setStreamingMessage(result);
+        }
+        
+        // Try to extract token usage information
+        const usageInfo = extractTokenUsage(chunk);
+        if (usageInfo) {
+          tokenUsage = usageInfo;
+        }
+      }
+      
+      // Add the AI response to messages
       setMessages((prevMessages) => [
         ...prevMessages,
         {
           id: String(prevMessages.length + 1),
-          content: completion,
+          content: result,
+          sender: { name: "AI", avatar: "", isOnline: true },
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          status: "sent",
+          tokenUsage: tokenUsage,
+        },
+      ]);
+      
+      // Reset streaming state
+      setIsStreaming(false);
+      setStreamingMessage("");
+      setIsDeepResearching(false);
+      
+    } catch (error) {
+      console.error("Error calling chat API:", error);
+      setIsStreaming(false);
+      setIsDeepResearching(false);
+      
+      // Add error message
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        {
+          id: String(prevMessages.length + 1),
+          content: "Sorry, there was an error processing your request. Please try again.",
           sender: { name: "AI", avatar: "", isOnline: true },
           timestamp: new Date().toLocaleTimeString([], {
             hour: "2-digit",
@@ -117,26 +261,91 @@ export default function AIChatCard({
           }),
           status: "sent",
         },
-      ])
-
-      // Reset streaming state
-      setIsStreaming(false)
-      setStreamingMessage("")
+      ]);
     }
-  }, [isLoading, completion, isStreaming])
+  };
+
+  // Helper function to extract text from the specific format we're seeing
+  const extractTextFromChunk = (chunk: string): string => {
+    try {
+      // The format we're seeing is like: f:{...} 0:"text" 0:" more" 0:" text" e:{...} d:{...}
+      // We need to extract all the text parts
+      
+      // Extract all text parts using regex
+      const regex = /\d+:"([^"]+)"/g;
+      let match;
+      let text = '';
+      
+      while ((match = regex.exec(chunk)) !== null) {
+        text += match[1];
+      }
+      
+      return text;
+    } catch (error) {
+      console.error('Error extracting text from chunk:', error);
+      return '';
+    }
+  };
+
+  // Helper function to extract token usage from the response
+  const extractTokenUsage = (chunk: string): { promptTokens: number, completionTokens: number, totalTokens: number } | undefined => {
+    try {
+      // Look for usage information in the chunk
+      // The format is typically like: e:{"finishReason":"stop","usage":{"promptTokens":13743,"completionTokens":1738},"isContinued":false}
+      const usageMatch = chunk.match(/e:{"finishReason":"[^"]+","usage":({[^}]+}),"isContinued":/);
+      if (usageMatch && usageMatch[1]) {
+        try {
+          const usageStr = usageMatch[1];
+          const usage = JSON.parse(usageStr);
+          
+          if (usage.promptTokens !== undefined && usage.completionTokens !== undefined) {
+            return {
+              promptTokens: usage.promptTokens,
+              completionTokens: usage.completionTokens,
+              totalTokens: usage.promptTokens + usage.completionTokens
+            };
+          }
+        } catch (e) {
+          console.error('Error parsing usage JSON:', e);
+        }
+      }
+      
+      // Alternative format: d:{"finishReason":"stop","usage":{"promptTokens":13743,"completionTokens":1738}}
+      const altUsageMatch = chunk.match(/d:{"finishReason":"[^"]+","usage":({[^}]+})}/);
+      if (altUsageMatch && altUsageMatch[1]) {
+        try {
+          const usageStr = altUsageMatch[1];
+          const usage = JSON.parse(usageStr);
+          
+          if (usage.promptTokens !== undefined && usage.completionTokens !== undefined) {
+            return {
+              promptTokens: usage.promptTokens,
+              completionTokens: usage.completionTokens,
+              totalTokens: usage.promptTokens + usage.completionTokens
+            };
+          }
+        } catch (e) {
+          console.error('Error parsing alternative usage JSON:', e);
+        }
+      }
+      
+      return undefined;
+    } catch (error) {
+      console.error('Error extracting token usage:', error);
+      return undefined;
+    }
+  };
 
   // Custom submit handler
-  const handleMessageSubmit = (e?: React.FormEvent) => {
-    if (e) e.preventDefault()
-
-    if (!input.trim()) return
+  const handleMessageSubmit = (value: string) => {
+    if (!value.trim()) return;
 
     // Add user message
     setMessages((prevMessages) => [
       ...prevMessages,
       {
         id: String(prevMessages.length + 1),
-        content: input,
+        content: value,
         sender: { name: "User", avatar: "", isOnline: true },
         timestamp: new Date().toLocaleTimeString([], {
           hour: "2-digit",
@@ -144,19 +353,11 @@ export default function AIChatCard({
         }),
         status: "sent",
       },
-    ])
-
-    // Submit to AI
-    handleSubmit()
-  }
-
-  // Handle keyboard events
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleMessageSubmit()
-    }
-  }
+    ]);
+    
+    // Call the API directly
+    callChatAPI(value);
+  };
 
   // Handle Escape key to minimize the chat
   useEffect(() => {
@@ -196,6 +397,72 @@ export default function AIChatCard({
     });
   };
 
+  // Helper function to preprocess message content for proper markdown rendering
+  const preprocessMarkdown = (content: string): string => {
+    if (!content) return '';
+    
+    // Replace escaped newlines with actual newlines
+    let processed = content.replace(/\\n/g, '\n');
+    
+    // Replace special dividers with markdown horizontal rules
+    processed = processed.replace(/─+/g, '---');
+    
+    // Handle section dividers (common in AI responses)
+    processed = processed.replace(/^(.*?)─+$(.*?)$/gm, '## $1\n\n$2');
+    
+    // Ensure proper spacing for lists and headings
+    processed = processed.replace(/•\s*/g, '* ');
+    
+    // Convert numbered lists with dot notation to markdown format
+    processed = processed.replace(/(\d+)\.\s+/g, '$1. ');
+    
+    // Ensure headers have space after the # symbol
+    processed = processed.replace(/^(#{1,6})([^#\s])/gm, '$1 $2');
+    
+    // Convert sections with titles to proper markdown headers
+    processed = processed.replace(/^(\d+)\.\s+([^\n]+)$/gm, '### $1. $2');
+    
+    // Ensure proper spacing after horizontal rules
+    processed = processed.replace(/---\n([^\n])/g, '---\n\n$1');
+    
+    // Ensure proper spacing before horizontal rules
+    processed = processed.replace(/([^\n])\n---/g, '$1\n\n---');
+    
+    // Handle lettered lists (a., b., etc.)
+    processed = processed.replace(/^([a-z])\.\s+/gm, '* ');
+    
+    // Add extra newlines before headers for better spacing
+    processed = processed.replace(/([^\n])\n(#{1,6}\s)/g, '$1\n\n$2');
+    
+    return processed;
+  };
+
+  // Function to clear chat history
+  const handleClearChatHistory = () => {
+    clearChatHistory(gene_name)
+    setMessages([])
+    setHasStoredMessages(false)
+  }
+
+  // Function to copy message content to clipboard
+  const copyToClipboard = (content: string, messageId: string) => {
+    if (typeof navigator !== 'undefined') {
+      navigator.clipboard.writeText(content)
+        .then(() => {
+          // Set the copied message ID to show visual feedback
+          setCopiedMessageId(messageId);
+          
+          // Reset after 2 seconds
+          setTimeout(() => {
+            setCopiedMessageId(null);
+          }, 2000);
+        })
+        .catch(err => {
+          console.error('Failed to copy content: ', err);
+        });
+    }
+  };
+
   return (
     <div
       className={cn(
@@ -216,7 +483,7 @@ export default function AIChatCard({
           "hover:shadow-xl hover:shadow-primary/10",
           "hover:border-primary/20",
           isMaximized
-            ? "w-[95%] h-[95%] md:w-[90%] md:h-[90%] max-w-5xl"
+            ? "w-[95%] h-[95%] md:w-[90%] md:h-[90%] max-w-8xl"
             : "w-full"
         )}
       >
@@ -247,9 +514,29 @@ export default function AIChatCard({
                 <h3 className="text-sm font-semibold text-foreground">
                   {chatName || "AI Assistant"}
                 </h3>
+                {useMemory && (
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
+                    <span className="text-xs text-blue-500">Memory active</span>
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {/* Clear chat history button - only show when useMemory is true and there are stored messages */}
+              {useMemory && hasStoredMessages && (
+                <button
+                  type="button"
+                  onClick={handleClearChatHistory}
+                  className={cn(
+                    "px-2 py-1 rounded-lg text-xs",
+                    "bg-red-500/10 text-red-500 hover:bg-red-500/20",
+                    "transition-colors duration-200"
+                  )}
+                >
+                  Clear History
+                </button>
+              )}
               {onToggleMaximize && (
                 <button
                   type="button"
@@ -499,9 +786,38 @@ export default function AIChatCard({
                         : "bg-primary/10 text-foreground"
                     )}
                   >
-                    <ReactMarkdown className="markdown prose prose-sm max-w-none dark:prose-invert">
-                      {message.content}
+                    {message.sender.name === "AI" && (
+                      <div className="flex justify-end mb-1 opacity-0 group-hover/message:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => copyToClipboard(message.content, message.id)}
+                          className={cn(
+                            "p-1 rounded-md transition-colors",
+                            copiedMessageId === message.id
+                              ? "bg-green-500/20 text-green-500"
+                              : "hover:bg-accent text-muted-foreground hover:text-foreground"
+                          )}
+                          title={copiedMessageId === message.id ? "Copied!" : "Copy to clipboard"}
+                        >
+                          {copiedMessageId === message.id ? (
+                            <Check className="w-3.5 h-3.5" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                      </div>
+                    )}
+                    <ReactMarkdown 
+                      className="markdown prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-pre:my-1 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-hr:my-3 prose-hr:border-border/30 prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs"
+                      remarkPlugins={[remarkGfm]}
+                    >
+                      {preprocessMarkdown(message.content)}
                     </ReactMarkdown>
+                    
+                    {message.tokenUsage && (
+                      <div className="mt-2 pt-2 border-t border-border/30 text-xs text-muted-foreground">
+                        <span>Tokens: {message.tokenUsage.completionTokens} generated | {message.tokenUsage.promptTokens} prompt | {message.tokenUsage.totalTokens} total</span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-1 pt-1">
@@ -562,9 +878,47 @@ export default function AIChatCard({
                       })}
                     </span>
                   </div>
-                  {streamingMessage ? (
+                  {isDeepResearching && !streamingMessage ? (
                     <div className="p-3 rounded-xl bg-accent/50 text-foreground text-sm">
-                      {streamingMessage}
+                      <div className="flex flex-col space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Search className="w-4 h-4 text-green-500 animate-pulse" />
+                          <span className="font-medium">Deep Research in progress...</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-1.5">
+                          <div className="bg-green-500 h-1.5 rounded-full animate-pulse" style={{ width: '100%' }}></div>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Searching the web for information about {gene_name}. This may take a moment.
+                        </p>
+                      </div>
+                    </div>
+                  ) : streamingMessage ? (
+                    <div className="p-3 rounded-xl bg-accent/50 text-foreground text-sm">
+                      <div className="flex justify-end mb-1 opacity-0 group-hover/message:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => copyToClipboard(streamingMessage, String(messages.length + 1))}
+                          className={cn(
+                            "p-1 rounded-md transition-colors",
+                            copiedMessageId === String(messages.length + 1)
+                              ? "bg-green-500/20 text-green-500"
+                              : "hover:bg-accent text-muted-foreground hover:text-foreground"
+                          )}
+                          title={copiedMessageId === String(messages.length + 1) ? "Copied!" : "Copy to clipboard"}
+                        >
+                          {copiedMessageId === String(messages.length + 1) ? (
+                            <Check className="w-3.5 h-3.5" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                      </div>
+                      <ReactMarkdown 
+                        className="markdown prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-pre:my-1 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-hr:my-3 prose-hr:border-border/30 prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs"
+                        remarkPlugins={[remarkGfm]}
+                      >
+                        {preprocessMarkdown(streamingMessage)}
+                      </ReactMarkdown>
                       <span className="inline-block w-1.5 h-4 ml-0.5 bg-primary/50 animate-pulse rounded-sm"></span>
                     </div>
                   ) : (
@@ -592,56 +946,14 @@ export default function AIChatCard({
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="p-4 border-t border-border mt-auto">
-          <form
+        <div className="border-t border-border">
+          <AIInput 
             onSubmit={handleMessageSubmit}
-            className="flex items-center gap-3"
-          >
-            <div className="relative flex-1">
-              <input
-                type="text"
-                placeholder="Write a message..."
-                value={input}
-                onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
-                className={cn(
-                  "w-full px-4 py-2.5 pr-10",
-                  "bg-accent/50",
-                  "border border-input",
-                  "rounded-xl",
-                  "text-sm text-foreground",
-                  "placeholder:text-muted-foreground",
-                  "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30",
-                  "transition-all duration-200"
-                )}
-              />
-              <button
-                type="button"
-                className={cn(
-                  "absolute right-2 top-1/2 -translate-y-1/2",
-                  "p-1.5 rounded-lg",
-                  "hover:bg-accent text-muted-foreground hover:text-foreground",
-                  "transition-colors duration-200"
-                )}
-              >
-                <SmilePlus className="w-4 h-4" />
-              </button>
-            </div>
-            <button
-              type="submit"
-              className={cn(
-                "p-2.5 rounded-xl",
-                "bg-primary text-primary-foreground",
-                "hover:bg-primary/90",
-                "transition-colors duration-200",
-                "focus:outline-none focus:ring-2 focus:ring-primary/20",
-                isLoading ? "opacity-50 cursor-not-allowed" : ""
-              )}
-              disabled={isLoading}
-            >
-              <Send className="w-4 h-4" />
-            </button>
-          </form>
+            useDeepResearch={useDeepResearch}
+            setUseDeepResearch={setUseDeepResearch}
+            useMemory={useMemory}
+            setUseMemory={setUseMemory}
+          />
         </div>
       </div>
     </div>

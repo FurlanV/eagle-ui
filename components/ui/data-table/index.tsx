@@ -15,6 +15,8 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
+  Row,
+  OnChangeFn,
 } from "@tanstack/react-table"
 import { ChevronDown, ChevronUp } from "lucide-react"
 
@@ -39,6 +41,8 @@ interface DataTableProps<TData, TValue> {
   hidePagination?: boolean
   enableExpanding?: boolean
   onRowClick?: (row: Row<TData>) => void
+  sorting?: SortingState
+  onSortingChange?: OnChangeFn<SortingState>
 }
 
 export function DataTable<TData, TValue>({
@@ -48,6 +52,8 @@ export function DataTable<TData, TValue>({
   hidePagination = false,
   enableExpanding = false,
   onRowClick,
+  sorting: externalSorting,
+  onSortingChange: onExternalSortingChange,
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] =
@@ -55,8 +61,11 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   )
-  const [sorting, setSorting] = React.useState<SortingState>([])
+  const [internalSorting, setInternalSorting] = React.useState<SortingState>([])
   const [expanded, setExpanded] = React.useState({})
+
+  const sorting = externalSorting ?? internalSorting
+  const setSorting = onExternalSortingChange ?? setInternalSorting
 
   const table = useReactTable({
     data,
@@ -164,13 +173,13 @@ export function DataTable<TData, TValue>({
                             Detailed Information
                           </h3>
                           <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {Object.entries(row.original).map(([key, value]) => (
+                            {Object.entries(row.original as Record<string, unknown>).map(([key, value]) => (
                               <div key={key} className="flex flex-col gap-1">
                                 <dt className="capitalize font-bold">
                                   {key.replace(/_/g, " ")}
                                 </dt>
                                 <dd className="bg-muted p-2 rounded-md">
-                                  {value || "N/A"}
+                                  {value ? String(value) : "N/A"}
                                 </dd>
                               </div>
                             ))}

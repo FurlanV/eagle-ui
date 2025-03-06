@@ -1,18 +1,17 @@
 "use client"
 
-import { useGetGenesWithCasesQuery } from "@/services/gene/gene"
-
+import { useGetAllPapersQuery } from "@/services/paper/paper"
 import { AuthWrapper } from "@/components/auth-wrapper"
-import { GenesTable } from "@/components/genes-table"
+import { PapersTable } from "@/components/papers-table"
 
-export default function CurationsPage() {
-  const { error, data: genesWithCasesData = [] } = useGetGenesWithCasesQuery()
-  
+export default function PapersPage() {
+  const { error, data: papersData = [], isLoading } = useGetAllPapersQuery()
+
   return (
     <AuthWrapper>
       <div className="flex flex-col p-4 space-y-6">
         <header className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Genes</h1>
+          <h1 className="text-2xl font-bold">Papers</h1>
         </header>
 
         {error && (
@@ -24,7 +23,7 @@ export default function CurationsPage() {
             <span className="block sm:inline"> {error.toString()}</span>
           </div>
         )}
-        <GenesTable data={genesWithCasesData} />
+        <PapersTable data={papersData} isLoading={isLoading} />
       </div>
     </AuthWrapper>
   )

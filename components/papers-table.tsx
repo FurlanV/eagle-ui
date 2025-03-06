@@ -1,16 +1,15 @@
 "use client"
 
 import * as React from "react"
-import {
-  CaretSortIcon,
-  ChevronDownIcon,
-  DotsHorizontalIcon,
-} from "@radix-ui/react-icons"
+import { useRouter } from "next/navigation"
+import { useGetPaperRelationshipsQuery } from "@/services/eagle/relationships"
+import { Paper } from "@/services/paper/paper"
+import { CaretSortIcon } from "@radix-ui/react-icons"
 import {
   ColumnDef,
   ColumnFiltersState,
+  Row,
   SortingState,
-  VisibilityState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
@@ -18,20 +17,21 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
+import {
+  Background,
+  Controls,
+  ReactFlow,
+  useEdgesState,
+  useNodesState,
+  Node,
+  Edge,
+} from "@xyflow/react"
+import { ExternalLink, Info } from "lucide-react"
+import { useState, useEffect } from "react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
+import { Spinner } from "@/components/ui/spinner"
 import {
   Table,
   TableBody,
@@ -40,123 +40,363 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-export type Papers = {
-  id: string
-  doi: string
-  patient: string
-  sex: string
-  age: number
-  phenotype: string
-  phenotypingNotes: string
-  ASD: string
-  genotypingMethod: string
-  variant: string
-  impact: string
-  inheritance: string
-  typeOfMutation: string
-  phenotypeQuality: string
-  cautionaryComment: string
-  evidenceType: string
-  points: number
-  score: number
+import "@xyflow/react/dist/style.css"
+
+// Add type definition for relationships data
+interface RelationshipsData {
+  nodes: Node[];
+  edges: Edge[];
+  raw_relationships?: any;
 }
 
-export const columns: ColumnDef<Papers>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "doi",
-    header: "pmid/doi",
-    cell: ({ row }) => <div>{row.getValue("pmid")??row.getValue("doi")}</div>,
-  },
-  {
-    accessorKey: "title",
-    header: "Title",
-    cell: ({ row }) => <div>{row.getValue("title")}</div>,
-  },
-  {
-    accessorKey: "year",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Date
-          <CaretSortIcon className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
-    cell: ({ row }) => (
-      <div className="text-center font-bold">
-        {row.getValue("year") ?? row.getValue("pubDate")}
-      </div>
-    ),
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const payment = row.original
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <DotsHorizontalIcon className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(payment.id)}
-            >
-              Copy DOI
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>View Authors</DropdownMenuItem>
-            <DropdownMenuItem>View Analysis</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
-    },
-  },
-]
+const ExpandedPaperRow = ({ data }: { data: Paper }) => {
+  const [activeTab, setActiveTab] = useState("paper_info")
+  const [isGraphLoading, setIsGraphLoading] = useState(true)
+  const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false)
+  
+  // Fetch relationships data with skip option to control when it loads
+  const { data: relationships, isLoading, isError, refetch } = useGetPaperRelationshipsQuery(
+    data.id.toString(),
+    {
+      // Force refetch when component mounts to ensure fresh data
+      refetchOnMountOrArgChange: true
+    }
+  )
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(relationships?.nodes || [])
+  const [edges, setEdges, onEdgesChange] = useEdgesState(relationships?.edges || [])
+
+  // Update loading state and nodes/edges when relationships data changes
+  useEffect(() => {
+    if (relationships) {
+      // Only update if we have actual data
+      if (relationships.nodes && relationships.edges) {
+        setNodes(relationships.nodes)
+        setEdges(relationships.edges)
+      }
+      setIsGraphLoading(false)
+      setHasAttemptedLoad(true)
+    }
+  }, [relationships, setNodes, setEdges])
+
+  useEffect(() => {
+    // Trigger a refetch when component mounts to ensure we have fresh data
+    refetch()
+  }, [refetch])
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value)
+    
+    // If switching to relationships tab, ensure data is loaded
+    if (value === "relationships") {
+      if (isLoading || (!hasAttemptedLoad && !relationships)) {
+        setIsGraphLoading(true)
+        refetch()
+      }
+    }
+  }
+
+  // Determine if we have valid graph data
+  const hasValidGraphData = 
+    relationships && 
+    relationships.nodes && 
+    relationships.nodes.length > 0 && 
+    relationships.edges && 
+    relationships.edges.length > 0
+
+  return (
+    <TableRow>
+      <TableCell
+        colSpan={6}
+        className="p-4 bg-gray-50 border-t border-gray-200"
+      >
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
+          <TabsList>
+            <TabsTrigger value="paper_info">Paper Info</TabsTrigger>
+            <TabsTrigger value="relationships">
+              Relationships
+              {isGraphLoading && (
+                <span className="ml-2 inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              )}
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="paper_info">
+            <div className="space-y-4">
+              {data.abstract && (
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-1">Abstract</h4>
+                  <p className="text-sm text-gray-700">{data.abstract}</p>
+                </div>
+              )}
+
+              {data.associated_disorders && (
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-1">
+                    Associated Disorders
+                  </h4>
+                  <p className="text-sm text-gray-700">
+                    {data.associated_disorders}
+                  </p>
+                </div>
+              )}
+
+              {data.asd_relevance_summary && (
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-1">
+                    ASD Relevance Summary
+                  </h4>
+                  <p className="text-sm text-gray-700">
+                    {data.asd_relevance_summary}
+                  </p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+          <TabsContent value="relationships">
+            <div className="space-y-4 h-[450px]">
+              {isLoading || isGraphLoading ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+                    <p className="text-gray-600">Loading relationship graph...</p>
+                  </div>
+                </div>
+              ) : isError ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="flex flex-col items-center space-y-4 text-center">
+                    <div className="rounded-full h-12 w-12 bg-red-100 flex items-center justify-center">
+                      <span className="text-red-500 text-xl">!</span>
+                    </div>
+                    <p className="text-gray-600">Failed to load relationship data</p>
+                    <button 
+                      onClick={() => {
+                        setIsGraphLoading(true)
+                        setHasAttemptedLoad(false)
+                        refetch()
+                      }}
+                      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                </div>
+              ) : hasValidGraphData ? (
+                <ReactFlow
+                  key={`flow-${data.id}`} // Add key to force re-render
+                  nodes={nodes}
+                  edges={edges}
+                  fitView
+                  fitViewOptions={{ padding: 0.2 }}
+                  onNodesChange={onNodesChange}
+                  onEdgesChange={onEdgesChange}
+                  nodesDraggable={true}
+                  elementsSelectable={true}
+                >
+                  <Controls />
+                  <Background />
+                </ReactFlow>
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <div className="flex flex-col items-center space-y-4 text-center">
+                    <p className="text-gray-600">No relationship data available for this paper</p>
+                    <button 
+                      onClick={() => {
+                        setIsGraphLoading(true)
+                        setHasAttemptedLoad(false)
+                        refetch()
+                      }}
+                      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                    >
+                      Refresh Data
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </TableCell>
+    </TableRow>
+  )
+}
 
 export function PapersTable({
   data,
   className,
-  setShowFileUpload,
-  searchPapers,
-}: any) {
+  isLoading = false,
+}: {
+  data: Paper[]
+  className?: string
+  isLoading?: boolean
+}) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   )
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({})
-  const [rowSelection, setRowSelection] = React.useState({})
+  const [expandedRows, setExpandedRows] = React.useState<
+    Record<number, boolean>
+  >({})
+  const [searchQuery, setSearchQuery] = React.useState("")
+
+  const router = useRouter()
+
+  // Function to toggle row expansion
+  const toggleRowExpanded = (id: number) => {
+    setExpandedRows((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }))
+  }
+
+  // Default sorting by year (descending)
+  React.useEffect(() => {
+    setSorting([{ id: "year", desc: true }])
+  }, [])
+
+  // Update column filters when search query changes
+  React.useEffect(() => {
+    setColumnFilters(searchQuery ? [{ id: "title", value: searchQuery }] : [])
+  }, [searchQuery])
+
+  const columns: ColumnDef<Paper>[] = [
+    {
+      accessorKey: "title",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="font-medium"
+          >
+            Title
+            <CaretSortIcon className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
+      cell: ({ row }) => (
+        <div className="font-medium text-primary hover:text-primary/80 cursor-pointer">
+          {row.getValue("title")}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "first_author",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="font-medium"
+          >
+            Author
+            <CaretSortIcon className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
+      cell: ({ row }) => {
+        const author = row.getValue("first_author") as string | null
+        return <div>{author || "Unknown"}</div>
+      },
+    },
+    {
+      accessorKey: "year",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="font-medium"
+          >
+            Year
+            <CaretSortIcon className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
+      cell: ({ row }) => {
+        const year = row.getValue("year") as number | null
+        return <div className="text-center">{year || "N/A"}</div>
+      },
+    },
+    {
+      accessorKey: "doi",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="font-medium"
+          >
+            DOI
+            <CaretSortIcon className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
+      cell: ({ row }) => {
+        const doi = row.getValue("doi") as string | null
+        const link = row.original.link
+
+        if (!doi && !link) return <div className="text-center">N/A</div>
+
+        return (
+          <div className="text-center">
+            {(doi || link) && (
+              <a
+                href={link || `https://doi.org/${doi}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center text-primary hover:text-primary/80"
+              >
+                <ExternalLink className="h-4 w-4 mr-1" />
+                {doi ? "DOI" : "Link"}
+              </a>
+            )}
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "autism_report",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="font-medium"
+          >
+            ASD Report
+            <CaretSortIcon className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
+      cell: ({ row }) => {
+        const hasAutismReport = row.getValue("autism_report") as boolean
+        return (
+          <div className="text-center">{hasAutismReport ? "Yes" : "No"}</div>
+        )
+      },
+    },
+    {
+      id: "details",
+      header: () => <div className="w-10"></div>,
+      cell: ({ row }) => (
+        <div className="flex justify-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation()
+              toggleRowExpanded(row.original.id)
+            }}
+            className="p-0 h-8 w-8"
+          >
+            <Info className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ]
 
   const table = useReactTable({
     data,
@@ -167,98 +407,62 @@ export function PapersTable({
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
     state: {
       sorting,
       columnFilters,
-      columnVisibility,
-      rowSelection,
     },
   })
 
-  return (
-    <div className={cn("w-full h-full", className)}>
-      <div className="flex items-center py-3">
-        <Input
-          placeholder="Filter Papers..."
-          value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("title")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Columns <ChevronDownIcon className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                )
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <Button
-          variant="outline"
-          className="ml-2"
-          onClick={() => setShowFileUpload(true)}
-        >
-          Upload
-        </Button>
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <Spinner />
       </div>
-      <div className="rounded-md border overflow-scroll h-[39rem]">
+    )
+  }
+
+  return (
+    <div className={cn("w-full", className)}>
+      <div className="rounded-md border">
         <Table>
-          <TableHeader className="w-full">
+          <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  )
-                })}
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
           </TableHeader>
-
-          <TableBody className="overflow-scroll">
+          <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
+                <React.Fragment key={row.id}>
+                  <TableRow
+                    data-state={row.getIsSelected() && "selected"}
+                    className="cursor-pointer"
+                    onClick={() => toggleRowExpanded(row.original.id)}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                  {expandedRows[row.original.id] && (
+                    <ExpandedPaperRow data={row.original} />
+                  )}
+                </React.Fragment>
               ))
             ) : (
               <TableRow>
@@ -274,10 +478,6 @@ export function PapersTable({
         </Table>
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
-        </div>
         <div className="space-x-2">
           <Button
             variant="outline"

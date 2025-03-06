@@ -40,7 +40,7 @@ export function TopGenesChart({ data }: TopGenesChartProps) {
         <CardTitle>Top Genes by Case Count</CardTitle>
         <CardDescription>Genes with the most associated cases</CardDescription>
       </CardHeader>
-      <CardContent className="h-[300px]">
+      <CardContent className="h-[390px]">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} layout="vertical" margin={{ left: 70 }}>
             <CartesianGrid strokeDasharray="3 3" horizontal={false} />

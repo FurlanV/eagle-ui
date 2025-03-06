@@ -2,14 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import {
-  CandlestickChart,
-  Dna,
-  Home,
-  PersonStanding,
-  Settings,
-  TestTubeDiagonal,
-} from "lucide-react"
+import { Book, Dna, Home, Settings, TestTubeDiagonal } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import {
@@ -18,6 +11,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { NewJobDialog } from "@/components/new-job-dialog"
 import { ThemeToggle } from "@/components/theme-toggle"
 
 export function Sidebar() {
@@ -25,7 +19,7 @@ export function Sidebar() {
   const split_pathname = pathname.split("/")
   const current = split_pathname[split_pathname.length - 1]
 
-  if(current === 'login') {
+  if (current === "login") {
     return null
   }
 
@@ -64,29 +58,30 @@ export function Sidebar() {
                   current === "curations" && "text-accent-foreground bg-accent"
                 )}
               >
-                <TestTubeDiagonal className="h-5 w-5" />
-                <span className="sr-only">Curations</span>
+                <Dna className="h-5 w-5" />
+                <span className="sr-only">Genes</span>
               </Link>
             </TooltipTrigger>
-            <TooltipContent side="right">Curations</TooltipContent>
+            <TooltipContent side="right">Genes</TooltipContent>
           </Tooltip>
-          {/* <Tooltip>
+          <Tooltip>
             <TooltipTrigger asChild>
               <Link
-                href="/eval"
+                href="/papers"
                 className={cn(
                   "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8",
-                  current === "analyses" && "text-accent-foreground bg-accent"
+                  current === "papers" && "text-accent-foreground bg-accent"
                 )}
               >
-                <CandlestickChart className="h-5 w-5" />
-                <span className="sr-only">Evaluations</span>
+                <Book className="h-5 w-5" />
+                <span className="sr-only">Papers</span>
               </Link>
             </TooltipTrigger>
-            <TooltipContent side="right">Evaluations</TooltipContent>
-          </Tooltip> */}
+            <TooltipContent side="right">Papers</TooltipContent>
+          </Tooltip>
         </nav>
-        <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
+        <nav className="mt-auto flex flex-col items-center gap-4 px-2 py-5">
+          <NewJobDialog />
           <ThemeToggle />
           <Tooltip>
             <TooltipTrigger asChild>

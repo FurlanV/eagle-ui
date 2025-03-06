@@ -10,6 +10,8 @@ import { tasksAPI } from "@/services/tasks"
 import jobSlice from "./eagle/job-slice"
 import authSlice from "./auth/auth-slice"
 import { geneAPI } from "@/services/gene/gene"
+import { paperApi } from "@/services/paper/paper"
+import { eagleRelationshipsAPI } from "@/services/eagle/relationships"
 
 export const makeStore = () => {
     return configureStore({
@@ -23,7 +25,9 @@ export const makeStore = () => {
             [authAPI.reducerPath]: authAPI.reducer,
             [tasksAPI.reducerPath]: tasksAPI.reducer,
             [curationReviewAPI.reducerPath]: curationReviewAPI.reducer,
-            [geneAPI.reducerPath]: geneAPI.reducer
+            [geneAPI.reducerPath]: geneAPI.reducer,
+            [paperApi.reducerPath]: paperApi.reducer,
+            [eagleRelationshipsAPI.reducerPath]: eagleRelationshipsAPI.reducer
         },
         middleware: (getDefaultMiddleware) =>
             getDefaultMiddleware().concat([
@@ -34,7 +38,9 @@ export const makeStore = () => {
                 authAPI.middleware,
                 tasksAPI.middleware,
                 curationReviewAPI.middleware,
-                geneAPI.middleware
+                geneAPI.middleware,
+                paperApi.middleware,
+                eagleRelationshipsAPI.middleware
             ]),
     })
 }

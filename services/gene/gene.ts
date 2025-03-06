@@ -11,9 +11,12 @@ export const geneAPI = createApi({
             query: () => 'cases',
         }),
         getGenePapersAndVariants: builder.query<any[], string>({
-            query: (gene_id: string) => `papers_variants?gene_id=${gene_id}`,
+            query: (gene_id: string) => `papers-variants?gene_id=${gene_id}`,
+        }),
+        updateGeneASDRelavance: builder.mutation<any[], string>({
+            query: (gene_id: string) => `asd-relevance?gene_id=${gene_id}`,
         }),
     }),
 })
 
-export const { useGetGeneInformationQuery, useGetGenesWithCasesQuery, useGetGenePapersAndVariantsQuery } = geneAPI
+export const { useGetGeneInformationQuery, useGetGenesWithCasesQuery, useGetGenePapersAndVariantsQuery, useUpdateGeneASDRelavanceMutation } = geneAPI
