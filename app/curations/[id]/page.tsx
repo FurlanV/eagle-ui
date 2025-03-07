@@ -309,12 +309,12 @@ export default function GeneDetailsPage() {
       </main>
 
       <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-        <Tabs defaultValue="papers">
+        <Tabs defaultValue="case-details">
           <TabsList>
+          <TabsTrigger value="case-details">Cases</TabsTrigger>
             <TabsTrigger value="papers">Papers</TabsTrigger>
-            <TabsTrigger value="case-details">Cases</TabsTrigger>
             <TabsTrigger value="variants">Variants</TabsTrigger>
-            <TabsTrigger value="protein-interactions">
+            <TabsTrigger value="protein-interactions" disabled>
               Protein Interactions
             </TabsTrigger>
           </TabsList>

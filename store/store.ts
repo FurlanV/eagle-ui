@@ -12,6 +12,7 @@ import authSlice from "./auth/auth-slice"
 import { geneAPI } from "@/services/gene/gene"
 import { paperApi } from "@/services/paper/paper"
 import { eagleRelationshipsAPI } from "@/services/eagle/relationships"
+import { feedbackAPI } from "@/services/feedback/feedback"
 
 export const makeStore = () => {
     return configureStore({
@@ -27,7 +28,8 @@ export const makeStore = () => {
             [curationReviewAPI.reducerPath]: curationReviewAPI.reducer,
             [geneAPI.reducerPath]: geneAPI.reducer,
             [paperApi.reducerPath]: paperApi.reducer,
-            [eagleRelationshipsAPI.reducerPath]: eagleRelationshipsAPI.reducer
+            [eagleRelationshipsAPI.reducerPath]: eagleRelationshipsAPI.reducer,
+            [feedbackAPI.reducerPath]: feedbackAPI.reducer
         },
         middleware: (getDefaultMiddleware) =>
             getDefaultMiddleware().concat([
@@ -40,7 +42,8 @@ export const makeStore = () => {
                 curationReviewAPI.middleware,
                 geneAPI.middleware,
                 paperApi.middleware,
-                eagleRelationshipsAPI.middleware
+                eagleRelationshipsAPI.middleware,
+                feedbackAPI.middleware
             ]),
     })
 }

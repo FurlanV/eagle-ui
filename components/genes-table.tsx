@@ -352,7 +352,7 @@ export function GenesTable({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="rounded-md border overflow-scroll h-[39rem]">
+      <div className="rounded-md border overflow-scroll">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
