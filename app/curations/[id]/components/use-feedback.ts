@@ -140,6 +140,44 @@ export const useFeedback = (caseDetailsData: CaseData[]) => {
                     description: toastMessage,
                     variant: "default",
                 })
+                
+                // Update userFeedbacks state to reflect the change immediately
+                setUserFeedbacks((prev) => {
+                    // Create a copy of the previous state (as an object, not an array)
+                    const newUserFeedbacks = { ...prev };
+                    
+                    // Initialize the feedback object for this case if it doesn't exist
+                    if (!newUserFeedbacks[id]) {
+                        newUserFeedbacks[id] = {};
+                    }
+                    
+                    // Toggle the liked state
+                    newUserFeedbacks[id] = {
+                        ...newUserFeedbacks[id],
+                        liked: !isCurrentlyLiked,
+                        // If we're liking, make sure disliked is false
+                        disliked: !isCurrentlyLiked ? false : newUserFeedbacks[id].disliked
+                    };
+                    
+                    // If we're removing the like, we might need to clean up
+                    if (isCurrentlyLiked) {
+                        // If there's no other feedback, we can remove the entire entry
+                        if (!newUserFeedbacks[id].disliked && 
+                            !newUserFeedbacks[id].flagged && 
+                            !newUserFeedbacks[id].flagged_for_rescoring) {
+                            delete newUserFeedbacks[id];
+                        }
+                    }
+                    
+                    // If we have a comment, update it
+                    if (comment) {
+                        if (newUserFeedbacks[id]) {
+                            newUserFeedbacks[id].comment = comment;
+                        }
+                    }
+                    
+                    return newUserFeedbacks;
+                });
             })
             .catch((error) => {
                 toast({
@@ -237,17 +275,51 @@ export const useFeedback = (caseDetailsData: CaseData[]) => {
         })
             .unwrap()
             .then(() => {
-                console.log(`Feedback for case ${id} successfully submitted`)
-                // Show success toast
                 toast({
                     title: "Success",
                     description: toastMessage,
                     variant: "default",
                 })
+                
+                // Update userFeedbacks state to reflect the change immediately
+                setUserFeedbacks((prev) => {
+                    // Create a copy of the previous state (as an object, not an array)
+                    const newUserFeedbacks = { ...prev };
+                    
+                    // Initialize the feedback object for this case if it doesn't exist
+                    if (!newUserFeedbacks[id]) {
+                        newUserFeedbacks[id] = {};
+                    }
+                    
+                    // Toggle the disliked state
+                    newUserFeedbacks[id] = {
+                        ...newUserFeedbacks[id],
+                        disliked: !isCurrentlyDisliked,
+                        // If we're disliking, make sure liked is false
+                        liked: !isCurrentlyDisliked ? false : newUserFeedbacks[id].liked
+                    };
+                    
+                    // If we're removing the dislike, we might need to clean up
+                    if (isCurrentlyDisliked) {
+                        // If there's no other feedback, we can remove the entire entry
+                        if (!newUserFeedbacks[id].liked && 
+                            !newUserFeedbacks[id].flagged && 
+                            !newUserFeedbacks[id].flagged_for_rescoring) {
+                            delete newUserFeedbacks[id];
+                        }
+                    }
+                    
+                    // If we have a comment, update it
+                    if (comment) {
+                        if (newUserFeedbacks[id]) {
+                            newUserFeedbacks[id].comment = comment;
+                        }
+                    }
+                    
+                    return newUserFeedbacks;
+                });
             })
             .catch((error) => {
-                console.error(`Error submitting feedback for case ${id}:`, error)
-                // Show error toast
                 toast({
                     title: "Error",
                     description: "Failed to update feedback. Please try again.",
@@ -267,7 +339,6 @@ export const useFeedback = (caseDetailsData: CaseData[]) => {
                         ...updatedCaseData[caseIndex],
                         dislikes_count: updatedCaseData[caseIndex].dislikes_count + 1,
                     }
-                    // Note: In a real implementation, you would update the state here
                 }
             })
     }
