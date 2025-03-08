@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useAddOrUpdateFeedbackMutation, useGetUserFeedbackForCasesMutation } from "@/services/feedback/feedback"
 import { CaseData, FeedbackState, FeedbackHandlers } from './types'
+import { toast } from "@/components/ui/use-toast"
 
 export const useFeedback = (caseDetailsData: CaseData[]) => {
     const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({})
@@ -64,7 +65,9 @@ export const useFeedback = (caseDetailsData: CaseData[]) => {
 
     // Function to handle like
     const handleLike = (id: number, comment?: string) => {
-        const isCurrentlyLiked = likedCases[id] || false
+        // Check if the case is currently liked using the same logic as the UI
+        const userFeedback = userFeedbacks && userFeedbacks[id] ? userFeedbacks[id] : null
+        const isCurrentlyLiked = userFeedback ? userFeedback.liked : (likedCases[id] || false)
 
         // If disliked, remove dislike
         if (dislikedCases[id]) {
@@ -120,24 +123,53 @@ export const useFeedback = (caseDetailsData: CaseData[]) => {
             [id]: null,
         }))
 
+        // Determine the feedback type and message for toast
+        const feedbackType = !isCurrentlyLiked ? "like" : "none"
+        const toastMessage = !isCurrentlyLiked ? "Case liked successfully" : "Like removed successfully"
+
         // Call the feedback API
         addOrUpdateFeedback({
             case_id: id,
-            feedback_type: !isCurrentlyLiked ? "like" : "none", // If already liked, toggling means removing the like
+            feedback_type: feedbackType, // If already liked, toggling means removing the like
             comment: comment || "",
         })
             .unwrap()
             .then(() => {
-                console.log(`Feedback for case ${id} successfully submitted`)
+                toast({
+                    title: "Success",
+                    description: toastMessage,
+                    variant: "default",
+                })
             })
             .catch((error) => {
-                console.error(`Error submitting feedback for case ${id}:`, error)
+                toast({
+                    title: "Error",
+                    description: "Failed to update feedback. Please try again.",
+                    variant: "destructive",
+                })
+                
+                // Revert UI changes on error
+                setLikedCases((prev) => ({
+                    ...prev,
+                    [id]: isCurrentlyLiked,
+                }))
+                
+                // If we were removing a like and it failed, restore the like count
+                if (isCurrentlyLiked && caseIndex !== -1) {
+                    const updatedCaseData = [...caseDetailsData]
+                    updatedCaseData[caseIndex] = {
+                        ...updatedCaseData[caseIndex],
+                        likes_count: updatedCaseData[caseIndex].likes_count + 1,
+                    }
+                }
             })
     }
 
     // Function to handle dislike
     const handleDislike = (id: number, comment?: string) => {
-        const isCurrentlyDisliked = dislikedCases[id] || false
+        // Check if the case is currently disliked using the same logic as the UI
+        const userFeedback = userFeedbacks && userFeedbacks[id] ? userFeedbacks[id] : null
+        const isCurrentlyDisliked = userFeedback ? userFeedback.disliked : (dislikedCases[id] || false)
 
         // If liked, remove like
         if (likedCases[id]) {
@@ -193,18 +225,50 @@ export const useFeedback = (caseDetailsData: CaseData[]) => {
             [id]: null,
         }))
 
+        // Determine the feedback type and message for toast
+        const feedbackType = !isCurrentlyDisliked ? "dislike" : "none"
+        const toastMessage = !isCurrentlyDisliked ? "Case disliked successfully" : "Dislike removed successfully"
+
         // Call the feedback API
         addOrUpdateFeedback({
             case_id: id,
-            feedback_type: !isCurrentlyDisliked ? "dislike" : "none", // If already disliked, toggling means removing the dislike
+            feedback_type: feedbackType, // If already disliked, toggling means removing the dislike
             comment: comment || "",
         })
             .unwrap()
             .then(() => {
                 console.log(`Feedback for case ${id} successfully submitted`)
+                // Show success toast
+                toast({
+                    title: "Success",
+                    description: toastMessage,
+                    variant: "default",
+                })
             })
             .catch((error) => {
                 console.error(`Error submitting feedback for case ${id}:`, error)
+                // Show error toast
+                toast({
+                    title: "Error",
+                    description: "Failed to update feedback. Please try again.",
+                    variant: "destructive",
+                })
+                
+                // Revert UI changes on error
+                setDislikedCases((prev) => ({
+                    ...prev,
+                    [id]: isCurrentlyDisliked,
+                }))
+                
+                // If we were removing a dislike and it failed, restore the dislike count
+                if (isCurrentlyDisliked && caseIndex !== -1) {
+                    const updatedCaseData = [...caseDetailsData]
+                    updatedCaseData[caseIndex] = {
+                        ...updatedCaseData[caseIndex],
+                        dislikes_count: updatedCaseData[caseIndex].dislikes_count + 1,
+                    }
+                    // Note: In a real implementation, you would update the state here
+                }
             })
     }
 

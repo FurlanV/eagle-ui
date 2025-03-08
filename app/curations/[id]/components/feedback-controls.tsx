@@ -100,8 +100,11 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
                   if (isCommentingLike) {
                     // If already commenting, just toggle the like
                     handleLike(id)
+                  } else if (isLiked) {
+                    // If already liked, just remove the like without showing comment input
+                    handleLike(id)
                   } else {
-                    // Toggle comment mode
+                    // Toggle comment mode only when adding a like
                     setActiveCommentType((prev) => ({
                       ...prev,
                       [id]: isCommentingLike ? null : "like",
@@ -198,8 +201,11 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
                   if (isCommentingDislike) {
                     // If already commenting, just toggle the dislike
                     handleDislike(id)
+                  } else if (isDisliked) {
+                    // If already disliked, just remove the dislike without showing comment input
+                    handleDislike(id)
                   } else {
-                    // Toggle comment mode
+                    // Toggle comment mode only when adding a dislike
                     setActiveCommentType((prev) => ({
                       ...prev,
                       [id]: isCommentingDislike ? null : "dislike",
