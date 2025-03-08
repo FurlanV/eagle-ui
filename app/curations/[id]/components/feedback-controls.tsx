@@ -188,16 +188,23 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
                     : caseData.dislikes_count > 0
                     ? "text-gray-600 bg-red-50/30"
                     : "text-gray-400"
+                } ${
+                  hasDislikeComment
+                    ? "ring-1 ring-red-200 rounded-full"
+                    : ""
                 }`}
                 onClick={(e) => {
                   e.stopPropagation()
-                  if (isDisliked) {
+                  if (isCommentingDislike) {
+                    // If already commenting, just toggle the dislike
                     handleDislike(id)
                   } else {
+                    // Toggle comment mode
                     setActiveCommentType((prev) => ({
                       ...prev,
-                      [id]: "dislike",
+                      [id]: isCommentingDislike ? null : "dislike",
                     }))
+                    setTempComment(displayDislikeComment)
                   }
                 }}
               >
@@ -223,8 +230,7 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
                 </div>
               </Button>
             </TooltipTrigger>
-            {((isDisliked && dislikeComments[id]) ||
-              caseData.dislikes_count > 0) && (
+            {(hasDislikeComment || caseData.dislikes_count > 0) && (
               <TooltipContent className="max-w-xs bg-red-50 border-red-200">
                 <div className="flex flex-col">
                   {caseData.dislikes_count > 0 && (
@@ -237,7 +243,7 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
                       {isDisliked && " (including you)"}
                     </span>
                   )}
-                  {isDisliked && dislikeComments[id] && (
+                  {hasDislikeComment && (
                     <>
                       <span className="text-xs font-medium text-red-700 mb-1">
                         Your negative feedback:
@@ -262,7 +268,7 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
                 size="sm"
                 className={`p-1 ${
                   isFlaggedForRescoring
-                    ? "text-amber-500"
+                    ? "text-amber-500 bg-amber-50 ring-1 ring-amber-200 rounded-full"
                     : "text-gray-400"
                 }`}
                 onClick={(e) => {
@@ -300,7 +306,7 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
                 variant="ghost"
                 size="sm"
                 className={`p-1 ${
-                  isFlagged ? "text-red-500" : "text-gray-400"
+                  isFlagged ? "text-red-500 bg-red-50 ring-1 ring-red-200 rounded-full" : "text-gray-400"
                 }`}
                 onClick={(e) => {
                   e.stopPropagation()
@@ -374,9 +380,9 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
                 // Submit on Ctrl+Enter or Cmd+Enter
                 if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
                   if (isCommentingLike) {
-                    handleLike(id, displayLikeComment)
+                    handleLike(id, tempComment)
                   } else {
-                    handleDislike(id, displayDislikeComment)
+                    handleDislike(id, tempComment)
                   }
                   setTempComment("")
                 }
@@ -393,9 +399,9 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
                 }`}
                 onClick={() => {
                   if (isCommentingLike) {
-                    handleLike(id, displayLikeComment)
+                    handleLike(id, tempComment)
                   } else {
-                    handleDislike(id, displayDislikeComment)
+                    handleDislike(id, tempComment)
                   }
                   setTempComment("")
                 }}

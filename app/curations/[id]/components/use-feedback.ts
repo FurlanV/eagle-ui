@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useAddOrUpdateFeedbackMutation, useGetUserFeedbackForCasesMutation } from "@/services/feedback/feedback"
 import { CaseData, FeedbackState, FeedbackHandlers } from './types'
 
@@ -25,14 +25,20 @@ export const useFeedback = (caseDetailsData: CaseData[]) => {
     const [addOrUpdateFeedback, { isLoading: isAddingFeedback }] = useAddOrUpdateFeedbackMutation()
     const [getUserFeedbackForCases, { isLoading: isGettingUserFeedbackForCases }] = useGetUserFeedbackForCasesMutation()
 
-    useEffect(() => {
-        const cases: string[] = []
-        caseDetailsData.map((caseData: any) => {
-            cases.push(caseData.id)
-        })
-        const feedback = getUserFeedbackForCases({ case_ids: cases })
-        setUserFeedbacks(feedback)
+    const getUserFeedbacks = useCallback(async () => {
+        if (caseDetailsData && caseDetailsData.length > 0) {
+            const cases: string[] = []
+            caseDetailsData.map((caseData: any) => {
+                cases.push(caseData.id)
+            })
+            const feedback = await getUserFeedbackForCases({ case_ids: cases })
+            setUserFeedbacks(feedback.data)
+        }
     }, [caseDetailsData])
+
+    useEffect(() => {
+        getUserFeedbacks()
+    }, [getUserFeedbacks])
 
     // Effect to focus the textarea when it appears
     useEffect(() => {
