@@ -1,4 +1,5 @@
-import React, { useRef, useEffect, useState } from 'react'
+import React, { useRef, useEffect, useState, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import {
@@ -18,6 +19,149 @@ import {
 import { Label } from "@/components/ui/label"
 import { ThumbsUp, ThumbsDown, Flag, X } from "lucide-react"
 import { CaseData, FeedbackState, FeedbackHandlers } from './types'
+
+// Define interface for CommentInput props
+interface CommentInputProps {
+  id: number;
+  isCommentingLike: boolean;
+  buttonPosition: { top: number; left: number };
+  tempComment: string;
+  setTempComment: (comment: string) => void;
+  handleLike: (id: number, comment?: string) => void;
+  handleDislike: (id: number, comment?: string) => void;
+  setActiveCommentType: (callback: (prev: Record<number, string | null>) => Record<number, string | null>) => void;
+  commentInputRef: React.RefObject<HTMLTextAreaElement>;
+}
+
+// Separate component for the comment input to prevent re-renders
+const CommentInput: React.FC<CommentInputProps> = ({
+  id,
+  isCommentingLike,
+  buttonPosition,
+  tempComment,
+  setTempComment,
+  handleLike,
+  handleDislike,
+  setActiveCommentType,
+  commentInputRef
+}) => {
+  // Use local state to prevent parent re-renders from affecting this component
+  const [localComment, setLocalComment] = useState(tempComment);
+  
+  // Update parent state only when saving
+  const handleSave = () => {
+    if (isCommentingLike) {
+      handleLike(id, localComment);
+    } else {
+      handleDislike(id, localComment);
+    }
+    setTempComment("");
+  };
+  
+  // Update local state when typing
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setLocalComment(e.target.value);
+  };
+  
+  // Focus the textarea on mount
+  useEffect(() => {
+    if (commentInputRef.current) {
+      commentInputRef.current.focus();
+    }
+  }, [commentInputRef]);
+  
+  // Handle keyboard shortcuts
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+      handleSave();
+    }
+  };
+  
+  // Handle cancel
+  const handleCancel = () => {
+    setActiveCommentType((prev) => ({
+      ...prev,
+      [id]: null,
+    }));
+  };
+  
+  return createPortal(
+    <div 
+      className="fixed z-50 animate-in fade-in zoom-in-95 duration-200"
+      style={{
+        top: `${buttonPosition.top}px`,
+        left: `${buttonPosition.left}px`
+      }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div
+        className={`relative border rounded-lg p-3 shadow-lg ${
+          isCommentingLike
+            ? "border-green-200 bg-white"
+            : "border-red-200 bg-white"
+        }`}
+      >
+        {/* Arrow pointing down to the button */}
+        <div 
+          className={`absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-4 h-4 rotate-45 ${
+            isCommentingLike
+              ? "bg-white border-b border-r border-green-200"
+              : "bg-white border-b border-r border-red-200"
+          }`}
+        />
+        
+        <div className="mb-2 flex justify-between items-center">
+          <span className={`text-sm font-medium ${
+            isCommentingLike ? "text-green-700" : "text-red-700"
+          }`}>
+            {isCommentingLike
+              ? "What do you like about this case?"
+              : "What do you dislike about this case?"}
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 rounded-full hover:bg-gray-100"
+            onClick={handleCancel}
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+        <Textarea
+          ref={commentInputRef}
+          placeholder="Add your comment here..."
+          value={localComment}
+          onChange={handleChange}
+          className={`text-sm min-h-[100px] w-full min-w-[300px] border ${
+            isCommentingLike
+              ? "border-green-200 focus-visible:ring-green-200 placeholder:text-green-400"
+              : "border-red-200 focus-visible:ring-red-200 placeholder:text-red-400"
+          }`}
+          onKeyDown={handleKeyDown}
+        />
+        <div className="flex justify-between mt-3">
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs"
+            onClick={handleCancel}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant={isCommentingLike ? "default" : "destructive"}
+            size="sm"
+            className="text-xs"
+            onClick={handleSave}
+          >
+            {isCommentingLike ? "Save Like" : "Save Dislike"}
+          </Button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+};
 
 interface FeedbackControlsProps {
   caseData: CaseData
@@ -84,23 +228,30 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
   const displayFlagComment = userFlagComment || flagComments[id] || ""
 
   // State to track the position of the comment balloon
-  const [commentPosition, setCommentPosition] = useState({ top: 0, left: 0 });
+  const [buttonPosition, setButtonPosition] = useState({ top: 0, left: 0 });
   
-  // Update the position of the comment balloon when the comment type changes
-  useEffect(() => {
-    if (isCommentingLike || isCommentingDislike) {
-      const buttonId = isCommentingLike ? `like-button-${id}` : `dislike-button-${id}`;
-      const buttonElement = document.getElementById(buttonId);
-      
-      if (buttonElement) {
-        const rect = buttonElement.getBoundingClientRect();
-        setCommentPosition({
-          top: rect.top - 220,
-          left: rect.left - 150
-        });
-      }
+  // Calculate button position only when comment mode changes
+  const calculateButtonPosition = useCallback((isLike: boolean) => {
+    const buttonId = isLike ? `like-button-${id}` : `dislike-button-${id}`;
+    const buttonElement = document.getElementById(buttonId);
+    
+    if (buttonElement) {
+      const rect = buttonElement.getBoundingClientRect();
+      setButtonPosition({
+        top: rect.top - 220,
+        left: rect.left - 150
+      });
     }
-  }, [isCommentingLike, isCommentingDislike, id]);
+  }, [id]);
+  
+  // Update position when comment mode changes
+  useEffect(() => {
+    if (isCommentingLike) {
+      calculateButtonPosition(true);
+    } else if (isCommentingDislike) {
+      calculateButtonPosition(false);
+    }
+  }, [isCommentingLike, isCommentingDislike, calculateButtonPosition]);
 
   return (
     <div
@@ -363,107 +514,19 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
         </TooltipProvider>
       </div>
 
-      {/* Floating comment input for like/dislike */}
+      {/* Render comment input as a portal to prevent re-renders */}
       {(isCommentingLike || isCommentingDislike) && (
-        <div 
-          className="fixed z-50 animate-in fade-in zoom-in-95 duration-200"
-          style={{
-            top: `${commentPosition.top}px`,
-            left: `${commentPosition.left}px`
-          }}
-        >
-          <div
-            className={`relative border rounded-lg p-3 shadow-lg ${
-              isCommentingLike
-                ? "border-green-200 bg-white"
-                : "border-red-200 bg-white"
-            }`}
-          >
-            {/* Arrow pointing down to the button */}
-            <div 
-              className={`absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-4 h-4 rotate-45 ${
-                isCommentingLike
-                  ? "bg-white border-b border-r border-green-200"
-                  : "bg-white border-b border-r border-red-200"
-              }`}
-            />
-            
-            <div className="mb-2 flex justify-between items-center">
-              <span className={`text-sm font-medium ${
-                isCommentingLike ? "text-green-700" : "text-red-700"
-              }`}>
-                {isCommentingLike
-                  ? "What do you like about this case?"
-                  : "What do you dislike about this case?"}
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 rounded-full hover:bg-gray-100"
-                onClick={() => {
-                  setActiveCommentType((prev) => ({
-                    ...prev,
-                    [id]: null,
-                  }))
-                }}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </div>
-            <Textarea
-              ref={commentInputRef}
-              placeholder="Add your comment here..."
-              value={tempComment}
-              onChange={(e) => setTempComment(e.target.value)}
-              className={`text-sm min-h-[100px] w-full min-w-[300px] border ${
-                isCommentingLike
-                  ? "border-green-200 focus-visible:ring-green-200 placeholder:text-green-400"
-                  : "border-red-200 focus-visible:ring-red-200 placeholder:text-red-400"
-              }`}
-              onKeyDown={(e) => {
-                // Submit on Ctrl+Enter or Cmd+Enter
-                if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-                  if (isCommentingLike) {
-                    handleLike(id, tempComment)
-                  } else {
-                    handleDislike(id, tempComment)
-                  }
-                  setTempComment("")
-                }
-              }}
-            />
-            <div className="flex justify-between mt-3">
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs"
-                onClick={() => {
-                  setActiveCommentType((prev) => ({
-                    ...prev,
-                    [id]: null,
-                  }))
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant={isCommentingLike ? "default" : "destructive"}
-                size="sm"
-                className="text-xs"
-                onClick={() => {
-                  if (isCommentingLike) {
-                    handleLike(id, tempComment)
-                  } else {
-                    handleDislike(id, tempComment)
-                  }
-                  setTempComment("")
-                }}
-              >
-                {isCommentingLike ? "Save Like" : "Save Dislike"}
-              </Button>
-            </div>
-          </div>
-        </div>
+        <CommentInput
+          id={id}
+          isCommentingLike={isCommentingLike}
+          buttonPosition={buttonPosition}
+          tempComment={tempComment}
+          setTempComment={setTempComment}
+          handleLike={handleLike}
+          handleDislike={handleDislike}
+          setActiveCommentType={setActiveCommentType}
+          commentInputRef={commentInputRef}
+        />
       )}
 
       {/* Flag Modal */}
