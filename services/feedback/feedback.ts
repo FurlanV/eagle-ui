@@ -11,10 +11,14 @@ export const feedbackAPI = createApi({
                 body: data,
             }),
         }),
-        getFeedback: builder.query<any[], string>({
-            query: (caseId) => `/case/${caseId}`,
+        getUserFeedbackForCases: builder.mutation({
+            query: (data) => ({
+                url: '/user_cases',
+                method: 'POST',
+                body: data,
+            }),
         }),
     }),
 })
 
-export const { useAddOrUpdateFeedbackMutation, useGetFeedbackQuery } = feedbackAPI
+export const { useAddOrUpdateFeedbackMutation, useGetUserFeedbackForCasesMutation } = feedbackAPI
