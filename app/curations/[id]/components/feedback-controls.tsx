@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import {
@@ -83,6 +83,25 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
   const displayDislikeComment = userDislikeComment || dislikeComments[id] || ""
   const displayFlagComment = userFlagComment || flagComments[id] || ""
 
+  // State to track the position of the comment balloon
+  const [commentPosition, setCommentPosition] = useState({ top: 0, left: 0 });
+  
+  // Update the position of the comment balloon when the comment type changes
+  useEffect(() => {
+    if (isCommentingLike || isCommentingDislike) {
+      const buttonId = isCommentingLike ? `like-button-${id}` : `dislike-button-${id}`;
+      const buttonElement = document.getElementById(buttonId);
+      
+      if (buttonElement) {
+        const rect = buttonElement.getBoundingClientRect();
+        setCommentPosition({
+          top: rect.top - 220,
+          left: rect.left - 150
+        });
+      }
+    }
+  }, [isCommentingLike, isCommentingDislike, id]);
+
   return (
     <div
       className="flex flex-col items-center"
@@ -122,7 +141,8 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
                   hasLikeComment
                     ? "ring-1 ring-green-200 rounded-full"
                     : ""
-                }`}
+                } relative`}
+                id={`like-button-${id}`}
               >
                 <div className="flex items-center">
                   <ThumbsUp
@@ -195,7 +215,8 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
                   hasDislikeComment
                     ? "ring-1 ring-red-200 rounded-full"
                     : ""
-                }`}
+                } relative`}
+                id={`dislike-button-${id}`}
                 onClick={(e) => {
                   e.stopPropagation()
                   if (isCommentingDislike) {
@@ -342,18 +363,35 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
         </TooltipProvider>
       </div>
 
-      {/* Inline comment input for like/dislike */}
+      {/* Floating comment input for like/dislike */}
       {(isCommentingLike || isCommentingDislike) && (
-        <div className="mt-2 w-full max-w-[300px] animate-in fade-in slide-in-from-top-2 duration-200">
+        <div 
+          className="fixed z-50 animate-in fade-in zoom-in-95 duration-200"
+          style={{
+            top: `${commentPosition.top}px`,
+            left: `${commentPosition.left}px`
+          }}
+        >
           <div
-            className={`relative border rounded-md p-2 shadow-sm ${
+            className={`relative border rounded-lg p-3 shadow-lg ${
               isCommentingLike
-                ? "border-green-200 bg-green-50"
-                : "border-red-200 bg-red-50"
+                ? "border-green-200 bg-white"
+                : "border-red-200 bg-white"
             }`}
           >
-            <div className="mb-1 flex justify-between items-center">
-              <span className="text-xs font-medium px-1">
+            {/* Arrow pointing down to the button */}
+            <div 
+              className={`absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-4 h-4 rotate-45 ${
+                isCommentingLike
+                  ? "bg-white border-b border-r border-green-200"
+                  : "bg-white border-b border-r border-red-200"
+              }`}
+            />
+            
+            <div className="mb-2 flex justify-between items-center">
+              <span className={`text-sm font-medium ${
+                isCommentingLike ? "text-green-700" : "text-red-700"
+              }`}>
                 {isCommentingLike
                   ? "What do you like about this case?"
                   : "What do you dislike about this case?"}
@@ -361,7 +399,7 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-5 w-5"
+                className="h-6 w-6 rounded-full hover:bg-gray-100"
                 onClick={() => {
                   setActiveCommentType((prev) => ({
                     ...prev,
@@ -377,10 +415,10 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
               placeholder="Add your comment here..."
               value={tempComment}
               onChange={(e) => setTempComment(e.target.value)}
-              className={`text-sm min-h-[80px] w-full border-0 focus-visible:ring-0 focus-visible:ring-offset-0 ${
+              className={`text-sm min-h-[100px] w-full min-w-[300px] border ${
                 isCommentingLike
-                  ? "bg-green-50 placeholder:text-green-400"
-                  : "bg-red-50 placeholder:text-red-400"
+                  ? "border-green-200 focus-visible:ring-green-200 placeholder:text-green-400"
+                  : "border-red-200 focus-visible:ring-red-200 placeholder:text-red-400"
               }`}
               onKeyDown={(e) => {
                 // Submit on Ctrl+Enter or Cmd+Enter
@@ -394,15 +432,24 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
                 }
               }}
             />
-            <div className="flex justify-end mt-1">
+            <div className="flex justify-between mt-3">
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                className={`h-7 text-xs ${
-                  isCommentingLike
-                    ? "text-green-700 hover:text-green-800 hover:bg-green-100"
-                    : "text-red-700 hover:text-red-800 hover:bg-red-100"
-                }`}
+                className="text-xs"
+                onClick={() => {
+                  setActiveCommentType((prev) => ({
+                    ...prev,
+                    [id]: null,
+                  }))
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant={isCommentingLike ? "default" : "destructive"}
+                size="sm"
+                className="text-xs"
                 onClick={() => {
                   if (isCommentingLike) {
                     handleLike(id, tempComment)
@@ -412,7 +459,7 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
                   setTempComment("")
                 }}
               >
-                Save Comment
+                {isCommentingLike ? "Save Like" : "Save Dislike"}
               </Button>
             </div>
           </div>
