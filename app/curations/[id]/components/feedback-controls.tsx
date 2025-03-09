@@ -446,7 +446,7 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
                 size="sm"
                 className={`p-1 ${
                   isFlaggedForRescoring
-                    ? "text-amber-500 bg-amber-50 ring-1 ring-amber-200 rounded-full"
+                    ? "text-amber-500"
                     : caseData.rescore_flags_count > 0
                     ? "text-amber-500"
                     : "text-gray-400"
@@ -520,7 +520,7 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
                 size="sm"
                 className={`p-1 ${
                   isFlagged 
-                    ? "text-red-500 bg-red-50 ring-1 ring-red-200 rounded-full" 
+                    ? "text-red-500" 
                     : caseData.remove_flags_count > 0
                     ? "text-red-500"
                     : "text-gray-400"
