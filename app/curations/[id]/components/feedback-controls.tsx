@@ -209,8 +209,16 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
   
   const isLiked = userFeedback ? userFeedback.liked : (likedCases[id] || false)
   const isDisliked = userFeedback ? userFeedback.disliked : (dislikedCases[id] || false)
-  const isFlagged = userFeedback ? userFeedback.remove : (flaggedCases[id] || false)
-  const isFlaggedForRescoring = userFeedback ? userFeedback.rescore : (flaggedForRescoring[id] || false)
+  
+  // Explicitly check for the 'remove' property, with fallback to the old 'flagged' property
+  const isFlagged = userFeedback ? 
+    (userFeedback.remove !== undefined ? userFeedback.remove : userFeedback.flagged || false) : 
+    (flaggedCases[id] || false)
+  
+  // Explicitly check for the 'rescore' property, with fallback to the old 'flagged_for_rescoring' property
+  const isFlaggedForRescoring = userFeedback ? 
+    (userFeedback.rescore !== undefined ? userFeedback.rescore : userFeedback.flagged_for_rescoring || false) : 
+    (flaggedForRescoring[id] || false)
   
   // For comments, check both sources
   const userLikeComment = userFeedback && userFeedback.liked ? userFeedback.comment : null
@@ -440,17 +448,25 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
                   isFlaggedForRescoring
                     ? "text-amber-500 bg-amber-50 ring-1 ring-amber-200 rounded-full"
                     : caseData.rescore_flags_count > 0
-                    ? "text-gray-600"
+                    ? "text-amber-500"
                     : "text-gray-400"
                 }`}
                 onClick={(e) => {
                   e.stopPropagation()
-                  setActiveFlagModal({ id, type: "rescoring" })
+                  if (isFlaggedForRescoring) {
+                    // If already flagged for rescoring, just remove the flag without showing dialog
+                    flagCase(id, "rescoring")
+                  } else {
+                    // Show dialog to add a flag
+                    setActiveFlagModal({ id, type: "rescoring" })
+                  }
                 }}
               >
                 <Flag className={`h-4 w-4 ${
-                  caseData.rescore_flags_count > 0 && !isFlaggedForRescoring
-                    ? "fill-amber-200"
+                  !isFlaggedForRescoring && caseData.rescore_flags_count > 0
+                    ? "text-amber-500 stroke-amber-500 stroke-[1.5px]"
+                    : isFlaggedForRescoring
+                    ? "fill-current"
                     : ""
                 }`} />
               </Button>
@@ -506,17 +522,25 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
                   isFlagged 
                     ? "text-red-500 bg-red-50 ring-1 ring-red-200 rounded-full" 
                     : caseData.remove_flags_count > 0
-                    ? "text-gray-600"
+                    ? "text-red-500"
                     : "text-gray-400"
                 }`}
                 onClick={(e) => {
                   e.stopPropagation()
-                  setActiveFlagModal({ id, type: "deletion" })
+                  if (isFlagged) {
+                    // If already flagged for deletion, just remove the flag without showing dialog
+                    flagCase(id, "deletion")
+                  } else {
+                    // Show dialog to add a flag
+                    setActiveFlagModal({ id, type: "deletion" })
+                  }
                 }}
               >
                 <X className={`h-4 w-4 ${
-                  caseData.remove_flags_count > 0 && !isFlagged
-                    ? "fill-red-200"
+                  !isFlagged && caseData.remove_flags_count > 0
+                    ? "text-red-500 stroke-red-500 stroke-[1.5px]"
+                    : isFlagged
+                    ? "fill-current"
                     : ""
                 }`} />
               </Button>

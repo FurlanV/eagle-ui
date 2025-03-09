@@ -18,7 +18,7 @@ export const useFeedback = (caseDetailsData: CaseData[]) => {
         id: number | null
         type: string | null
     }>({ id: null, type: null })
-    const [userFeedbacks, setUserFeedbacks] = useState<any[]>([])
+    const [userFeedbacks, setUserFeedbacks] = useState<Record<number, any>>({})
 
     const commentInputRef = useRef<HTMLTextAreaElement>(null)
     const flagCommentInputRef = useRef<HTMLTextAreaElement>(null)
@@ -32,8 +32,34 @@ export const useFeedback = (caseDetailsData: CaseData[]) => {
             caseDetailsData.map((caseData: any) => {
                 cases.push(caseData.id)
             })
-            const feedback = await getUserFeedbackForCases({ case_ids: cases })
-            setUserFeedbacks(feedback.data)
+            try {
+                const response = await getUserFeedbackForCases({ case_ids: cases })
+                console.log("API Response:", response)
+                
+                // Ensure the feedback data is an object with case IDs as keys
+                if (response.data) {
+                    console.log("Response Data Type:", typeof response.data, Array.isArray(response.data))
+                    
+                    // If the data is an array, convert it to an object
+                    if (Array.isArray(response.data)) {
+                        const feedbackObj: Record<number, any> = {}
+                        response.data.forEach((item: any) => {
+                            console.log("Feedback Item:", item)
+                            if (item && item.case_id) {
+                                feedbackObj[item.case_id] = item
+                            }
+                        })
+                        console.log("Converted Feedback Object:", feedbackObj)
+                        setUserFeedbacks(feedbackObj)
+                    } else {
+                        // If it's already an object, use it directly
+                        console.log("Using Response Data Directly:", response.data)
+                        setUserFeedbacks(response.data)
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching user feedbacks:", error)
+            }
         }
     }, [caseDetailsData])
 
@@ -163,8 +189,8 @@ export const useFeedback = (caseDetailsData: CaseData[]) => {
                     if (isCurrentlyLiked) {
                         // If there's no other feedback, we can remove the entire entry
                         if (!newUserFeedbacks[id].disliked &&
-                            !newUserFeedbacks[id].flagged &&
-                            !newUserFeedbacks[id].flagged_for_rescoring) {
+                            !newUserFeedbacks[id].remove &&
+                            !newUserFeedbacks[id].rescore) {
                             delete newUserFeedbacks[id];
                         }
                     }
@@ -299,12 +325,11 @@ export const useFeedback = (caseDetailsData: CaseData[]) => {
                         liked: !isCurrentlyDisliked ? false : newUserFeedbacks[id].liked
                     };
 
-                    // If we're removing the dislike, we might need to clean up
+                    // If we're removing the dislike and there's no other feedback, clean up
                     if (isCurrentlyDisliked) {
-                        // If there's no other feedback, we can remove the entire entry
                         if (!newUserFeedbacks[id].liked &&
-                            !newUserFeedbacks[id].flagged &&
-                            !newUserFeedbacks[id].flagged_for_rescoring) {
+                            !newUserFeedbacks[id].remove &&
+                            !newUserFeedbacks[id].rescore) {
                             delete newUserFeedbacks[id];
                         }
                     }
@@ -347,8 +372,18 @@ export const useFeedback = (caseDetailsData: CaseData[]) => {
     const flagCase = (id: number, flagType: string, comment?: string) => {
         // Check if the case is currently flagged using the same logic as the UI
         const userFeedback = userFeedbacks && userFeedbacks[id] ? userFeedbacks[id] : null
-        const isCurrentlyFlaggedForDeletion = userFeedback ? userFeedback.remove : (flaggedCases[id] || false)
-        const isCurrentlyFlaggedForRescoring = userFeedback ? userFeedback.rescore : (flaggedForRescoring[id] || false)
+        
+        // Explicitly check for both old and new field names
+        const isCurrentlyFlaggedForDeletion = userFeedback ? 
+            (userFeedback.remove !== undefined ? userFeedback.remove : userFeedback.flagged || false) : 
+            (flaggedCases[id] || false)
+        
+        const isCurrentlyFlaggedForRescoring = userFeedback ? 
+            (userFeedback.rescore !== undefined ? userFeedback.rescore : userFeedback.flagged_for_rescoring || false) : 
+            (flaggedForRescoring[id] || false)
+
+        console.log(`flagCase - ID: ${id}, Type: ${flagType}, Current Deletion: ${isCurrentlyFlaggedForDeletion}, Current Rescoring: ${isCurrentlyFlaggedForRescoring}`)
+        console.log(`flagCase - userFeedback:`, userFeedback)
 
         let feedbackType = "none";
         let toastMessage = "";
@@ -390,6 +425,8 @@ export const useFeedback = (caseDetailsData: CaseData[]) => {
             toastMessage = newFlaggedState ? "Case flagged for rescoring" : "Flag for rescoring removed";
         }
 
+        console.log(`flagCase - New State: ${newFlaggedState}, Feedback Type: ${feedbackType}`)
+
         if (comment) {
             setFlagComments((prev) => ({
                 ...prev,
@@ -418,6 +455,7 @@ export const useFeedback = (caseDetailsData: CaseData[]) => {
                 setUserFeedbacks((prev) => {
                     // Create a copy of the previous state
                     const newUserFeedbacks = { ...prev };
+                    console.log("Previous userFeedbacks:", prev)
 
                     // Initialize the feedback object for this case if it doesn't exist
                     if (!newUserFeedbacks[id]) {
@@ -428,31 +466,42 @@ export const useFeedback = (caseDetailsData: CaseData[]) => {
                         newUserFeedbacks[id] = {
                             ...newUserFeedbacks[id],
                             remove: newFlaggedState,
-                            rescore: false // Turn off rescoring flag if setting deletion flag
+                            flagged: newFlaggedState, // For backward compatibility
+                            rescore: false, // Turn off rescoring flag if setting deletion flag
+                            flagged_for_rescoring: false // For backward compatibility
                         };
+                        console.log(`Updated userFeedbacks for deletion - ID: ${id}, State:`, newUserFeedbacks[id])
                     } else if (flagType === "rescoring") {
                         newUserFeedbacks[id] = {
                             ...newUserFeedbacks[id],
                             rescore: newFlaggedState,
-                            remove: false // Turn off deletion flag if setting rescoring flag
+                            flagged_for_rescoring: newFlaggedState, // For backward compatibility
+                            remove: false, // Turn off deletion flag if setting rescoring flag
+                            flagged: false // For backward compatibility
                         };
+                        console.log(`Updated userFeedbacks for rescoring - ID: ${id}, State:`, newUserFeedbacks[id])
                     }
 
                     // If we're removing the flag and there's no other feedback, clean up
                     if (!newFlaggedState &&
                         !newUserFeedbacks[id].liked &&
                         !newUserFeedbacks[id].disliked &&
-                        (flagType === "deletion" ? !newUserFeedbacks[id].rescore : !newUserFeedbacks[id].remove)) {
+                        (flagType === "deletion" ? 
+                            (!newUserFeedbacks[id].rescore && !newUserFeedbacks[id].flagged_for_rescoring) : 
+                            (!newUserFeedbacks[id].remove && !newUserFeedbacks[id].flagged))) {
                         delete newUserFeedbacks[id];
+                        console.log(`Removed userFeedbacks entry for ID: ${id}`)
                     }
 
                     // If we have a comment, update it
                     if (comment) {
                         if (newUserFeedbacks[id]) {
                             newUserFeedbacks[id].comment = comment;
+                            console.log(`Updated comment for ID: ${id}:`, comment)
                         }
                     }
 
+                    console.log("New userFeedbacks:", newUserFeedbacks)
                     return newUserFeedbacks;
                 });
             })
