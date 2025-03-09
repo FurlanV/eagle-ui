@@ -292,9 +292,9 @@ export default function GeneDetailsPage() {
             </Button>
           </div>
 
-          <p className="markdown prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-pre:my-1 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-hr:my-3 prose-hr:border-border/30 prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs">
+          <Markdown className="markdown prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-pre:my-1 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-hr:my-3 prose-hr:border-border/30 prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs">
             {geneInfoData?.relevance_to_autism}
-          </p>
+          </Markdown>
         </section>
 
         {/* Molecular Function Section */}
@@ -311,7 +311,7 @@ export default function GeneDetailsPage() {
       <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         <Tabs defaultValue="case-details">
           <TabsList>
-          <TabsTrigger value="case-details">Cases</TabsTrigger>
+            <TabsTrigger value="case-details">Cases</TabsTrigger>
             <TabsTrigger value="papers">Papers</TabsTrigger>
             <TabsTrigger value="variants">Variants</TabsTrigger>
             <TabsTrigger value="protein-interactions" disabled>
