@@ -209,13 +209,13 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
   
   const isLiked = userFeedback ? userFeedback.liked : (likedCases[id] || false)
   const isDisliked = userFeedback ? userFeedback.disliked : (dislikedCases[id] || false)
-  const isFlagged = userFeedback ? userFeedback.flagged : (flaggedCases[id] || false)
-  const isFlaggedForRescoring = userFeedback ? userFeedback.flagged_for_rescoring : (flaggedForRescoring[id] || false)
+  const isFlagged = userFeedback ? userFeedback.remove : (flaggedCases[id] || false)
+  const isFlaggedForRescoring = userFeedback ? userFeedback.rescore : (flaggedForRescoring[id] || false)
   
   // For comments, check both sources
   const userLikeComment = userFeedback && userFeedback.liked ? userFeedback.comment : null
   const userDislikeComment = userFeedback && userFeedback.disliked ? userFeedback.comment : null
-  const userFlagComment = userFeedback && (userFeedback.flagged || userFeedback.flagged_for_rescoring) ? userFeedback.comment : null
+  const userFlagComment = userFeedback && (userFeedback.remove || userFeedback.rescore) ? userFeedback.comment : null
   
   const isCommentingLike = activeCommentType[id] === "like"
   const isCommentingDislike = activeCommentType[id] === "dislike"
@@ -284,14 +284,10 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
                 }}
                 className={`p-1 ${
                   isLiked
-                    ? "text-green-500 bg-green-50"
+                    ? "text-green-500"
                     : caseData.likes_count > 0
-                    ? "text-gray-600 bg-green-50/30"
+                    ? "text-gray-600"
                     : "text-gray-400"
-                } ${
-                  hasLikeComment
-                    ? "ring-1 ring-green-200 rounded-full"
-                    : ""
                 } relative`}
                 id={`like-button-${id}`}
               >
@@ -358,14 +354,10 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
                 size="sm"
                 className={`p-1 ${
                   isDisliked
-                    ? "text-red-500 bg-red-50"
+                    ? "text-red-500"
                     : caseData.dislikes_count > 0
-                    ? "text-gray-600 bg-red-50/30"
+                    ? "text-gray-600"
                     : "text-gray-400"
-                } ${
-                  hasDislikeComment
-                    ? "ring-1 ring-red-200 rounded-full"
-                    : ""
                 } relative`}
                 id={`dislike-button-${id}`}
                 onClick={(e) => {
@@ -447,6 +439,8 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
                 className={`p-1 ${
                   isFlaggedForRescoring
                     ? "text-amber-500 bg-amber-50 ring-1 ring-amber-200 rounded-full"
+                    : caseData.rescore_flags_count > 0
+                    ? "text-gray-600"
                     : "text-gray-400"
                 }`}
                 onClick={(e) => {
@@ -454,7 +448,11 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
                   setActiveFlagModal({ id, type: "rescoring" })
                 }}
               >
-                <Flag className="h-4 w-4" />
+                <Flag className={`h-4 w-4 ${
+                  caseData.rescore_flags_count > 0 && !isFlaggedForRescoring
+                    ? "fill-amber-200"
+                    : ""
+                }`} />
               </Button>
             </TooltipTrigger>
             {isFlaggedForRescoring && displayFlagComment ? (
@@ -466,11 +464,32 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
                   <p className="text-sm text-amber-800">
                     {displayFlagComment}
                   </p>
+                  {caseData.rescore_flags_count > 0 && (
+                    <span className="text-xs font-medium text-amber-700 mt-2">
+                      {caseData.rescore_flags_count}{" "}
+                      {caseData.rescore_flags_count === 1
+                        ? "person has"
+                        : "people have"}{" "}
+                      flagged this case for rescoring
+                      {isFlaggedForRescoring && " (including you)"}
+                    </span>
+                  )}
                 </div>
               </TooltipContent>
             ) : (
               <TooltipContent>
-                <p className="text-xs">Flag for rescoring</p>
+                <div className="flex flex-col">
+                  <p className="text-xs">Flag for rescoring</p>
+                  {caseData.rescore_flags_count > 0 && (
+                    <span className="text-xs font-medium text-amber-700 mt-1">
+                      {caseData.rescore_flags_count}{" "}
+                      {caseData.rescore_flags_count === 1
+                        ? "person has"
+                        : "people have"}{" "}
+                      flagged this case for rescoring
+                    </span>
+                  )}
+                </div>
               </TooltipContent>
             )}
           </Tooltip>
@@ -484,14 +503,22 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
                 variant="ghost"
                 size="sm"
                 className={`p-1 ${
-                  isFlagged ? "text-red-500 bg-red-50 ring-1 ring-red-200 rounded-full" : "text-gray-400"
+                  isFlagged 
+                    ? "text-red-500 bg-red-50 ring-1 ring-red-200 rounded-full" 
+                    : caseData.remove_flags_count > 0
+                    ? "text-gray-600"
+                    : "text-gray-400"
                 }`}
                 onClick={(e) => {
                   e.stopPropagation()
                   setActiveFlagModal({ id, type: "deletion" })
                 }}
               >
-                <X className="h-4 w-4" />
+                <X className={`h-4 w-4 ${
+                  caseData.remove_flags_count > 0 && !isFlagged
+                    ? "fill-red-200"
+                    : ""
+                }`} />
               </Button>
             </TooltipTrigger>
             {isFlagged && displayFlagComment ? (
@@ -503,11 +530,32 @@ export const FeedbackControls: React.FC<FeedbackControlsProps> = ({
                   <p className="text-sm text-red-800">
                     {displayFlagComment}
                   </p>
+                  {caseData.remove_flags_count > 0 && (
+                    <span className="text-xs font-medium text-red-700 mt-2">
+                      {caseData.remove_flags_count}{" "}
+                      {caseData.remove_flags_count === 1
+                        ? "person has"
+                        : "people have"}{" "}
+                      flagged this case for deletion
+                      {isFlagged && " (including you)"}
+                    </span>
+                  )}
                 </div>
               </TooltipContent>
             ) : (
               <TooltipContent>
-                <p className="text-xs">Flag for deletion</p>
+                <div className="flex flex-col">
+                  <p className="text-xs">Flag for deletion</p>
+                  {caseData.remove_flags_count > 0 && (
+                    <span className="text-xs font-medium text-red-700 mt-1">
+                      {caseData.remove_flags_count}{" "}
+                      {caseData.remove_flags_count === 1
+                        ? "person has"
+                        : "people have"}{" "}
+                      flagged this case for deletion
+                    </span>
+                  )}
+                </div>
               </TooltipContent>
             )}
           </Tooltip>

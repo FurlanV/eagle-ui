@@ -52,7 +52,7 @@ interface RelationshipsData {
 }
 
 const ExpandedPaperRow = ({ data }: { data: Paper }) => {
-  const [activeTab, setActiveTab] = useState("paper_info")
+  const [activeTab, setActiveTab] = useState("summary")
   const [isGraphLoading, setIsGraphLoading] = useState(true)
   const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false)
   
@@ -114,7 +114,7 @@ const ExpandedPaperRow = ({ data }: { data: Paper }) => {
       >
         <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList>
-            <TabsTrigger value="paper_info">Paper Info</TabsTrigger>
+            <TabsTrigger value="summary">Summary</TabsTrigger>
             <TabsTrigger value="relationships">
               Relationships
               {isGraphLoading && (
@@ -122,7 +122,7 @@ const ExpandedPaperRow = ({ data }: { data: Paper }) => {
               )}
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="paper_info">
+          <TabsContent value="summary">
             <div className="space-y-4">
               {data.abstract && (
                 <div>

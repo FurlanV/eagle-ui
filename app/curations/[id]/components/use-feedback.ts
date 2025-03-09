@@ -140,17 +140,17 @@ export const useFeedback = (caseDetailsData: CaseData[]) => {
                     description: toastMessage,
                     variant: "default",
                 })
-                
+
                 // Update userFeedbacks state to reflect the change immediately
                 setUserFeedbacks((prev) => {
                     // Create a copy of the previous state (as an object, not an array)
                     const newUserFeedbacks = { ...prev };
-                    
+
                     // Initialize the feedback object for this case if it doesn't exist
                     if (!newUserFeedbacks[id]) {
                         newUserFeedbacks[id] = {};
                     }
-                    
+
                     // Toggle the liked state
                     newUserFeedbacks[id] = {
                         ...newUserFeedbacks[id],
@@ -158,24 +158,24 @@ export const useFeedback = (caseDetailsData: CaseData[]) => {
                         // If we're liking, make sure disliked is false
                         disliked: !isCurrentlyLiked ? false : newUserFeedbacks[id].disliked
                     };
-                    
+
                     // If we're removing the like, we might need to clean up
                     if (isCurrentlyLiked) {
                         // If there's no other feedback, we can remove the entire entry
-                        if (!newUserFeedbacks[id].disliked && 
-                            !newUserFeedbacks[id].flagged && 
+                        if (!newUserFeedbacks[id].disliked &&
+                            !newUserFeedbacks[id].flagged &&
                             !newUserFeedbacks[id].flagged_for_rescoring) {
                             delete newUserFeedbacks[id];
                         }
                     }
-                    
+
                     // If we have a comment, update it
                     if (comment) {
                         if (newUserFeedbacks[id]) {
                             newUserFeedbacks[id].comment = comment;
                         }
                     }
-                    
+
                     return newUserFeedbacks;
                 });
             })
@@ -185,13 +185,13 @@ export const useFeedback = (caseDetailsData: CaseData[]) => {
                     description: "Failed to update feedback. Please try again.",
                     variant: "destructive",
                 })
-                
+
                 // Revert UI changes on error
                 setLikedCases((prev) => ({
                     ...prev,
                     [id]: isCurrentlyLiked,
                 }))
-                
+
                 // If we were removing a like and it failed, restore the like count
                 if (isCurrentlyLiked && caseIndex !== -1) {
                     const updatedCaseData = [...caseDetailsData]
@@ -280,17 +280,17 @@ export const useFeedback = (caseDetailsData: CaseData[]) => {
                     description: toastMessage,
                     variant: "default",
                 })
-                
+
                 // Update userFeedbacks state to reflect the change immediately
                 setUserFeedbacks((prev) => {
                     // Create a copy of the previous state (as an object, not an array)
                     const newUserFeedbacks = { ...prev };
-                    
+
                     // Initialize the feedback object for this case if it doesn't exist
                     if (!newUserFeedbacks[id]) {
                         newUserFeedbacks[id] = {};
                     }
-                    
+
                     // Toggle the disliked state
                     newUserFeedbacks[id] = {
                         ...newUserFeedbacks[id],
@@ -298,24 +298,24 @@ export const useFeedback = (caseDetailsData: CaseData[]) => {
                         // If we're disliking, make sure liked is false
                         liked: !isCurrentlyDisliked ? false : newUserFeedbacks[id].liked
                     };
-                    
+
                     // If we're removing the dislike, we might need to clean up
                     if (isCurrentlyDisliked) {
                         // If there's no other feedback, we can remove the entire entry
-                        if (!newUserFeedbacks[id].liked && 
-                            !newUserFeedbacks[id].flagged && 
+                        if (!newUserFeedbacks[id].liked &&
+                            !newUserFeedbacks[id].flagged &&
                             !newUserFeedbacks[id].flagged_for_rescoring) {
                             delete newUserFeedbacks[id];
                         }
                     }
-                    
+
                     // If we have a comment, update it
                     if (comment) {
                         if (newUserFeedbacks[id]) {
                             newUserFeedbacks[id].comment = comment;
                         }
                     }
-                    
+
                     return newUserFeedbacks;
                 });
             })
@@ -325,13 +325,13 @@ export const useFeedback = (caseDetailsData: CaseData[]) => {
                     description: "Failed to update feedback. Please try again.",
                     variant: "destructive",
                 })
-                
+
                 // Revert UI changes on error
                 setDislikedCases((prev) => ({
                     ...prev,
                     [id]: isCurrentlyDisliked,
                 }))
-                
+
                 // If we were removing a dislike and it failed, restore the dislike count
                 if (isCurrentlyDisliked && caseIndex !== -1) {
                     const updatedCaseData = [...caseDetailsData]
@@ -345,47 +345,137 @@ export const useFeedback = (caseDetailsData: CaseData[]) => {
 
     // Function to flag a case
     const flagCase = (id: number, flagType: string, comment?: string) => {
+        // Check if the case is currently flagged using the same logic as the UI
+        const userFeedback = userFeedbacks && userFeedbacks[id] ? userFeedbacks[id] : null
+        const isCurrentlyFlaggedForDeletion = userFeedback ? userFeedback.remove : (flaggedCases[id] || false)
+        const isCurrentlyFlaggedForRescoring = userFeedback ? userFeedback.rescore : (flaggedForRescoring[id] || false)
+
+        let feedbackType = "none";
+        let toastMessage = "";
+        let newFlaggedState = false;
+
         if (flagType === "deletion") {
+            // Toggle flag for deletion
+            newFlaggedState = !isCurrentlyFlaggedForDeletion;
             setFlaggedCases((prev) => ({
                 ...prev,
-                [id]: true,
+                [id]: newFlaggedState,
             }))
-            setFlaggedForRescoring((prev) => ({
-                ...prev,
-                [id]: false,
-            }))
-            if (comment) {
-                setFlagComments((prev) => ({
+            // If we're flagging for deletion, make sure rescoring flag is off
+            if (newFlaggedState) {
+                setFlaggedForRescoring((prev) => ({
                     ...prev,
-                    [id]: comment,
+                    [id]: false,
                 }))
             }
-            console.log(
-                `Case ${id} flagged for deletion${comment ? `, Comment: ${comment}` : ""
-                }`
-            )
+
+            feedbackType = newFlaggedState ? "remove" : "none";
+            toastMessage = newFlaggedState ? "Case flagged for deletion" : "Flag for deletion removed";
         } else if (flagType === "rescoring") {
+            // Toggle flag for rescoring
+            newFlaggedState = !isCurrentlyFlaggedForRescoring;
             setFlaggedForRescoring((prev) => ({
                 ...prev,
-                [id]: true,
+                [id]: newFlaggedState,
             }))
-            setFlaggedCases((prev) => ({
-                ...prev,
-                [id]: false,
-            }))
-            if (comment) {
-                setFlagComments((prev) => ({
+            // If we're flagging for rescoring, make sure deletion flag is off
+            if (newFlaggedState) {
+                setFlaggedCases((prev) => ({
                     ...prev,
-                    [id]: comment,
+                    [id]: false,
                 }))
             }
-            console.log(
-                `Case ${id} flagged for rescoring${comment ? `, Comment: ${comment}` : ""
-                }`
-            )
+
+            feedbackType = newFlaggedState ? "rescore" : "none";
+            toastMessage = newFlaggedState ? "Case flagged for rescoring" : "Flag for rescoring removed";
         }
+
+        if (comment) {
+            setFlagComments((prev) => ({
+                ...prev,
+                [id]: comment,
+            }))
+        }
+
         // Close the modal after flagging
         setActiveFlagModal({ id: null, type: null })
+
+        // Call the feedback API
+        addOrUpdateFeedback({
+            case_id: id,
+            feedback_type: feedbackType,
+            comment: comment || "",
+        })
+            .unwrap()
+            .then(() => {
+                toast({
+                    title: "Success",
+                    description: toastMessage,
+                    variant: "default",
+                })
+
+                // Update userFeedbacks state to reflect the change immediately
+                setUserFeedbacks((prev) => {
+                    // Create a copy of the previous state
+                    const newUserFeedbacks = { ...prev };
+
+                    // Initialize the feedback object for this case if it doesn't exist
+                    if (!newUserFeedbacks[id]) {
+                        newUserFeedbacks[id] = {};
+                    }
+
+                    if (flagType === "deletion") {
+                        newUserFeedbacks[id] = {
+                            ...newUserFeedbacks[id],
+                            remove: newFlaggedState,
+                            rescore: false // Turn off rescoring flag if setting deletion flag
+                        };
+                    } else if (flagType === "rescoring") {
+                        newUserFeedbacks[id] = {
+                            ...newUserFeedbacks[id],
+                            rescore: newFlaggedState,
+                            remove: false // Turn off deletion flag if setting rescoring flag
+                        };
+                    }
+
+                    // If we're removing the flag and there's no other feedback, clean up
+                    if (!newFlaggedState &&
+                        !newUserFeedbacks[id].liked &&
+                        !newUserFeedbacks[id].disliked &&
+                        (flagType === "deletion" ? !newUserFeedbacks[id].rescore : !newUserFeedbacks[id].remove)) {
+                        delete newUserFeedbacks[id];
+                    }
+
+                    // If we have a comment, update it
+                    if (comment) {
+                        if (newUserFeedbacks[id]) {
+                            newUserFeedbacks[id].comment = comment;
+                        }
+                    }
+
+                    return newUserFeedbacks;
+                });
+            })
+            .catch((error) => {
+                toast({
+                    title: "Error",
+                    description: "Failed to update feedback. Please try again.",
+                    variant: "destructive",
+                })
+
+                // Revert UI changes on error
+                if (flagType === "deletion") {
+                    setFlaggedCases((prev) => ({
+                        ...prev,
+                        [id]: isCurrentlyFlaggedForDeletion,
+                    }))
+                } else if (flagType === "rescoring") {
+                    setFlaggedForRescoring((prev) => ({
+                        ...prev,
+                        [id]: isCurrentlyFlaggedForRescoring,
+                    }))
+                }
+            })
     }
 
     const feedbackState: FeedbackState = {

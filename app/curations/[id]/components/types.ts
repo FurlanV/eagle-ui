@@ -12,6 +12,8 @@ export interface CaseData {
   experimental_evidence_score_rationale: string | null
   likes_count: number
   dislikes_count: number
+  remove_flags_count: number
+  rescore_flags_count: number
 }
 
 export interface FeedbackState {
