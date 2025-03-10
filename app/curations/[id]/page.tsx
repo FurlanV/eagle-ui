@@ -136,7 +136,7 @@ function HypothesisDisplay({ hypothesis }: { hypothesis?: string }) {
     .filter((line) => line.trim() !== "")
 
   return (
-    <div className="mt-4 bg-blue-50 p-4 rounded-lg border border-blue-200 mt-2">
+    <div className="mt-3 bg-blue-50 p-4 rounded-lg border border-blue-200 mt-2">
       <h5 className="text-lg font-medium text-blue-800 mb-2">Hypothesis</h5>
       <div className="space-y-2">
         {hypothesisLines.map((line, index) => (
@@ -290,14 +290,6 @@ export default function GeneDetailsPage() {
                 Rare Single Gene Mutation, Syndromic, Functional
               </p>
             </div>
-            {/* <div className="sm:col-span-2">
-              <span className="block text-sm font-medium text-gray-500">
-                Gene Summary
-              </span>
-              <p className="mt-1 text-base text-gray-800">
-                {geneInfoData?.summary}
-              </p>
-            </div> */}
             <div className="sm:col-span-2">
               <span className="block text-sm font-medium text-gray-500">
                 External Database References
@@ -313,16 +305,18 @@ export default function GeneDetailsPage() {
         <section>
           <div className="flex flex-row gap-4 border-b-2 border-gray-300 pb-2 mb-6 items-center">
             <h2 className="text-2xl font-semibold">Relevance to Autism</h2>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => {
-                updateGeneASDRelavance(geneInfoData?.id || "")
-              }}
-              disabled={isUpdating}
-            >
-              <UpdateIcon className="w-4 h-4" />
-            </Button>
+            {geneInfoData?.asd_relevance?.length === 0 && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  updateGeneASDRelavance(geneInfoData?.id || "")
+                }}
+                disabled={isUpdating}
+              >
+                <UpdateIcon className="w-4 h-4" />
+              </Button>
+            )}
           </div>
           <Markdown
             remarkPlugins={[remarkGfm]}
