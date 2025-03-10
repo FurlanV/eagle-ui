@@ -11,6 +11,7 @@ import { UpdateIcon } from "@radix-ui/react-icons"
 import { ColumnDef } from "@tanstack/react-table"
 import { BotMessageSquare, ExternalLink, X } from "lucide-react"
 import Markdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -112,11 +113,43 @@ interface GeneInfo {
   associated_syndromes?: string
   associated_disorders?: string
   genetic_category?: string
+  asd_relevance?: Array<{
+    scientific_assessment?: string
+    hypothesis?: string
+    references?: Array<{
+      reference: string
+      link?: string
+    }>
+  }>
 }
 
 interface GenePapersAndVariants {
   papers: Paper[]
   variants: Variant[]
+}
+
+function HypothesisDisplay({ hypothesis }: { hypothesis?: string }) {
+  if (!hypothesis) return null
+
+  const hypothesisLines = hypothesis
+    .split("\n")
+    .filter((line) => line.trim() !== "")
+
+  return (
+    <div className="mt-4 bg-blue-50 p-4 rounded-lg border border-blue-200 mt-2">
+      <h5 className="text-lg font-medium text-blue-800 mb-2">Hypothesis</h5>
+      <div className="space-y-2">
+        {hypothesisLines.map((line, index) => (
+          <div key={index} className="flex items-start">
+            <div className="flex-shrink-0 mt-1">
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+            </div>
+            <p className="ml-3 text-sm text-gray-700">{line}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 export default function GeneDetailsPage() {
@@ -291,10 +324,45 @@ export default function GeneDetailsPage() {
               <UpdateIcon className="w-4 h-4" />
             </Button>
           </div>
-
-          <Markdown className="markdown prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-pre:my-1 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-hr:my-3 prose-hr:border-border/30 prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs">
-            {geneInfoData?.relevance_to_autism}
+          <Markdown
+            remarkPlugins={[remarkGfm]}
+            className="markdown prose text-md"
+          >
+            {geneInfoData?.asd_relevance?.[0]?.scientific_assessment}
           </Markdown>
+
+          <HypothesisDisplay
+            hypothesis={geneInfoData?.asd_relevance?.[0]?.hypothesis}
+          />
+
+          {geneInfoData?.asd_relevance?.[0]?.references &&
+            geneInfoData.asd_relevance[0].references.length > 0 && (
+              <div className="mt-5">
+                <h5 className="text-lg font-medium text-gray-700 mb-2">
+                  References
+                </h5>
+                <div className="space-y-2">
+                  {geneInfoData.asd_relevance[0].references.map(
+                    (ref, index: number) => (
+                      <div key={index} className="text-xs">
+                        {ref.link ? (
+                          <a
+                            href={ref.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline"
+                          >
+                            {ref.reference}
+                          </a>
+                        ) : (
+                          <span>{ref.reference}</span>
+                        )}
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+            )}
         </section>
 
         {/* Molecular Function Section */}

@@ -34,17 +34,13 @@ export const useFeedback = (caseDetailsData: CaseData[]) => {
             })
             try {
                 const response = await getUserFeedbackForCases({ case_ids: cases })
-                console.log("API Response:", response)
-                
+                              
                 // Ensure the feedback data is an object with case IDs as keys
-                if (response.data) {
-                    console.log("Response Data Type:", typeof response.data, Array.isArray(response.data))
-                    
+                if (response.data) {            
                     // If the data is an array, convert it to an object
                     if (Array.isArray(response.data)) {
                         const feedbackObj: Record<number, any> = {}
                         response.data.forEach((item: any) => {
-                            console.log("Feedback Item:", item)
                             if (item && item.case_id) {
                                 feedbackObj[item.case_id] = item
                             }
@@ -52,8 +48,6 @@ export const useFeedback = (caseDetailsData: CaseData[]) => {
                         console.log("Converted Feedback Object:", feedbackObj)
                         setUserFeedbacks(feedbackObj)
                     } else {
-                        // If it's already an object, use it directly
-                        console.log("Using Response Data Directly:", response.data)
                         setUserFeedbacks(response.data)
                     }
                 }
