@@ -305,7 +305,7 @@ export default function GeneDetailsPage() {
         <section>
           <div className="flex flex-row gap-4 border-b-2 border-gray-300 pb-2 mb-6 items-center">
             <h2 className="text-2xl font-semibold">Relevance to Autism</h2>
-            {geneInfoData?.asd_relevance?.length === 0 && (
+            {/* {geneInfoData?.asd_relevance?.length === 0 && ( */}
               <Button
                 variant="outline"
                 size="icon"
@@ -316,7 +316,7 @@ export default function GeneDetailsPage() {
               >
                 <UpdateIcon className="w-4 h-4" />
               </Button>
-            )}
+            {/* )} */}
           </div>
           <Markdown
             remarkPlugins={[remarkGfm]}
