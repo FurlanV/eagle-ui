@@ -13,6 +13,7 @@ import { BotMessageSquare, ExternalLink, X } from "lucide-react"
 import Markdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 
+import { useAppSelector } from "@/lib/hooks"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -134,6 +135,7 @@ function HypothesisDisplay({ hypothesis }: { hypothesis?: string }) {
   const hypothesisLines = hypothesis
     .split("\n")
     .filter((line) => line.trim() !== "")
+    .map((line) => line.replaceAll("•", ""))
 
   return (
     <div className="mt-3 bg-blue-50 p-4 rounded-lg border border-blue-200 mt-2">
@@ -173,6 +175,8 @@ export default function GeneDetailsPage() {
     geneInfoData?.id || "",
     { skip: !geneInfoData?.id }
   )
+
+  const user = useAppSelector((state) => state.auth.user)
 
   // Default empty data if nothing is returned
   const papers = Array.isArray(variantData)
@@ -305,7 +309,7 @@ export default function GeneDetailsPage() {
         <section>
           <div className="flex flex-row gap-4 border-b-2 border-gray-300 pb-2 mb-6 items-center">
             <h2 className="text-2xl font-semibold">Relevance to Autism</h2>
-            {/* {geneInfoData?.asd_relevance?.length === 0 && ( */}
+            {user?.is_admin && (
               <Button
                 variant="outline"
                 size="icon"
@@ -316,7 +320,7 @@ export default function GeneDetailsPage() {
               >
                 <UpdateIcon className="w-4 h-4" />
               </Button>
-            {/* )} */}
+            )}
           </div>
           <Markdown
             remarkPlugins={[remarkGfm]}
@@ -388,6 +392,8 @@ export default function GeneDetailsPage() {
               caseDetailsData={cases || []}
               columns={columns}
               isLoading={false}
+              isUserCurator={user?.is_curator || false}
+              isUserAdmin={user?.is_admin || false}
             />
           </TabsContent>
           <TabsContent value="variants">

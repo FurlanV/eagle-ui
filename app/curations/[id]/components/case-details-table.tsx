@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState } from "react"
 import {
   SortingState,
   flexRender,
@@ -19,24 +19,28 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
-import { CaseData } from './types'
-import { ExpandedRow } from './expanded-row'
-import { useFeedback } from './use-feedback'
-import { getEnhancedColumns } from './table-columns'
+import { ExpandedRow } from "./expanded-row"
+import { getColumns } from "./table-columns"
+import { CaseData } from "./types"
+import { useFeedback } from "./use-feedback"
 
 interface CaseDetailsTableProps {
   caseDetailsData: CaseData[]
   columns: any[]
   isLoading: boolean
+  isUserCurator: boolean
+  isUserAdmin: boolean
 }
 
 export const CaseDetailsTable: React.FC<CaseDetailsTableProps> = ({
   caseDetailsData,
   columns,
   isLoading,
+  isUserCurator,
+  isUserAdmin,
 }) => {
   const [sorting, setSorting] = useState<SortingState>([])
-  
+
   const {
     expandedRows,
     toggleRowExpanded,
@@ -44,21 +48,20 @@ export const CaseDetailsTable: React.FC<CaseDetailsTableProps> = ({
     feedbackHandlers,
     commentInputRef,
     flagCommentInputRef,
-    userFeedbacks
+    userFeedbacks,
   } = useFeedback(caseDetailsData)
 
-  const enhancedColumns = getEnhancedColumns(
-    columns,
-    {
-      expandedRows,
-      toggleRowExpanded,
-      feedbackState,
-      feedbackHandlers,
-      commentInputRef,
-      flagCommentInputRef,
-      userFeedbacks
-    }
-  )
+  const enhancedColumns = getColumns(columns, {
+    expandedRows,
+    toggleRowExpanded,
+    feedbackState,
+    feedbackHandlers,
+    commentInputRef,
+    flagCommentInputRef,
+    userFeedbacks,
+    isUserCurator,
+    isUserAdmin,
+  })
 
   const table = useReactTable({
     data: caseDetailsData,

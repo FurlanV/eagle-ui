@@ -13,11 +13,15 @@ import {
 } from "@/components/ui/tooltip"
 import { NewJobDialog } from "@/components/new-job-dialog"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { useAppSelector } from "@/lib/hooks"
+import { CaseProcessingNotifications } from "@/components/case-processing-notifications"
 
 export function Sidebar() {
   const pathname = usePathname()
   const split_pathname = pathname.split("/")
   const current = split_pathname[split_pathname.length - 1]
+
+  const user = useAppSelector((state) => state.auth.user)
 
   if (current === "login") {
     return null
@@ -81,7 +85,8 @@ export function Sidebar() {
           </Tooltip>
         </nav>
         <nav className="mt-auto flex flex-col items-center gap-4 px-2 py-5">
-          <NewJobDialog />
+          {user?.is_admin && <CaseProcessingNotifications />}
+          {user?.is_admin && <NewJobDialog />}
           <ThemeToggle />
           <Tooltip>
             <TooltipTrigger asChild>

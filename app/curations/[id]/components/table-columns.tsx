@@ -1,16 +1,22 @@
-import React from 'react'
+import React, { useState } from "react"
+import {
+  useRescoreCaseMutation,
+  useSoftDeleteCaseMutation,
+} from "@/services/eagle/cases"
 import { ColumnDef } from "@tanstack/react-table"
+import { ChevronDown, ChevronRight, RefreshCw, XCircle } from "lucide-react"
+
 import { Button } from "@/components/ui/button"
-import { ChevronDown, ChevronRight } from "lucide-react"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { CaseData } from './types'
-import { FeedbackControls } from './feedback-controls'
-import { getScoreColumn } from './score-cell'
+
+import { ConfirmationModal } from "./confirmation-modal"
+import { FeedbackControls } from "./feedback-controls"
+import { getScoreColumn } from "./score-cell"
 
 interface GetColumnsProps {
   expandedRows: Record<number, boolean>
@@ -20,9 +26,11 @@ interface GetColumnsProps {
   commentInputRef: React.RefObject<HTMLTextAreaElement>
   flagCommentInputRef: React.RefObject<HTMLTextAreaElement>
   userFeedbacks: any
+  isUserCurator: boolean
+  isUserAdmin: boolean
 }
 
-export const getEnhancedColumns = (
+export const getColumns = (
   baseColumns: ColumnDef<any, any>[],
   {
     expandedRows,
@@ -31,7 +39,9 @@ export const getEnhancedColumns = (
     feedbackHandlers,
     commentInputRef,
     flagCommentInputRef,
-    userFeedbacks
+    userFeedbacks,
+    isUserCurator,
+    isUserAdmin,
   }: GetColumnsProps
 ): ColumnDef<any, any>[] => {
   const expanderColumn: ColumnDef<any, any> = {
@@ -100,6 +110,94 @@ export const getEnhancedColumns = (
     ),
   }
 
+  const actionsColumn: ColumnDef<any, any> = {
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => {
+      const [rescoreModalOpen, setRescoreModalOpen] = useState(false)
+      const [excludeModalOpen, setExcludeModalOpen] = useState(false)
+
+      const [rescoreCase] = useRescoreCaseMutation()
+      const [softDeleteCase] = useSoftDeleteCaseMutation()
+
+      const handleRescore = () => rescoreCase(row.original.id)
+
+      const handleExclude = () => softDeleteCase(row.original.id)
+
+      return (
+        <div
+          className="flex items-center space-x-2 z-10"
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onMouseUp={(e) => e.stopPropagation()}
+        >
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 p-0"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setRescoreModalOpen(true)
+                  }}
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Rescore this case</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-destructive border-destructive hover:bg-destructive/10 z-10"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setExcludeModalOpen(true)
+                  }}
+                >
+                  <XCircle className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Exclude this case</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          {/* Rescore Confirmation Modal */}
+          <ConfirmationModal
+            isOpen={rescoreModalOpen}
+            onClose={() => setRescoreModalOpen(false)}
+            onConfirm={handleRescore}
+            title="Rescore Case"
+            description={`Are you sure you want to rescore case ${row.original.id}?`}
+            confirmText="Rescore"
+          />
+
+          {/* Exclude Confirmation Modal */}
+          <ConfirmationModal
+            isOpen={excludeModalOpen}
+            onClose={() => setExcludeModalOpen(false)}
+            onConfirm={handleExclude}
+            title="Exclude Case"
+            description={`Are you sure you want to exclude case ${row.original.id}? This action cannot be undone.`}
+            confirmText="Exclude"
+            variant="destructive"
+          />
+        </div>
+      )
+    },
+  }
+
   // Filter out any columns that might have phenotypes as accessorKey
   const filteredBaseColumns = baseColumns.filter((col) => {
     if ("accessorKey" in col) {
@@ -108,12 +206,27 @@ export const getEnhancedColumns = (
     return true
   })
 
-  return [
+  // Base columns that are always shown regardless of user role
+  const commonColumns = [
     expanderColumn,
     ...filteredBaseColumns,
     ageColumn,
     phenotypesColumn,
     scoreColumn,
-    feedbackColumn,
   ]
-} 
+
+  // Create a copy of columns to add role-specific columns
+  let resultColumns = [...commonColumns]
+
+  // Add the feedback column if the user is a curator
+  if (isUserCurator) {
+    resultColumns.push(feedbackColumn)
+  }
+
+  // Add the actions column if the user is an admin
+  if (isUserAdmin) {
+    resultColumns.push(actionsColumn)
+  }
+
+  return resultColumns
+}
