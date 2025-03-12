@@ -13,8 +13,6 @@ interface UseWebSocketOptions {
   onOpen?: () => void
   onClose?: () => void
   onError?: (error: Event) => void
-  reconnectInterval?: number
-  reconnectAttempts?: number
   autoConnect?: boolean
 }
 
@@ -24,8 +22,6 @@ export function useWebSocket({
   onOpen,
   onClose,
   onError,
-  reconnectInterval = 5000,
-  reconnectAttempts = 10,
   autoConnect = true,
 }: UseWebSocketOptions) {
   const [status, setStatus] = useState<WebSocketStatus>('closed')
@@ -62,11 +58,11 @@ export function useWebSocket({
           setMessages((prev) => [...prev, data])
           if (onMessage) onMessage(data)
         } catch (error) {
-          console.error('Error parsing WebSocket message:', error)
+          console.error('Error parsing WebSocket message:', error, event.data)
         }
       }
 
-      socket.onclose = () => {
+      socket.onclose = (event) => {
         setStatus('closed')
         if (onClose) onClose()
       }
@@ -74,7 +70,6 @@ export function useWebSocket({
       socket.onerror = (error) => {
         setStatus('error')
         if (onError) onError(error)
-        socket.close()
       }
 
       socketRef.current = socket
@@ -82,7 +77,7 @@ export function useWebSocket({
       console.error('Error connecting to WebSocket:', error)
       setStatus('error')
     }
-  }, [url])
+  }, [url, onOpen, onMessage, onClose, onError, autoConnect])
 
   const disconnect = useCallback(() => {
     if (socketRef.current) {
@@ -111,9 +106,8 @@ export function useWebSocket({
 
   // Connect on mount if autoConnect is true
   useEffect(() => {
-    if (autoConnect) {
-      connect()
-    }
+
+    connect()
 
     // Cleanup on unmount
     return () => {

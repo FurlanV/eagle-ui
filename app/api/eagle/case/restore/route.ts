@@ -18,6 +18,7 @@ export async function POST(req: NextRequest) {
     const res = await fetch(`${API_URL}/api/v1/eagle/case/${case_id}/restore`, {
         method: "POST",
         headers: {
+            'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
         },
     })
