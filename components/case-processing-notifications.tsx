@@ -153,9 +153,7 @@ export function CaseProcessingNotifications() {
   // Connect to the WebSocket
   const { status, messages } = useWebSocket({
     url: `${process.env.NEXT_PUBLIC_API_URL?.replace('http', 'ws')}/api/v1/eagle/ws/case-processing?user_id=${user?.id}`,
-    onMessage: (message) => {
-      console.log('WebSocket message received:', message);
-      
+    onMessage: (message) => {      
       // Process the message based on its type
       if (message.type === 'case_processing') {
         // Handle case processing notifications
@@ -291,7 +289,7 @@ export function CaseProcessingNotifications() {
                         </span>
                       </div>
                       <span className="text-xs text-muted-foreground">
-                        {formatTimestamp(notification.timestamp)}
+                        {notification.timestamp}
                       </span>
                     </div>
                     <div className="mt-1 text-xs text-muted-foreground">

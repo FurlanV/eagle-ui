@@ -22,7 +22,7 @@ export function createBaseQueryWithReauth(
                 const release = await mutex.acquire()
                 try {
                     const refreshResult = await refreshQuery(
-                        'auth/refresh',
+                        '/auth/refresh',
                         api,
                         extraOptions
                     )

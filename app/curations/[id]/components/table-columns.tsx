@@ -120,7 +120,9 @@ export const getColumns = (
       const [rescoreCase] = useRescoreCaseMutation()
       const [softDeleteCase] = useSoftDeleteCaseMutation()
 
-      const handleRescore = () => rescoreCase(row.original.id)
+      const handleRescore = () => {
+        rescoreCase(row.original.id)
+      }
 
       const handleExclude = () => softDeleteCase(row.original.id)
 
@@ -177,7 +179,7 @@ export const getColumns = (
           <ConfirmationModal
             isOpen={rescoreModalOpen}
             onClose={() => setRescoreModalOpen(false)}
-            onConfirm={handleRescore}
+            onConfirm={() => handleRescore()}
             title="Rescore Case"
             description={`Are you sure you want to rescore case ${row.original.id}?`}
             confirmText="Rescore"

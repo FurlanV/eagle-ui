@@ -26,7 +26,7 @@ export const ScoreCell: React.FC<ScoreCellProps> = ({ score }) => {
     <div className="flex justify-center w-full">
       <div className={`rounded-full px-3 py-1 ${bgClass}`}>
         <span className={`font-medium ${textClass}`}>
-          {score.toFixed(2)}
+          {score ? score.toFixed(2) : '0.0'}
         </span>
       </div>
     </div>
