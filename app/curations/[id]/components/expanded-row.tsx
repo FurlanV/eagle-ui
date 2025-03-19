@@ -1,6 +1,9 @@
-import React from 'react'
+import React from "react"
+import { BookOpen } from "lucide-react"
+
 import { TableCell, TableRow } from "@/components/ui/table"
-import { CaseData } from './types'
+
+import { CaseData } from "./types"
 
 interface ExpandedRowProps {
   data: CaseData
@@ -14,6 +17,22 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({ data }) => {
         className="p-4 bg-gray-50 border-t border-gray-200"
       >
         <div className="space-y-4">
+          {/* Paper information section */}
+          {data.title && (
+            <div className="flex items-start gap-3">
+              <div className="mt-1 text-blue-600">
+                <BookOpen size={15} />
+              </div>
+              <div className="flex-1">
+                <div className="text-sm text-gray-700">
+                  {data.title && (
+                    <p className="font-medium text-blue-700">{data.title}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {data.description && (
             <div>
               <h4 className="font-medium text-gray-900 mb-1">
@@ -73,4 +92,4 @@ export const ExpandedRow: React.FC<ExpandedRowProps> = ({ data }) => {
       </TableCell>
     </TableRow>
   )
-} 
+}

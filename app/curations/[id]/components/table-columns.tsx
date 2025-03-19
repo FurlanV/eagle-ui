@@ -4,7 +4,7 @@ import {
   useSoftDeleteCaseMutation,
 } from "@/services/eagle/cases"
 import { ColumnDef } from "@tanstack/react-table"
-import { ChevronDown, ChevronRight, RefreshCw, XCircle } from "lucide-react"
+import { ChevronDown, ChevronRight, Play, RefreshCw, XCircle } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -66,6 +66,12 @@ export const getColumns = (
     },
     enableSorting: false,
     enableHiding: false,
+  }
+
+  const publicationColumn: ColumnDef<any, any> = {
+    id: "publication",
+    header: "Publication",
+    cell: ({ row }) => `${row.original.first_author} (${row.original.year})`,
   }
 
   const ageColumn: ColumnDef<any, any> = {
@@ -145,11 +151,19 @@ export const getColumns = (
                     setRescoreModalOpen(true)
                   }}
                 >
-                  <RefreshCw className="h-4 w-4" />
+                  {row.original.is_scored ? (
+                    <RefreshCw className="h-4 w-4" />
+                  ) : (
+                    <Play className="h-4 w-4" />
+                  )}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Rescore this case</p>
+                {row.original.is_scored ? (
+                  <p>Rescore this case</p>
+                ) : (
+                  <p>Score this case</p>
+                )}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -211,6 +225,7 @@ export const getColumns = (
   // Base columns that are always shown regardless of user role
   const commonColumns = [
     expanderColumn,
+    publicationColumn,
     ...filteredBaseColumns,
     ageColumn,
     phenotypesColumn,

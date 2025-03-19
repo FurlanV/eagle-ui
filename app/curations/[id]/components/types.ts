@@ -14,6 +14,9 @@ export interface CaseData {
   dislikes_count: number
   remove_flags_count: number
   rescore_flags_count: number
+  title: string | null
+  first_author: string | null
+  year: number | null
 }
 
 export interface FeedbackState {

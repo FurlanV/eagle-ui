@@ -237,7 +237,18 @@ export default function GeneDetailsPage() {
                     ?.reduce((a: number, b: any) => a + b.total_case_score, 0)
                     .toFixed(2)}
                 </span>
-                <span className="text-sm text-gray-500">{"No Support"}</span>
+                <span className="text-sm text-gray-500">
+                  {(() => {
+                    const score =
+                      cases?.reduce(
+                        (a: number, b: any) => a + b.total_case_score,
+                        0
+                      ) || 0
+                    if (score >= 12) return "Strong Evidence"
+                    if (score >= 7 && score < 12) return "Moderate Evidence"
+                    return "Limited Evidence"
+                  })()}
+                </span>
               </div>
             </HighlightCard>
 
@@ -252,7 +263,7 @@ export default function GeneDetailsPage() {
               title="Rare Variants / Common Variants"
               accentClass="border-red-500"
             >
-              {variants.length} / {cases.length}
+              {variants.length} / 0
             </HighlightCard>
 
             <HighlightCard

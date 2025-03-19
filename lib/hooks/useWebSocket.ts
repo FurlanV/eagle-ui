@@ -77,7 +77,7 @@ export function useWebSocket({
       console.error('Error connecting to WebSocket:', error)
       setStatus('error')
     }
-  }, [url, onOpen, onMessage, onClose, onError, autoConnect])
+  }, [url])
 
   const disconnect = useCallback(() => {
     if (socketRef.current) {

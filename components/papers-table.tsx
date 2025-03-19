@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useGetPaperRelationshipsQuery } from "@/services/eagle/relationships"
 import { Paper } from "@/services/paper/paper"
@@ -20,14 +21,13 @@ import {
 import {
   Background,
   Controls,
+  Edge,
+  Node,
   ReactFlow,
   useEdgesState,
   useNodesState,
-  Node,
-  Edge,
 } from "@xyflow/react"
-import { ExternalLink, Info } from "lucide-react"
-import { useState, useEffect } from "react"
+import { ExternalLink, Trash } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -46,27 +46,33 @@ import "@xyflow/react/dist/style.css"
 
 // Add type definition for relationships data
 interface RelationshipsData {
-  nodes: Node[];
-  edges: Edge[];
-  raw_relationships?: any;
+  nodes: Node[]
+  edges: Edge[]
+  raw_relationships?: any
 }
 
 const ExpandedPaperRow = ({ data }: { data: Paper }) => {
   const [activeTab, setActiveTab] = useState("summary")
   const [isGraphLoading, setIsGraphLoading] = useState(true)
   const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false)
-  
-  // Fetch relationships data with skip option to control when it loads
-  const { data: relationships, isLoading, isError, refetch } = useGetPaperRelationshipsQuery(
-    data.id.toString(),
-    {
-      // Force refetch when component mounts to ensure fresh data
-      refetchOnMountOrArgChange: true
-    }
-  )
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(relationships?.nodes || [])
-  const [edges, setEdges, onEdgesChange] = useEdgesState(relationships?.edges || [])
+  // Fetch relationships data with skip option to control when it loads
+  const {
+    data: relationships,
+    isLoading,
+    isError,
+    refetch,
+  } = useGetPaperRelationshipsQuery(data.id.toString(), {
+    // Force refetch when component mounts to ensure fresh data
+    refetchOnMountOrArgChange: true,
+  })
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(
+    relationships?.nodes || []
+  )
+  const [edges, setEdges, onEdgesChange] = useEdgesState(
+    relationships?.edges || []
+  )
 
   // Update loading state and nodes/edges when relationships data changes
   useEffect(() => {
@@ -88,7 +94,7 @@ const ExpandedPaperRow = ({ data }: { data: Paper }) => {
 
   const handleTabChange = (value: string) => {
     setActiveTab(value)
-    
+
     // If switching to relationships tab, ensure data is loaded
     if (value === "relationships") {
       if (isLoading || (!hasAttemptedLoad && !relationships)) {
@@ -99,11 +105,11 @@ const ExpandedPaperRow = ({ data }: { data: Paper }) => {
   }
 
   // Determine if we have valid graph data
-  const hasValidGraphData = 
-    relationships && 
-    relationships.nodes && 
-    relationships.nodes.length > 0 && 
-    relationships.edges && 
+  const hasValidGraphData =
+    relationships &&
+    relationships.nodes &&
+    relationships.nodes.length > 0 &&
+    relationships.edges &&
     relationships.edges.length > 0
 
   return (
@@ -160,7 +166,9 @@ const ExpandedPaperRow = ({ data }: { data: Paper }) => {
                 <div className="flex items-center justify-center h-full">
                   <div className="flex flex-col items-center space-y-4">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
-                    <p className="text-gray-600">Loading relationship graph...</p>
+                    <p className="text-gray-600">
+                      Loading relationship graph...
+                    </p>
                   </div>
                 </div>
               ) : isError ? (
@@ -169,8 +177,10 @@ const ExpandedPaperRow = ({ data }: { data: Paper }) => {
                     <div className="rounded-full h-12 w-12 bg-red-100 flex items-center justify-center">
                       <span className="text-red-500 text-xl">!</span>
                     </div>
-                    <p className="text-gray-600">Failed to load relationship data</p>
-                    <button 
+                    <p className="text-gray-600">
+                      Failed to load relationship data
+                    </p>
+                    <button
                       onClick={() => {
                         setIsGraphLoading(true)
                         setHasAttemptedLoad(false)
@@ -200,8 +210,10 @@ const ExpandedPaperRow = ({ data }: { data: Paper }) => {
               ) : (
                 <div className="flex items-center justify-center h-full">
                   <div className="flex flex-col items-center space-y-4 text-center">
-                    <p className="text-gray-600">No relationship data available for this paper</p>
-                    <button 
+                    <p className="text-gray-600">
+                      No relationship data available for this paper
+                    </p>
+                    <button
                       onClick={() => {
                         setIsGraphLoading(true)
                         setHasAttemptedLoad(false)
@@ -391,7 +403,7 @@ export function PapersTable({
             }}
             className="p-0 h-8 w-8"
           >
-            <Info className="h-4 w-4" />
+            <Trash className="h-4 w-4 text-red-500" />
           </Button>
         </div>
       ),
