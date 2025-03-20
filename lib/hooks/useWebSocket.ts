@@ -113,7 +113,7 @@ export function useWebSocket({
     return () => {
       disconnect()
     }
-  }, [])
+  }, [url])
 
   return {
     status,

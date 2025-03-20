@@ -3,13 +3,8 @@
 import { useGetDashboardStatsQuery } from "@/services/eagle/reports"
 
 import { useAppSelector } from "@/lib/hooks"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { AuthWrapper } from "@/components/auth-wrapper"
-import { Icons } from "@/components/icons"
-import { SearchInput } from "@/components/search-input"
 import { StatsCards } from "@/components/dashboard/stats-cards"
 import { TopGenesChart } from "@/components/dashboard/top-genes-chart"
 import { TopVariantsChart } from "@/components/dashboard/top-variants-chart"
@@ -26,26 +21,7 @@ export default function IndexPage() {
       <main className="flex flex-row">
         <div className="flex flex-row w-full">
           <div className="flex flex-col w-full">
-            <section className="flex flex-row items-center w-full p-3">
-              <div className="w-full justify-between flex flex-row items-center">
-                <SearchInput />
-                <div className="flex flex-row gap-2">
-                  <Button variant="ghost" size="icon">
-                    <Icons.bell className="h-6 w-6 text-muted-foreground" />
-                  </Button>
-                </div>
-              </div>
-              <Separator orientation="vertical" />
-              <div className="flex flex-row gap-4 w-18 ml-4">
-                <Avatar>
-                  <AvatarFallback>
-                    {user?.name[0]}
-                    {user?.surname[0]}
-                  </AvatarFallback>
-                </Avatar>
-              </div>
-            </section>
-            <Separator orientation="horizontal" />
+
             <section className="flex flex-col w-full p-4 gap-4">
               <div className="gap-2 flex flex-row justify-between items-center w-full">
                 <div>

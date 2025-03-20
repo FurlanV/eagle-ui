@@ -85,7 +85,7 @@ export function Sidebar() {
           </Tooltip>
         </nav>
         <nav className="mt-auto flex flex-col items-center gap-4 px-2 py-5">
-          {user?.is_admin && <CaseProcessingNotifications />}
+          {/* {user?.is_admin && <CaseProcessingNotifications />} */}
           {user?.is_admin && <NewJobDialog />}
           <ThemeToggle />
           <Tooltip>

@@ -5,10 +5,11 @@ import StoreProvider from "@/store/store-provider"
 
 import { fontSans } from "@/lib/fonts"
 import { cn } from "@/lib/utils"
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from "@/components/ui/toaster" 
 import { Sidebar } from "@/components/sidebar"
 import { TailwindIndicator } from "@/components/tailwind-indicator"
 import { ThemeProvider } from "@/components/theme-provider"
+import { TopBar } from "@/components/top-bar"
 
 interface RootLayoutProps {
   children: React.ReactNode
@@ -28,7 +29,11 @@ export default function RootLayout({ children }: RootLayoutProps) {
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <div className="flex flex-1 flex-row">
               <Sidebar />
-              <main className="flex-1">{children}</main>
+              <div className="flex flex-1 flex-col">
+                <TopBar />
+                <main className="flex-1">{children}</main>
+              </div>
+
               <Toaster />
             </div>
             <TailwindIndicator />
