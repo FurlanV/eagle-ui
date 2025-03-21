@@ -118,6 +118,7 @@ interface GeneInfo {
     scientific_assessment?: string
     hypothesis?: string
     references?: Array<{
+      reference_id: string
       reference: string
       link?: string
     }>
@@ -135,7 +136,8 @@ function HypothesisDisplay({ hypothesis }: { hypothesis?: string }) {
   const hypothesisLines = hypothesis
     .split("\n")
     .filter((line) => line.trim() !== "")
-    .map((line) => line.replaceAll("•", ""))
+    .map((line) => line.replace(/^[•\-*+]\s*|\d+[.)]\s*/g, ""))
+    .map((line) => line.replace(/^\s*[\d]+\.\s*/, "").replace(/\[\s*|\s*\]/g, ""))
 
   return (
     <div className="mt-3 bg-blue-50 p-4 rounded-lg border border-blue-200 mt-2">
@@ -361,10 +363,10 @@ export default function GeneDetailsPage() {
                             rel="noopener noreferrer"
                             className="text-blue-600 hover:underline"
                           >
-                            {ref.reference}
+                            {ref.reference_id}. {ref.reference}
                           </a>
                         ) : (
-                          <span>{ref.reference}</span>
+                          <span>{ref.reference_id}. {ref.reference}</span>
                         )}
                       </div>
                     )

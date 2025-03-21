@@ -5,7 +5,9 @@ import {
   CheckCheck,
   CheckCircle,
   Clock,
+  Cog,
   Trash2,
+  User,
 } from "lucide-react"
 
 import { useAppSelector } from "@/lib/hooks"
@@ -18,6 +20,8 @@ import { Button } from "./ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu"
@@ -122,7 +126,7 @@ function NotificationsDropdown() {
   const [isOpen, setIsOpen] = useState(false)
   const user = useAppSelector((state) => state.auth.user)
 
-  // Get user email as identifier since id is not available in the User type
+  // Get user identifier - use email instead of id which isn't available in the User type
   const getUserIdentifier = () => {
     return user?.id || ""
   }
@@ -305,6 +309,11 @@ function NotificationsDropdown() {
 
 export function TopBar() {
   const user = useAppSelector((state) => state.auth.user)
+  
+  if (!user) {
+    return null
+  }
+
   return (
     <>
       <section className="flex flex-row items-center justify-between w-full p-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -315,14 +324,31 @@ export function TopBar() {
         <div className="flex flex-row items-center gap-4">
           {user?.is_admin && <NotificationsDropdown />}
           <Separator orientation="vertical" className="h-6" />
-          <Avatar className="h-8 w-8">
-            <AvatarFallback>
-              {user?.name
-                ?.split(" ")
-                .map((n) => n[0])
-                .join("") || "U"}
-            </AvatarFallback>
-          </Avatar>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Avatar className="h-8 w-8 cursor-pointer">
+                <AvatarFallback>
+                  {user?.name
+                    ?.split(" ")
+                    .map((n) => n[0])
+                    .join("") || "U"}
+                </AvatarFallback>
+              </Avatar>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Cog className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </section>
       <Separator orientation="horizontal" />

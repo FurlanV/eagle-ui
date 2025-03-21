@@ -282,6 +282,7 @@ export function GenesTable({
           </div>
         )
       },
+
     }
   ]
 
